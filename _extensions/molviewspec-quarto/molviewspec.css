@@ -55,6 +55,24 @@ molstar-editor-viewer {
     min-height: 500px;
 }
 
+/* Hide MolStar viewer controls */
+.molviewspec-viewer .msp-layout-top,
+.molviewspec-viewer .msp-layout-controls,
+.molviewspec-viewer .msp-plugin-controls,
+.molviewspec-viewer .msp-layout-expanded,
+.molviewspec-viewer .msp-layout-left-panel,
+.molviewspec-viewer .msp-layout-right-panel,
+.molviewspec-viewer .msp-btn-row,
+.molviewspec-viewer .msp-controls-panel,
+.molviewspec-viewer .msp-transform-wrapper,
+.molviewspec-viewer .msp-viewport-controls,
+.molviewspec-viewer .msp-viewport-top-left-controls,
+.molviewspec-viewer .msp-btn-row-group,
+.molviewspec-viewer .msp-semi-transparent-background,
+.molviewspec-viewer .msp-viewport-controls-panel {
+    display: none !important;
+}
+
 /* Fallback styles */
 .molviewspec-fallback {
     padding: 1rem;

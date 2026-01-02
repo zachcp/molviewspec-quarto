@@ -56,8 +56,8 @@ async function initializeMolViewSpecViewers() {
           h(EditorWithViewer, {
             initialCode: builderCode,
             layout: "horizontal",
-            editorHeight: "600px",
-            viewerHeight: "600px",
+            editorHeight: "400px",
+            viewerHeight: "400px",
             autoRun: true,
             autoRunDelay: 500,
           }),

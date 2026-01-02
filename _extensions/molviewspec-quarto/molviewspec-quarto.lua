@@ -120,7 +120,7 @@ function CodeBlock(el)
     local content = el.text
 
     -- Get optional attributes
-    local height = el.attributes.height or "600px"
+    local height = el.attributes.height or "400px"
     local width = el.attributes.width or "100%"
     local title = el.attributes.title or ""
 

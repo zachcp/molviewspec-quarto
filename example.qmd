@@ -28,7 +28,7 @@ structure
 
 This example shows a protein with custom coloring:
 
-```{.molviewspec title="Colored Protein Representation" height="700px"}
+```{.molviewspec title="Colored Protein Representation"}
 const structure = builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
@@ -44,7 +44,7 @@ structure
 
 This example highlights a ligand with a label and focus:
 
-```{.molviewspec title="Protein with Ligand" height="700px"}
+```{.molviewspec title="Protein with Ligand"}
 const structure = builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
@@ -65,7 +65,7 @@ structure
 
 You can add multiple components with different representations:
 
-```{.molviewspec height="800px" width="100%" title="Multiple Representations"}
+```{.molviewspec title="Multiple Representations"}
 const structure = builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
@@ -89,7 +89,7 @@ structure
 
 You can omit the title attribute if you don't need a header:
 
-```{.molviewspec height="600px"}
+```{.molviewspec}
 const structure = builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
@@ -133,7 +133,7 @@ structure
 The MolViewSpec code blocks support the following attributes:
 
 - **title**: Set a title for the viewer (default: empty)
-- **height**: Set the height of the viewer (default: "600px")
+- **height**: Set the height of the viewer (default: "400px")
 - **width**: Set the width of the viewer (default: "100%")
 
 ## Technical Details
@@ -162,7 +162,7 @@ The builder API provides a fluent interface for creating molecular visualization
 - `modelStructure()`: Create a model structure node
 - `component()`: Select parts of the structure (polymer, ligand, water, etc.)
 - `representation()`: Add a visual representation (cartoon, ball_and_stick, surface, spacefill, etc.)
-- `color()`: Apply colors (named colors, hex codes, or color schemes like 'rainbow')
+- `color()`: Apply colors (named colors like 'red', 'blue', or hex codes like '#cc3399')
 - `label()`: Add text labels
 - `focus()`: Focus the camera on a component
 
