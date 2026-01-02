@@ -25,36 +25,42 @@ async function initializeMolViewSpecViewers() {
     }
 
     viewers.forEach((viewerElement) => {
-      // Get the builder code from the script tag
+      // Get the story and scene code from script tags
       const viewerId = viewerElement.id.replace("-viewer", "");
-      const codeScript = document.getElementById(viewerId + "-code");
+      const storyScript = document.getElementById(viewerId + "-story");
+      const sceneScript = document.getElementById(viewerId + "-scene");
 
-      if (!codeScript) {
+      if (!sceneScript) {
         console.warn(
-          "No MolViewSpec builder code script found for viewer:",
+          "No MolViewSpec scene code script found for viewer:",
           viewerElement.id,
         );
         return;
       }
 
-      const builderCode = codeScript.textContent;
+      const storyCode = storyScript ? storyScript.textContent : "";
+      const sceneCode = sceneScript.textContent;
 
       console.log(
         "Extracted code for",
         viewerElement.id,
-        "length:",
-        builderCode.length,
+        "- story length:",
+        storyCode.length,
+        "scene length:",
+        sceneCode.length,
       );
-      console.log("Code preview:", builderCode.substring(0, 100));
+      console.log("Scene preview:", sceneCode.substring(0, 100));
 
       try {
         // Clear the container
         viewerElement.innerHTML = "";
 
         // Render the EditorWithViewer component using Preact
+        // Use hiddenCode prop to prepend story code before scene code
         render(
           h(EditorWithViewer, {
-            initialCode: builderCode,
+            initialCode: sceneCode,
+            hiddenCode: storyCode, // Story code runs but doesn't show in editor
             layout: "horizontal",
             editorHeight: "400px",
             viewerHeight: "400px",
@@ -72,8 +78,8 @@ async function initializeMolViewSpecViewers() {
             <p style="margin: 0 0 10px 0;"><strong>Error loading MolViewSpec:</strong></p>
             <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">${error.message}</pre>
             <details style="margin-top: 10px;">
-              <summary style="cursor: pointer;">Builder Code</summary>
-              <pre style="margin-top: 10px; background: white; padding: 10px; border-radius: 4px; overflow-x: auto; font-family: monospace;">${builderCode}</pre>
+              <summary style="cursor: pointer;">Code</summary>
+              <pre style="margin-top: 10px; background: white; padding: 10px; border-radius: 4px; overflow-x: auto; font-family: monospace;">Story: ${storyCode}\n---\n${sceneCode}</pre>
             </details>
           </div>
         `;

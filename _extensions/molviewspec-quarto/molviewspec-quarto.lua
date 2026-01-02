@@ -119,6 +119,16 @@ function CodeBlock(el)
     -- Get the code content (JavaScript builder code)
     local content = el.text
 
+    -- Split content into story code and scene code using "---" as delimiter
+    local story_code = ""
+    local scene_code = content
+    local separator_pos = content:find("\n%-%-%-\n")
+
+    if separator_pos then
+      story_code = content:sub(1, separator_pos - 1)
+      scene_code = content:sub(separator_pos + 5) -- Skip past "\n---\n"
+    end
+
     -- Get optional attributes
     local height = el.attributes.height or "400px"
     local width = el.attributes.width or "100%"
@@ -127,16 +137,18 @@ function CodeBlock(el)
     -- Inject Monaco loader before first viewer (only once)
     local monaco_loader = inject_monaco()
 
-    -- Create HTML structure with script tag to store code (avoids escape issues)
+    -- Create HTML structure with separate script tags for story and scene code
     local html = string.format([[%s
 <div class="molviewspec-container" id="%s" style="height: %s; width: %s;">
   %s
-  <script type="application/json" id="%s-code">%s</script>
+  <script type="application/json" id="%s-story">%s</script>
+  <script type="application/json" id="%s-scene">%s</script>
   <div class="molviewspec-viewer" id="%s-viewer"></div>
 </div>
 ]], monaco_loader, id, height, width,
     title ~= "" and string.format('<div class="molviewspec-header"><h4 class="molviewspec-title">%s</h4></div>', title) or "",
-    id, content,
+    id, story_code,
+    id, scene_code,
     id)
 
     -- Return as raw HTML block
