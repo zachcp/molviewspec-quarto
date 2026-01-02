@@ -1,0 +1,201 @@
+---
+title: "MolViewSpec Quarto Extension Example"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+filters:
+  - molviewspec-quarto
+---
+
+## Installation
+
+To use this extension in your Quarto project, run the following command in your terminal:
+
+```bash
+quarto add zachcp/molviewspec-quarto
+```
+
+Then add the filter to your document's YAML front matter:
+
+```yaml
+---
+title: "My Document"
+format: html
+filters:
+  - molviewspec-quarto
+---
+```
+
+## Introduction
+
+This document demonstrates the MolViewSpec Quarto filter extension, which creates interactive molecular structure viewers using the MolStar visualization library and the MolViewSpec builder API.
+
+## Basic Example
+
+Here's a simple example that loads and displays a protein structure:
+
+```{.molviewspec title="Basic Protein Structure (1CBS)"}
+const structure = builder
+  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
+  .parse({ format: 'bcif' })
+  .modelStructure();
+
+structure
+  .component({ selector: 'polymer' })
+  .representation({ type: 'cartoon' });
+```
+
+## Example with Custom Colors
+
+This example shows a protein with custom coloring:
+
+```{.molviewspec title="Colored Protein Representation"}
+const structure = builder
+  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
+  .parse({ format: 'bcif' })
+  .modelStructure();
+
+structure
+  .component({ selector: 'polymer' })
+  .representation({ type: 'cartoon' })
+  .color({ color: 'blue' });
+```
+
+## Example with Ligands
+
+This example highlights a ligand with a label and focus:
+
+```{.molviewspec title="Protein with Ligand"}
+const structure = builder
+  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
+  .parse({ format: 'bcif' })
+  .modelStructure();
+
+structure
+  .component({ selector: 'polymer' })
+  .representation({ type: 'cartoon' })
+  .color({ color: 'green' });
+
+structure
+  .component({ selector: 'ligand' })
+  .representation({ type: 'ball_and_stick' })
+  .color({ color: '#cc3399' });
+```
+
+## Multiple Components
+
+You can add multiple components with different representations:
+
+```{.molviewspec title="Multiple Representations"}
+const structure = builder
+  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
+  .parse({ format: 'bcif' })
+  .modelStructure();
+
+structure
+  .component({ selector: 'polymer' })
+  .representation({ type: 'cartoon' });
+
+structure
+  .component({ selector: 'ligand' })
+  .representation({ type: 'ball_and_stick' });
+
+structure
+  .component({ selector: 'water' })
+  .representation({ type: 'ball_and_stick' })
+  .color({ color: 'lightblue' });
+```
+
+## Without Title
+
+You can omit the title attribute if you don't need a header:
+
+```{.molviewspec}
+const structure = builder
+  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
+  .parse({ format: 'bcif' })
+  .modelStructure();
+
+structure
+  .component({ selector: 'polymer' })
+  .representation({ type: 'cartoon' })
+  .color({ color: 'red' });
+```
+
+## Story Code and Scene Code
+
+You can split your code into two parts using `---` as a separator:
+- **Story code** (above `---`): Runs but doesn't appear in the editor - useful for setup, imports, or shared variables
+- **Scene code** (below `---`): Appears in the editor and is editable
+
+```{.molviewspec title="Using Story and Scene Code"}
+// This is story code - it runs but won't show in the editor
+const structure = builder
+  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
+  .parse({ format: 'bcif' })
+  .modelStructure();
+
+---
+
+// This is scene code - it appears in the editor and is editable
+structuref
+  .component({ selector: 'polymer' })
+  .representation({ type: 'cartoon' })
+  .color({ color: 'purple' });
+```
+
+
+
+## Supported Attributes
+
+The MolViewSpec code blocks support the following attributes:
+
+- **title**: Set a title for the viewer (default: empty)
+- **height**: Set the height of the viewer (default: "400px")
+- **width**: Set the width of the viewer (default: "100%")
+
+## Technical Details
+
+### How It Works
+
+1. The Lua filter detects `{.molviewspec}` code blocks in your document
+2. It extracts the JavaScript builder code
+3. Generates HTML containers with unique IDs for each block
+4. Loads the bundled MolStar viewer library
+5. Creates a MolViewSpec builder and executes your code
+6. Loads the resulting view into the MolStar viewer
+
+### Requirements
+
+- Quarto >= 1.8.0
+- HTML output format
+- Works offline (MolStar bundled with extension)
+
+### MolViewSpec Builder API
+
+The builder API provides a fluent interface for creating molecular visualizations. Key methods include:
+
+- `download()`: Download a structure from a URL
+- `parse()`: Parse the downloaded file (formats: bcif, cif, pdb, etc.)
+- `modelStructure()`: Create a model structure node
+- `component()`: Select parts of the structure (polymer, ligand, water, etc.)
+- `representation()`: Add a visual representation (cartoon, ball_and_stick, surface, spacefill, etc.)
+- `color()`: Apply colors (named colors like 'red', 'blue', or hex codes like '#cc3399')
+- `label()`: Add text labels
+- `focus()`: Focus the camera on a component
+
+For more information about MolViewSpec:
+
+- [MolViewSpec Documentation](https://molstar.org/mol-view-spec-docs/)
+- [Integration Examples](https://molstar.org/mol-view-spec-docs/mvs-molstar-extension/integration/)
+- [MolStar Website](https://molstar.org/)
+
+## Notes
+
+- Each block creates an independent interactive viewer
+- The extension automatically manages all JavaScript and CSS dependencies
+- The viewer is fully interactive and allows rotation, zooming, and selection
+- Use `{.molviewspec}` with a dot prefix for the code block class
+- The MolStar library is bundled with the extension for offline use
+- Write JavaScript code using the `builder` variable to construct your view

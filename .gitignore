@@ -7,7 +7,7 @@
 *.docx
 *_files/
 *_cache/
-
+e
 # OS files
 .DS_Store
 .DS_Store?
@@ -28,6 +28,8 @@ Thumbs.db
 
 # Node modules (if using npm for development)
 node_modules/
+
+example_files/
 
 # Python virtual environments
 venv/
