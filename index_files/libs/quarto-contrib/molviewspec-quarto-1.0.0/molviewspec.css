@@ -1,0 +1,196 @@
+/* MolViewSpec Quarto Extension Styles */
+
+.molviewspec-container {
+    margin: 2rem 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.molviewspec-viewer {
+    flex: 1;
+    min-height: 500px;
+    position: relative;
+}
+
+.molviewspec-header {
+    background: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.molviewspec-title {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.molviewspec-title:empty {
+    display: none;
+}
+
+.molviewspec-header:has(.molviewspec-title:empty) {
+    display: none;
+}
+
+.molviewspec-editor-viewer {
+    position: relative;
+}
+
+.molviewspec-content {
+    min-height: 400px;
+    position: relative;
+    padding: 1rem;
+}
+
+/* Custom element styles (if using web components) */
+molstar-editor-viewer {
+    display: block;
+    width: 100%;
+    min-height: 500px;
+}
+
+/* Hide MolStar viewer controls */
+.molviewspec-viewer .msp-layout-top,
+.molviewspec-viewer .msp-layout-controls,
+.molviewspec-viewer .msp-plugin-controls,
+.molviewspec-viewer .msp-layout-expanded,
+.molviewspec-viewer .msp-layout-left-panel,
+.molviewspec-viewer .msp-layout-right-panel,
+.molviewspec-viewer .msp-btn-row,
+.molviewspec-viewer .msp-controls-panel,
+.molviewspec-viewer .msp-transform-wrapper,
+.molviewspec-viewer .msp-viewport-controls,
+.molviewspec-viewer .msp-viewport-top-left-controls,
+.molviewspec-viewer .msp-btn-row-group,
+.molviewspec-viewer .msp-semi-transparent-background,
+.molviewspec-viewer .msp-viewport-controls-panel {
+    display: none !important;
+}
+
+/* Fallback styles */
+.molviewspec-fallback {
+    padding: 1rem;
+}
+
+.molviewspec-fallback p {
+    margin: 0.5rem 0;
+    font-weight: 500;
+}
+
+.molviewspec-fallback textarea {
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", "Courier New", monospace;
+    font-size: 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.75rem;
+    resize: vertical;
+    background: #f8f9fa;
+    line-height: 1.5;
+}
+
+/* Error display */
+.molviewspec-error {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+    color: #856404;
+}
+
+.molviewspec-error p {
+    margin: 0.5rem 0;
+}
+
+.molviewspec-error p:first-child {
+    margin-top: 0;
+}
+
+.molviewspec-error p:last-child {
+    margin-bottom: 0;
+}
+
+.molviewspec-error pre {
+    background: #fff;
+    padding: 0.5rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", "Courier New", monospace;
+}
+
+/* Loading state */
+.molviewspec-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #666;
+}
+
+.molviewspec-loading::after {
+    content: "Loading MolViewSpec viewer...";
+    font-size: 1.1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .molviewspec-container {
+        margin: 1rem 0;
+    }
+
+    .molviewspec-content {
+        min-height: 300px;
+        padding: 0.5rem;
+    }
+
+    .molviewspec-header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .molviewspec-title {
+        font-size: 1rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .molviewspec-container {
+        background: #1e1e1e;
+        border-color: #444;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .molviewspec-header {
+        background: #2d2d2d;
+        border-bottom-color: #444;
+    }
+
+    .molviewspec-title {
+        color: #e0e0e0;
+    }
+
+    .molviewspec-fallback textarea {
+        background: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #444;
+    }
+
+    .molviewspec-error {
+        background: #3e3e2d;
+        border-color: #8b7e00;
+        color: #ffd700;
+    }
+
+    .molviewspec-error pre {
+        background: #2d2d2d;
+        color: #e0e0e0;
+    }
+}
