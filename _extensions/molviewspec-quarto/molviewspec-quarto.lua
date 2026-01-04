@@ -109,6 +109,9 @@ function CodeBlock(el)
     -- Extract all EditorWithViewer props
     local props = {}
 
+    -- Track if we need extra height for bottom controls
+    local has_bottom_controls = false
+
     -- String props
     if el.attributes.layout then props.layout = el.attributes.layout end
     if el.attributes.editorHeight then props.editorHeight = el.attributes.editorHeight end
@@ -118,14 +121,18 @@ function CodeBlock(el)
     if el.attributes.autoRun then
       props.autoRun = el.attributes.autoRun == "true"
     end
-    if el.attributes.showLog then
-      props.showLog = el.attributes.showLog == "true"
-    end
-    if el.attributes.showAutoUpdateToggle then
-      props.showAutoUpdateToggle = el.attributes.showAutoUpdateToggle == "true"
-    end
-    if el.attributes.showBottomControlPanel then
-      props.showBottomControlPanel = el.attributes.showBottomControlPanel == "true"
+
+    -- Simplified controls option - when enabled, shows bottom control panel with toggles
+    -- showLog must be true to enable the log toggle functionality
+    -- The log visibility is then controlled by the user via the toggle
+    if el.attributes.controls then
+      local controls_enabled = el.attributes.controls == "true"
+      if controls_enabled then
+        props.showBottomControlPanel = true
+        props.showAutoUpdateToggle = true
+        props.showLog = true  -- Must be true for log toggle to work
+        has_bottom_controls = true
+      end
     end
 
     -- Number props
@@ -153,16 +160,19 @@ function CodeBlock(el)
     end
     json_props = json_props .. "}"
 
+    -- Build inline styles - omit height if bottom controls are enabled (let it be responsive)
+    local inline_style = has_bottom_controls and string.format("width: %s;", width) or string.format("height: %s; width: %s;", height, width)
+
     -- Create HTML structure with separate script tags for story and scene code
     local html = string.format([[
-<div class="molviewspec-container" id="%s" style="height: %s; width: %s;">
+<div class="molviewspec-container" id="%s" style="%s">
   %s
   <script type="application/json" id="%s-story">%s</script>
   <script type="application/json" id="%s-scene">%s</script>
   <script type="application/json" id="%s-props">%s</script>
   <div class="molviewspec-viewer" id="%s-viewer"></div>
 </div>
-]], id, height, width,
+]], id, inline_style,
     title ~= "" and string.format('<div class="molviewspec-header"><h4 class="molviewspec-title">%s</h4></div>', title) or "",
     id, story_code,
     id, scene_code,

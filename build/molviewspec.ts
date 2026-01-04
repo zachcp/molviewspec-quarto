@@ -79,7 +79,8 @@ async function initializeMolViewSpecViewers() {
           viewerHeight: "400px",
           autoRun: true,
           autoRunDelay: 500,
-          showLog: false,
+          // Note: Not setting showLog here - when controls are enabled,
+          // we let it default to true so the toggle works properly
           showAutoUpdateToggle: false,
           showBottomControlPanel: false,
         };
