@@ -2,7 +2,7 @@
 // Initializes all molviewspec viewers when DOM is ready
 
 import { h, render } from "preact";
-import { EditorWithViewer } from "@zachcp/molstar-components";
+import { EditorWithViewer } from "@zachcp/molstar-components"; // v0.4.14
 
 // Note: Monaco Environment is configured in the HTML head via Lua filter
 // to ensure it runs before the module loads
@@ -33,6 +33,7 @@ async function initializeMolViewSpecViewers() {
       const viewerId = viewerElement.id.replace("-viewer", "");
       const storyScript = document.getElementById(viewerId + "-story");
       const sceneScript = document.getElementById(viewerId + "-scene");
+      const propsScript = document.getElementById(viewerId + "-props");
 
       if (!sceneScript) {
         console.warn(
@@ -45,6 +46,16 @@ async function initializeMolViewSpecViewers() {
       const storyCode = storyScript ? storyScript.textContent : "";
       const sceneCode = sceneScript.textContent;
 
+      // Parse component props from JSON script tag
+      let componentProps: any = {};
+      if (propsScript && propsScript.textContent) {
+        try {
+          componentProps = JSON.parse(propsScript.textContent);
+        } catch (e) {
+          console.warn("Failed to parse component props for", viewerId, e);
+        }
+      }
+
       console.log(
         "Initializing viewer for",
         viewerElement.id,
@@ -53,30 +64,33 @@ async function initializeMolViewSpecViewers() {
         "chars, scene:",
         sceneCode.length,
         "chars",
+        "- props:",
+        componentProps,
       );
 
       try {
         // Clear the container
         viewerElement.innerHTML = "";
 
+        // Merge default props with user-provided props
+        const defaultProps = {
+          layout: "horizontal",
+          editorHeight: "400px",
+          viewerHeight: "400px",
+          autoRun: true,
+          autoRunDelay: 500,
+          showLog: false,
+          showAutoUpdateToggle: false,
+          showBottomControlPanel: false,
+        };
+
         // Render the EditorWithViewer component
         render(
           h(EditorWithViewer, {
             initialCode: sceneCode,
             hiddenCode: storyCode,
-            layout: "horizontal",
-            editorHeight: "400px",
-            viewerHeight: "400px",
-            autoRun: true,
-            autoRunDelay: 500,
-            showLog: false,
-            showAutoUpdateToggle: false,
-            showBottomControlPanel: false,
-            editorOptions: {
-              lineNumbersMinChars: 2,
-              glyphMargin: false,
-              folding: false,
-            },
+            ...defaultProps,
+            ...componentProps, // User props override defaults
           }),
           viewerElement,
         );

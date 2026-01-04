@@ -105,18 +105,68 @@ function CodeBlock(el)
     local width = el.attributes.width or "100%"
     local title = el.attributes.title or ""
 
+    -- Build component props from attributes
+    -- Extract all EditorWithViewer props
+    local props = {}
+
+    -- String props
+    if el.attributes.layout then props.layout = el.attributes.layout end
+    if el.attributes.editorHeight then props.editorHeight = el.attributes.editorHeight end
+    if el.attributes.viewerHeight then props.viewerHeight = el.attributes.viewerHeight end
+
+    -- Boolean props (convert string "true"/"false" to boolean)
+    if el.attributes.autoRun then
+      props.autoRun = el.attributes.autoRun == "true"
+    end
+    if el.attributes.showLog then
+      props.showLog = el.attributes.showLog == "true"
+    end
+    if el.attributes.showAutoUpdateToggle then
+      props.showAutoUpdateToggle = el.attributes.showAutoUpdateToggle == "true"
+    end
+    if el.attributes.showBottomControlPanel then
+      props.showBottomControlPanel = el.attributes.showBottomControlPanel == "true"
+    end
+
+    -- Number props
+    if el.attributes.autoRunDelay then
+      props.autoRunDelay = tonumber(el.attributes.autoRunDelay)
+    end
+
+    -- Convert props table to JSON string
+    local json_props = "{"
+    local first = true
+    for key, value in pairs(props) do
+      if not first then
+        json_props = json_props .. ","
+      end
+      first = false
+
+      json_props = json_props .. string.format('"%s":', key)
+      if type(value) == "string" then
+        json_props = json_props .. string.format('"%s"', value:gsub('"', '\\"'))
+      elseif type(value) == "boolean" then
+        json_props = json_props .. (value and "true" or "false")
+      elseif type(value) == "number" then
+        json_props = json_props .. tostring(value)
+      end
+    end
+    json_props = json_props .. "}"
+
     -- Create HTML structure with separate script tags for story and scene code
     local html = string.format([[
 <div class="molviewspec-container" id="%s" style="height: %s; width: %s;">
   %s
   <script type="application/json" id="%s-story">%s</script>
   <script type="application/json" id="%s-scene">%s</script>
+  <script type="application/json" id="%s-props">%s</script>
   <div class="molviewspec-viewer" id="%s-viewer"></div>
 </div>
 ]], id, height, width,
     title ~= "" and string.format('<div class="molviewspec-header"><h4 class="molviewspec-title">%s</h4></div>', title) or "",
     id, story_code,
     id, scene_code,
+    id, json_props,
     id)
 
     -- Return as raw HTML block
