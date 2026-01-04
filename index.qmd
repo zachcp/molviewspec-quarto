@@ -34,8 +34,9 @@ filters:
 ```
 ````
 
+## Examples
 
-## Basic Example
+### Basic Example
 
 Here's a simple example that loads and displays a protein structure. We are using the [molstar](https://molstar.org) and [mol-view-stories](http://molstar.org/mol-view-stories) Javascript libraries
 dynamically build up [mol-view-spec](https://molstar.org/mol-view-spec/) state tree which is rendered on a molstar canvas. Try it out!
@@ -54,7 +55,7 @@ structure
 ```
 
 
-## Selections and Multiple Components
+### Selections and Multiple Components
 
 This example adds a few additional features.  We use the `builder` to make muleiple different represetnations and selections. One for the `polymer`, one for the `water`, and one for the `ligand`.
 We also use `focus` to center the canvas on the ligand. Because we are building a state tree, anytime we with to branch we
@@ -88,8 +89,7 @@ ligand
 ```
 
 
-
-## Adding  Controls
+### Adding  Controls
 
 When `controls="true"` is set, you can:
 - Toggle auto-update on/off to control when the viewer re-renders
@@ -116,16 +116,15 @@ structure
 ```
 
 
-
-
-## Story Code and Scene Code
+###  Hiding Code
 
 You can split your code into two parts using `---` as a separator:
-- **Story code** (above `---`): Runs but doesn't appear in the editor - useful for setup, imports, or shared variables
+- **Hidden code** (above `---`): Runs but doesn't appear in the editor - useful for setup, imports, or shared variables
 - **Scene code** (below `---`): Appears in the editor and is editable
 
+
 ```{.molviewspec title="Using Story and Scene Code"}
-// This is story code - it runs but won't show in the editor
+// This is hidden code - it runs but won't show in the editor
 const structure = builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
@@ -141,16 +140,21 @@ structure
 ```
 
 
+###  Writing Functions
 
-## Custom Configuration Example
+You can write functions to save space and improve reusabilty.
 
-You can pass any EditorWithViewer props as attributes to customize the behavior:
-
-```{.molviewspec title="With Execution Logs" controls="true"}
-const structure = builder
+```{.molviewspec}
+// we are declaring a function
+function molecule(){
+  return  builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
   .modelStructure();
+}
+
+// and now we are using it
+const structure = molecule();
 
 structure
   .component({ selector: 'polymer' })
@@ -160,41 +164,15 @@ structure
 
 ## Supported Attributes
 
-The MolViewSpec code blocks support the following attributes:
+You can customize molviewspec code blocks using the following attributes:
 
 ### Container Attributes
-- **title**: Set a title for the viewer (default: empty)
-- **height**: Set the height of the container (default: "400px")
-- **width**: Set the width of the container (default: "100%")
+- **title**: Optional title displayed in the header. If empty, no header is shown.
+- **controls**: Enable interactive controls - "true" or "false" (default: "false"). When enabled, shows a bottom control panel with auto-update toggle and execution log toggle. This automatically enables `showBottomControlPanel="true"`, `showAutoUpdateToggle="true"`, and `showLog="true"`.
 
-### EditorWithViewer Props
-- **layout**: Layout orientation - "horizontal" or "vertical" (default: "horizontal")
-- **editorHeight**: Height of the editor panel (default: "400px")
-- **viewerHeight**: Height of the viewer panel (default: "400px")
-- **autoRun**: Auto-execute code as user types - "true" or "false" (default: "true")
-- **autoRunDelay**: Delay in ms before auto-execution (default: 500)
-- **showLog**: Show execution log panel - "true" or "false" (default: "false")
-- **showAutoUpdateToggle**: Show auto-update toggle - "true" or "false" (default: "false")
-- **showBottomControlPanel**: Show bottom control panel - "true" or "false" (default: "false")
 
-## Technical Details
 
-### How It Works
-
-1. The Lua filter detects `{.molviewspec}` code blocks in your document
-2. It extracts the JavaScript builder code
-3. Generates HTML containers with unique IDs for each block
-4. Loads the bundled MolStar viewer library
-5. Creates a MolViewSpec builder and executes your code
-6. Loads the resulting view into the MolStar viewer
-
-### Requirements
-
-- Quarto >= 1.8.0
-- HTML output format
-- Works offline (MolStar bundled with extension)
-
-### MolViewSpec Builder API
+## MolViewSpec Builder API
 
 The builder API provides a fluent interface for creating molecular visualizations. Key methods include:
 
@@ -213,7 +191,11 @@ For more information about MolViewSpec:
 - [Integration Examples](https://molstar.org/mol-view-spec-docs/mvs-molstar-extension/integration/)
 - [MolStar Website](https://molstar.org/)
 
-## Notes
+
+## Technical Notes
+
+This quarto extension wraps  [MolStar-Components](https://zachcp.github.io/molstar-components/) which
+in turn uses the code from the [Mol-View-Stories](https://molstar.org/mol-view-stories/) project.
 
 - Each block creates an independent interactive viewer
 - The extension automatically manages all JavaScript and CSS dependencies
