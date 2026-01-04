@@ -4,27 +4,20 @@ A Quarto filter extension that creates interactive molecular structure editors a
 
 ## Features
 
-- 🧬 Interactive molecular structure visualization
-- ✏️ Built-in editor for MolViewSpec JSON
-- 🎨 Customizable dimensions and styling
-- 📦 All dependencies properly packaged following Quarto best practices
-- 🚀 Uses the molstar-components library from JSR
+- 🧬 Interactive 3D molecular structure visualization
+- ✏️ Built-in Monaco code editor with live preview
+- 🎨 Customizable layout and dimensions
+- 🔧 Optional interactive controls (auto-update toggle, execution log)
+- 📦 Works offline - all dependencies bundled
+- 🚀 Uses molstar-components from JSR
 
-## Installing
-
-To install this extension in your Quarto project:
+## Installation
 
 ```bash
 quarto add zachcp/molviewspec-quarto
 ```
 
-Or manually copy the `_extensions/molviewspec-quarto` directory to your project's `_extensions` folder.
-
-If you're using version control, you will want to check in the `_extensions` directory.
-
 ## Usage
-
-### Basic Setup
 
 Add the filter to your document's YAML header:
 
@@ -37,9 +30,7 @@ filters:
 ---
 ```
 
-### Creating a MolViewSpec Block
-
-Use `{.molviewspec}` code blocks with JavaScript builder code:
+Then create a `{.molviewspec}` code block with JavaScript builder code:
 
 ````markdown
 ```{.molviewspec}
@@ -55,153 +46,137 @@ structure
 ```
 ````
 
-## Options
+## Attributes
 
-You can customize the viewer with the following attributes:
+Customize your viewers with these attributes:
 
-| Attribute | Description | Default |
-|-----------|-------------|---------|
-| `title` | Set a title for the viewer | (empty) |
-| `height` | Set the height of the viewer | `"600px"` |
-| `width` | Set the width of the viewer | `"100%"` |
+### Container
+- `title` - Optional title for the viewer
+- `height` - Container height (default: `"400px"`)
+- `width` - Container width (default: `"100%"`)
 
-### Examples with Options
+### Layout
+- `layout` - Editor/viewer arrangement: `"horizontal"` or `"vertical"` (default: `"horizontal"`)
+- `editorHeight` - Editor panel height (default: `"400px"`)
+- `viewerHeight` - Viewer panel height (default: `"400px"`)
 
-#### Custom Title
+### Behavior
+- `autoRun` - Auto-execute code on edit: `"true"` or `"false"` (default: `"true"`)
+- `autoRunDelay` - Delay before auto-execution in ms (default: `500`)
+- `controls` - Enable interactive controls: `"true"` or `"false"` (default: `"false"`)
+
+### Examples
+
+**With title:**
+````markdown
+```{.molviewspec title="Protein Structure"}
+// your code here
+```
+````
+
+**With interactive controls:**
+````markdown
+```{.molviewspec controls="true" title="Interactive Demo"}
+// your code here
+```
+````
+
+When `controls="true"`, users can:
+- Toggle auto-update on/off
+- View execution logs for debugging
+
+**Custom dimensions:**
+````markdown
+```{.molviewspec height="800px" width="100%"}
+// your code here
+```
+````
+
+## Advanced: Story and Scene Code
+
+Split your code using `---` as a separator:
+- **Story code** (above `---`): Runs but hidden from editor - for setup/imports
+- **Scene code** (below `---`): Visible and editable in the Monaco editor
 
 ````markdown
-```{.molviewspec title="My Protein Structure"}
+```{.molviewspec}
+// Hidden setup code
 const structure = builder
   .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
   .parse({ format: 'bcif' })
   .modelStructure();
 
+---
+
+// Visible, editable code
 structure
   .component({ selector: 'polymer' })
-  .representation({ type: 'cartoon' });
+  .representation({ type: 'cartoon' })
+  .color({ color: 'purple' });
 ```
 ````
-
-#### Custom Dimensions
-
-````markdown
-```{.molviewspec height="800px" width="100%" title="Large Viewer"}
-const structure = builder
-  .download({ url: 'https://www.ebi.ac.uk/pdbe/entry-files/1cbs.bcif' })
-  .parse({ format: 'bcif' })
-  .modelStructure();
-
-structure
-  .component({ selector: 'polymer' })
-  .representation({ type: 'cartoon' });
-```
-````
-
-## How It Works
-
-1. The Lua filter detects `{.molviewspec}` code blocks in your document
-2. It extracts the JavaScript builder code from the block
-3. Generates HTML containers with unique IDs for each block
-4. Loads the bundled MolStar viewer library
-5. Creates a MolViewSpec builder instance
-6. Executes your JavaScript code to build the molecular view
-7. Loads the resulting view into the MolStar viewer
-8. Each viewer instance is independent and fully interactive
-
-## Technical Details
-
-### Architecture
-
-The extension consists of four main components:
-
-- **molviewspec-quarto.lua**: Lua filter that processes code blocks and generates HTML
-- **molviewspec.js**: JavaScript that initializes the MolStar viewer with MolViewSpec data
-- **molviewspec.css**: Styles for the viewer containers and UI elements
-- **assets/molstar.js** and **assets/molstar.css**: The MolStar viewer library
-
-### Dependencies
-
-- **Quarto**: >= 1.8.0
-- **MolStar**: Bundled with the extension (no internet required)
-- **Output format**: HTML (gracefully handles other formats by showing the original code block)
-
-### Browser Compatibility
-
-The extension uses modern JavaScript features and requires:
-- Modern browsers with ES6+ support
-- Works offline (MolStar bundled with extension)
 
 ## MolViewSpec Builder API
 
-MolViewSpec provides a JavaScript builder API for programmatically creating molecular visualizations. The builder provides a fluent interface for:
+The `builder` variable provides a fluent API for creating molecular visualizations:
 
-- Downloading and parsing molecular structures (PDB, mmCIF, etc.)
-- Selecting components (polymer, ligand, water, etc.)
-- Adding visual representations (cartoon, ball-and-stick, surface, spacefill, etc.)
-- Applying colors (named colors, hex codes, or color schemes)
-- Adding labels and annotations
-- Focusing the camera on specific components
+- `download()` - Load structure from URL
+- `parse()` - Parse file (bcif, cif, pdb, etc.)
+- `modelStructure()` - Create model structure node
+- `component()` - Select parts (polymer, ligand, water, etc.)
+- `representation()` - Add visuals (cartoon, ball_and_stick, surface, spacefill, etc.)
+- `color()` - Apply colors (named colors or hex codes)
+- `focus()` - Focus camera on component
 
-For more information about MolViewSpec:
-
+**Resources:**
 - [MolViewSpec Documentation](https://molstar.org/mol-view-spec-docs/)
 - [Integration Examples](https://molstar.org/mol-view-spec-docs/mvs-molstar-extension/integration/)
-- [MolStar Viewer](https://molstar.org/)
-- [PDB Europe](https://www.ebi.ac.uk/pdbe/)
+- [MolStar Website](https://molstar.org/)
 
-## Example
-
-See [example.qmd](example.qmd) for a complete working example with multiple use cases.
-
-To preview the example:
+## Development
 
 ```bash
-quarto preview example.qmd
+# Build and preview
+deno task build && quarto preview index.qmd
+
+# Build only
+deno task build
 ```
+
+## Requirements
+
+- Quarto >= 1.8.0
+- HTML output format (non-HTML formats display original code block)
+- Modern browser with ES6+ support
+
+## How It Works
+
+1. Lua filter detects `{.molviewspec}` code blocks
+2. Extracts JavaScript builder code
+3. Generates HTML containers with unique IDs
+4. Loads bundled MolStar library and Monaco editor
+5. Initializes interactive editor/viewer components
+6. Executes code and renders molecular structure
 
 ## Styling
 
-The extension includes built-in styling that:
+Override these CSS classes to customize appearance:
 
-- Provides clean, modern containers for viewers
-- Supports responsive design for mobile devices
-- Includes dark mode support
-- Shows helpful error messages if components fail to load
-
-You can customize the appearance by overriding the CSS classes:
-
-- `.molviewspec-container`: Main container
-- `.molviewspec-header`: Title area
-- `.molviewspec-title`: Title text
-- `.molviewspec-content`: Viewer content area
-- `.molviewspec-error`: Error message styling
+- `.molviewspec-container` - Main container
+- `.molviewspec-viewer` - Viewer wrapper
+- `.molviewspec-header` - Title header
+- `.molviewspec-title` - Title text
 
 ## Troubleshooting
 
-### Components Not Loading
+**Viewers not rendering?**
+- Check browser console for errors
+- Ensure HTML output format
+- Verify JavaScript syntax in code blocks
 
-If the MolStar components fail to load, the extension will display a fallback view with the JSON content in a text area. This can happen if:
-
-- There's no internet connection
-- The JSR registry is unavailable
-- The molstar-components package URL has changed
-
-### HTML Format Required
-
-The extension only works with HTML output formats. For PDF, Word, or other formats, the original code block will be displayed instead.
-
-### JSON Syntax Errors
-
-Make sure your MolViewSpec JSON is valid. Common issues:
-
-- Missing commas between array elements or object properties
-- Trailing commas (not allowed in JSON)
-- Unquoted keys or string values
-- Mismatched brackets or braces
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
+**Monaco workers failing?**
+- Check Network tab for 404s on worker files
+- Ensure assets are properly deployed with your site
 
 ## License
 
