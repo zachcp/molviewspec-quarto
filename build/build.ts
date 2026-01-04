@@ -38,7 +38,7 @@ async function build() {
       bundle: true,
       format: "esm",
       platform: "browser",
-      minify: true,
+      minify: false,
       target: "es2022",
       jsx: "automatic",
       jsxImportSource: "preact",
@@ -66,7 +66,7 @@ async function build() {
       format: "iife" as const,
       platform: "browser" as const,
       target: "es2022",
-      minify: true,
+      minify: false,
       loader: {
         ".ttf": "file",
         ".woff": "file",
@@ -80,7 +80,7 @@ async function build() {
       ...workerConfig,
       entryPoints: {
         "editor.worker":
-          "npm:monaco-editor@0.45.0/esm/vs/editor/editor.worker.js",
+          "npm:monaco-editor@0.55.1/esm/vs/editor/editor.worker.js",
       },
       outdir: assetsDir,
     });
@@ -91,7 +91,7 @@ async function build() {
       ...workerConfig,
       entryPoints: {
         "ts.worker":
-          "npm:monaco-editor@0.45.0/esm/vs/language/typescript/ts.worker.js",
+          "npm:monaco-editor@0.55.1/esm/vs/language/typescript/ts.worker.js",
       },
       outdir: assetsDir,
     });

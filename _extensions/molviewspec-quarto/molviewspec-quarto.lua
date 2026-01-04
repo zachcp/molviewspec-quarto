@@ -12,17 +12,48 @@ local function add_dependencies()
 
   -- Only add dependencies if quarto global is available
   if quarto and quarto.doc and quarto.doc.addHtmlDependency then
-    -- Add bundled molstar-components assets
+    -- Add bundled molviewspec assets (all-in-one compiled bundle)
+    -- Monaco configuration must run before module loads
     quarto.doc.addHtmlDependency({
       name = "molviewspec-quarto",
       version = "1.1.0",
+      head = [[
+<script>
+// Configure Monaco Environment before loading modules
+window.MonacoEnvironment = {
+  getWorkerUrl: function(moduleId, label) {
+    // Determine base path from script location
+    var scripts = document.getElementsByTagName('script');
+    var basePath = '';
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src;
+      if (src && src.indexOf('molviewspec') !== -1) {
+        basePath = src.substring(0, src.lastIndexOf('/') + 1);
+        break;
+      }
+    }
+    if (label === 'typescript' || label === 'javascript') {
+      return basePath + 'assets/ts.worker.js';
+    }
+    return basePath + 'assets/editor.worker.js';
+  }
+};
+</script>
+]],
       scripts = {
-        { path = "assets/molstar-components.js", attribs = {type = "module"} },
+        { path = "assets/molstar.js" },
         { path = "molviewspec.js", attribs = {type = "module"} }
       },
       stylesheets = {
+        "assets/molstar.css",
         "assets/molstar-components.css",
         "molviewspec.css"
+      },
+      resources = {
+        { name = "assets/molstar.js", path = "assets/molstar.js" },
+        { name = "assets/molstar.css", path = "assets/molstar.css" },
+        { name = "assets/editor.worker.js", path = "assets/editor.worker.js" },
+        { name = "assets/ts.worker.js", path = "assets/ts.worker.js" }
       }
     })
   end

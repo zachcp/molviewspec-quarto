@@ -6,7 +6,7 @@ contributes:
   filters:
     - molviewspec-quarto.lua
   resources:
-    - assets/molstar-components.js
+    - molviewspec.js
     - assets/molstar-components.css
     - assets/editor.worker.js
     - assets/ts.worker.js

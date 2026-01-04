@@ -139,7 +139,7 @@ const structure = builder
 ---
 
 // This is scene code - it appears in the editor and is editable
-structuref
+structure
   .component({ selector: 'polymer' })
   .representation({ type: 'cartoon' })
   .color({ color: 'purple' });

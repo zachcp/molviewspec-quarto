@@ -1,26 +1,14316 @@
-(()=>{var Nn=class{constructor(){this.listeners=[],this.unexpectedErrorHandler=function(e){setTimeout(()=>{throw e.stack?at.isErrorNoTelemetry(e)?new at(e.message+`
+(() => {
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/errors.js
+  var ErrorHandler = class {
+    constructor() {
+      this.listeners = [];
+      this.unexpectedErrorHandler = function(e) {
+        setTimeout(() => {
+          if (e.stack) {
+            if (ErrorNoTelemetry.isErrorNoTelemetry(e)) {
+              throw new ErrorNoTelemetry(e.message + "\n\n" + e.stack);
+            }
+            throw new Error(e.message + "\n\n" + e.stack);
+          }
+          throw e;
+        }, 0);
+      };
+    }
+    emit(e) {
+      this.listeners.forEach((listener) => {
+        listener(e);
+      });
+    }
+    onUnexpectedError(e) {
+      this.unexpectedErrorHandler(e);
+      this.emit(e);
+    }
+    // For external errors, we don't want the listeners to be called
+    onUnexpectedExternalError(e) {
+      this.unexpectedErrorHandler(e);
+    }
+  };
+  var errorHandler = new ErrorHandler();
+  function onUnexpectedError(e) {
+    if (!isCancellationError(e)) {
+      errorHandler.onUnexpectedError(e);
+    }
+    return void 0;
+  }
+  function transformErrorForSerialization(error) {
+    if (error instanceof Error) {
+      const { name, message, cause } = error;
+      const stack = error.stacktrace || error.stack;
+      return {
+        $isError: true,
+        name,
+        message,
+        stack,
+        noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
+        cause: cause ? transformErrorForSerialization(cause) : void 0,
+        code: error.code
+      };
+    }
+    return error;
+  }
+  var canceledName = "Canceled";
+  function isCancellationError(error) {
+    if (error instanceof CancellationError) {
+      return true;
+    }
+    return error instanceof Error && error.name === canceledName && error.message === canceledName;
+  }
+  var CancellationError = class extends Error {
+    constructor() {
+      super(canceledName);
+      this.name = this.message;
+    }
+  };
+  var ErrorNoTelemetry = class _ErrorNoTelemetry extends Error {
+    constructor(msg) {
+      super(msg);
+      this.name = "CodeExpectedError";
+    }
+    static fromError(err) {
+      if (err instanceof _ErrorNoTelemetry) {
+        return err;
+      }
+      const result = new _ErrorNoTelemetry();
+      result.message = err.message;
+      result.stack = err.stack;
+      return result;
+    }
+    static isErrorNoTelemetry(err) {
+      return err.name === "CodeExpectedError";
+    }
+  };
+  var BugIndicatingError = class _BugIndicatingError extends Error {
+    constructor(message) {
+      super(message || "An unexpected bug occurred.");
+      Object.setPrototypeOf(this, _BugIndicatingError.prototype);
+    }
+  };
 
-`+e.stack):new Error(e.message+`
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/assert.js
+  function assertNever(value, message = "Unreachable") {
+    throw new Error(message);
+  }
+  function assert(condition, messageOrError = "unexpected state") {
+    if (!condition) {
+      const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
+      throw errorToThrow;
+    }
+  }
+  function assertFn(condition) {
+    if (!condition()) {
+      debugger;
+      condition();
+      onUnexpectedError(new BugIndicatingError("Assertion Failed"));
+    }
+  }
+  function checkAdjacentItems(items, predicate) {
+    let i = 0;
+    while (i < items.length - 1) {
+      const a = items[i];
+      const b = items[i + 1];
+      if (!predicate(a, b)) {
+        return false;
+      }
+      i++;
+    }
+    return true;
+  }
 
-`+e.stack):e},0)}}emit(e){this.listeners.forEach(n=>{n(e)})}onUnexpectedError(e){this.unexpectedErrorHandler(e),this.emit(e)}onUnexpectedExternalError(e){this.unexpectedErrorHandler(e)}},_1=new Nn;function Pe(t){y1(t)||_1.onUnexpectedError(t)}function Ct(t){if(t instanceof Error){let{name:e,message:n,cause:r}=t,s=t.stacktrace||t.stack;return{$isError:!0,name:e,message:n,stack:s,noTelemetry:at.isErrorNoTelemetry(t),cause:r?Ct(r):void 0,code:t.code}}return t}var Sn="Canceled";function y1(t){return t instanceof ot?!0:t instanceof Error&&t.name===Sn&&t.message===Sn}var ot=class extends Error{constructor(){super(Sn),this.name=this.message}};var at=class t extends Error{constructor(e){super(e),this.name="CodeExpectedError"}static fromError(e){if(e instanceof t)return e;let n=new t;return n.message=e.message,n.stack=e.stack,n}static isErrorNoTelemetry(e){return e.name==="CodeExpectedError"}},G=class t extends Error{constructor(e){super(e||"An unexpected bug occurred."),Object.setPrototypeOf(this,t.prototype)}};function kr(t,e="Unreachable"){throw new Error(e)}function Rn(t,e="unexpected state"){if(!t)throw typeof e=="string"?new G(`Assertion Failed: ${e}`):e}function xe(t){if(!t()){debugger;t(),Pe(new G("Assertion Failed"))}}function lt(t,e){let n=0;for(;n<t.length-1;){let r=t[n],s=t[n+1];if(!e(r,s))return!1;n++}return!0}function Fr(t){return typeof t=="string"}function Pr(t){return!!t&&typeof t[Symbol.iterator]=="function"}var He;(function(t){function e(w){return!!w&&typeof w=="object"&&typeof w[Symbol.iterator]=="function"}t.is=e;let n=Object.freeze([]);function r(){return n}t.empty=r;function*s(w){yield w}t.single=s;function i(w){return e(w)?w:s(w)}t.wrap=i;function a(w){return w||n}t.from=a;function*l(w){for(let _=w.length-1;_>=0;_--)yield w[_]}t.reverse=l;function u(w){return!w||w[Symbol.iterator]().next().done===!0}t.isEmpty=u;function c(w){return w[Symbol.iterator]().next().value}t.first=c;function f(w,_){let R=0;for(let T of w)if(_(T,R++))return!0;return!1}t.some=f;function h(w,_){let R=0;for(let T of w)if(!_(T,R++))return!1;return!0}t.every=h;function m(w,_){for(let R of w)if(_(R))return R}t.find=m;function*b(w,_){for(let R of w)_(R)&&(yield R)}t.filter=b;function*p(w,_){let R=0;for(let T of w)yield _(T,R++)}t.map=p;function*d(w,_){let R=0;for(let T of w)yield*_(T,R++)}t.flatMap=d;function*x(...w){for(let _ of w)Pr(_)?yield*_:yield _}t.concat=x;function N(w,_,R){let T=R;for(let I of w)T=_(T,I);return T}t.reduce=N;function v(w){let _=0;for(let R of w)_++;return _}t.length=v;function*L(w,_,R=w.length){for(_<-w.length&&(_=0),_<0&&(_+=w.length),R<0?R+=w.length:R>w.length&&(R=w.length);_<R;_++)yield w[_]}t.slice=L;function C(w,_=Number.POSITIVE_INFINITY){let R=[];if(_===0)return[R,w];let T=w[Symbol.iterator]();for(let I=0;I<_;I++){let y=T.next();if(y.done)return[R,t.empty()];R.push(y.value)}return[R,{[Symbol.iterator](){return T}}]}t.consume=C;async function D(w){let _=[];for await(let R of w)_.push(R);return _}t.asyncToArray=D;async function q(w){let _=[];for await(let R of w)_=_.concat(R);return _}t.asyncToArrayFlat=q})(He||(He={}));function Cn(t){if(He.is(t)){let e=[];for(let n of t)if(n)try{n.dispose()}catch(r){e.push(r)}if(e.length===1)throw e[0];if(e.length>1)throw new AggregateError(e,"Encountered errors while disposing of store");return Array.isArray(t)?[]:t}else if(t)return t.dispose(),t}function Dr(...t){return _e(()=>Cn(t))}var An=class{constructor(e){this._isDisposed=!1,this._fn=e}dispose(){if(!this._isDisposed){if(!this._fn)throw new Error("Unbound disposable context: Need to use an arrow function to preserve the value of this");this._isDisposed=!0,this._fn()}}};function _e(t){return new An(t)}var De=class t{static{this.DISABLE_DISPOSED_WARNING=!1}constructor(){this._toDispose=new Set,this._isDisposed=!1}dispose(){this._isDisposed||(this._isDisposed=!0,this.clear())}get isDisposed(){return this._isDisposed}clear(){if(this._toDispose.size!==0)try{Cn(this._toDispose)}finally{this._toDispose.clear()}}add(e){if(!e||e===se.None)return e;if(e===this)throw new Error("Cannot register a disposable on itself!");return this._isDisposed?t.DISABLE_DISPOSED_WARNING||console.warn(new Error("Trying to add a disposable to a DisposableStore that has already been disposed of. The added object will be leaked!").stack):this._toDispose.add(e),e}delete(e){if(e){if(e===this)throw new Error("Cannot dispose a disposable on itself!");this._toDispose.delete(e),e.dispose()}}},se=class{static{this.None=Object.freeze({dispose(){}})}constructor(){this._store=new De,this._store}dispose(){this._store.dispose()}_register(e){if(e===this)throw new Error("Cannot register a disposable on itself!");return this._store.add(e)}};var H=class t{static{this.Undefined=new t(void 0)}constructor(e){this.element=e,this.next=t.Undefined,this.prev=t.Undefined}},ut=class{constructor(){this._first=H.Undefined,this._last=H.Undefined,this._size=0}get size(){return this._size}isEmpty(){return this._first===H.Undefined}clear(){let e=this._first;for(;e!==H.Undefined;){let n=e.next;e.prev=H.Undefined,e.next=H.Undefined,e=n}this._first=H.Undefined,this._last=H.Undefined,this._size=0}unshift(e){return this._insert(e,!1)}push(e){return this._insert(e,!0)}_insert(e,n){let r=new H(e);if(this._first===H.Undefined)this._first=r,this._last=r;else if(n){let i=this._last;this._last=r,r.prev=i,i.next=r}else{let i=this._first;this._first=r,r.next=i,i.prev=r}this._size+=1;let s=!1;return()=>{s||(s=!0,this._remove(r))}}shift(){if(this._first!==H.Undefined){let e=this._first.element;return this._remove(this._first),e}}pop(){if(this._last!==H.Undefined){let e=this._last.element;return this._remove(this._last),e}}_remove(e){if(e.prev!==H.Undefined&&e.next!==H.Undefined){let n=e.prev;n.next=e.next,e.next.prev=n}else e.prev===H.Undefined&&e.next===H.Undefined?(this._first=H.Undefined,this._last=H.Undefined):e.next===H.Undefined?(this._last=this._last.prev,this._last.next=H.Undefined):e.prev===H.Undefined&&(this._first=this._first.next,this._first.prev=H.Undefined);this._size-=1}*[Symbol.iterator](){let e=this._first;for(;e!==H.Undefined;)yield e.element,e=e.next}};var L1=globalThis.performance.now.bind(globalThis.performance),Ge=class t{static create(e){return new t(e)}constructor(e){this._now=e===!1?Date.now:L1,this._startTime=this._now(),this._stopTime=-1}stop(){this._stopTime=this._now()}reset(){this._startTime=this._now(),this._stopTime=-1}elapsed(){return this._stopTime!==-1?this._stopTime-this._startTime:this._now()-this._startTime}};var Et;(function(t){t.None=()=>se.None;function e(y,S){return m(y,()=>{},0,void 0,!0,void 0,S)}t.defer=e;function n(y){return(S,M=null,A)=>{let P=!1,U;return U=y($=>{if(!P)return U?U.dispose():P=!0,S.call(M,$)},null,A),P&&U.dispose(),U}}t.once=n;function r(y,S){return t.once(t.filter(y,S))}t.onceIf=r;function s(y,S,M){return f((A,P=null,U)=>y($=>A.call(P,S($)),null,U),M)}t.map=s;function i(y,S,M){return f((A,P=null,U)=>y($=>{S($),A.call(P,$)},null,U),M)}t.forEach=i;function a(y,S,M){return f((A,P=null,U)=>y($=>S($)&&A.call(P,$),null,U),M)}t.filter=a;function l(y){return y}t.signal=l;function u(...y){return(S,M=null,A)=>{let P=Dr(...y.map(U=>U($=>S.call(M,$))));return h(P,A)}}t.any=u;function c(y,S,M,A){let P=M;return s(y,U=>(P=S(P,U),P),A)}t.reduce=c;function f(y,S){let M,A={onWillAddFirstListener(){M=y(P.fire,P)},onDidRemoveLastListener(){M?.dispose()}},P=new Z(A);return S?.add(P),P.event}function h(y,S){return S instanceof Array?S.push(y):S&&S.add(y),y}function m(y,S,M=100,A=!1,P=!1,U,$){let Q,Y,Fe,Rt=0,it,b1={leakWarningThreshold:U,onWillAddFirstListener(){Q=y(w1=>{Rt++,Y=S(Y,w1),A&&!Fe&&(At.fire(Y),Y=void 0),it=()=>{let x1=Y;Y=void 0,Fe=void 0,(!A||Rt>1)&&At.fire(x1),Rt=0},typeof M=="number"?(Fe&&clearTimeout(Fe),Fe=setTimeout(it,M)):Fe===void 0&&(Fe=null,queueMicrotask(it))})},onWillRemoveListener(){P&&Rt>0&&it?.()},onDidRemoveLastListener(){it=void 0,Q.dispose()}},At=new Z(b1);return $?.add(At),At.event}t.debounce=m;function b(y,S=0,M){return t.debounce(y,(A,P)=>A?(A.push(P),A):[P],S,void 0,!0,void 0,M)}t.accumulate=b;function p(y,S=(A,P)=>A===P,M){let A=!0,P;return a(y,U=>{let $=A||!S(U,P);return A=!1,P=U,$},M)}t.latch=p;function d(y,S,M){return[t.filter(y,S,M),t.filter(y,A=>!S(A),M)]}t.split=d;function x(y,S=!1,M=[],A){let P=M.slice(),U=y(Y=>{P?P.push(Y):Q.fire(Y)});A&&A.add(U);let $=()=>{P?.forEach(Y=>Q.fire(Y)),P=null},Q=new Z({onWillAddFirstListener(){U||(U=y(Y=>Q.fire(Y)),A&&A.add(U))},onDidAddFirstListener(){P&&(S?setTimeout($):$())},onDidRemoveLastListener(){U&&U.dispose(),U=null}});return A&&A.add(Q),Q.event}t.buffer=x;function N(y,S){return(A,P,U)=>{let $=S(new L);return y(function(Q){let Y=$.evaluate(Q);Y!==v&&A.call(P,Y)},void 0,U)}}t.chain=N;let v=Symbol("HaltChainable");class L{constructor(){this.steps=[]}map(S){return this.steps.push(S),this}forEach(S){return this.steps.push(M=>(S(M),M)),this}filter(S){return this.steps.push(M=>S(M)?M:v),this}reduce(S,M){let A=M;return this.steps.push(P=>(A=S(A,P),A)),this}latch(S=(M,A)=>M===A){let M=!0,A;return this.steps.push(P=>{let U=M||!S(P,A);return M=!1,A=P,U?P:v}),this}evaluate(S){for(let M of this.steps)if(S=M(S),S===v)break;return S}}function C(y,S,M=A=>A){let A=(...Q)=>$.fire(M(...Q)),P=()=>y.on(S,A),U=()=>y.removeListener(S,A),$=new Z({onWillAddFirstListener:P,onDidRemoveLastListener:U});return $.event}t.fromNodeEventEmitter=C;function D(y,S,M=A=>A){let A=(...Q)=>$.fire(M(...Q)),P=()=>y.addEventListener(S,A),U=()=>y.removeEventListener(S,A),$=new Z({onWillAddFirstListener:P,onDidRemoveLastListener:U});return $.event}t.fromDOMEventEmitter=D;function q(y,S){let M,A=new Promise((P,U)=>{let $=n(y)(P,null,S);M=()=>$.dispose()});return A.cancel=M,A}t.toPromise=q;function w(y,S){return y(M=>S.fire(M))}t.forward=w;function _(y,S,M){return S(M),y(A=>S(A))}t.runAndSubscribe=_;class R{constructor(S,M){this._observable=S,this._counter=0,this._hasChanged=!1;let A={onWillAddFirstListener:()=>{S.addObserver(this),this._observable.reportChanges()},onDidRemoveLastListener:()=>{S.removeObserver(this)}};this.emitter=new Z(A),M&&M.add(this.emitter)}beginUpdate(S){this._counter++}handlePossibleChange(S){}handleChange(S,M){this._hasChanged=!0}endUpdate(S){this._counter--,this._counter===0&&(this._observable.reportChanges(),this._hasChanged&&(this._hasChanged=!1,this.emitter.fire(this._observable.get())))}}function T(y,S){return new R(y,S).emitter.event}t.fromObservable=T;function I(y){return(S,M,A)=>{let P=0,U=!1,$={beginUpdate(){P++},endUpdate(){P--,P===0&&(y.reportChanges(),U&&(U=!1,S.call(M)))},handlePossibleChange(){},handleChange(){U=!0}};y.addObserver($),y.reportChanges();let Q={dispose(){y.removeObserver($)}};return A instanceof De?A.add(Q):Array.isArray(A)&&A.push(Q),Q}}t.fromObservableLight=I})(Et||(Et={}));var En=class t{static{this.all=new Set}static{this._idPool=0}constructor(e){this.listenerCount=0,this.invocationCount=0,this.elapsedOverall=0,this.durations=[],this.name=`${e}_${t._idPool++}`,t.all.add(this)}start(e){this._stopWatch=new Ge,this.listenerCount=e}stop(){if(this._stopWatch){let e=this._stopWatch.elapsed();this.durations.push(e),this.elapsedOverall+=e,this.invocationCount+=1,this._stopWatch=void 0}}},v1=-1,Mn=class t{static{this._idPool=1}constructor(e,n,r=(t._idPool++).toString(16).padStart(3,"0")){this._errorHandler=e,this.threshold=n,this.name=r,this._warnCountdown=0}dispose(){this._stacks?.clear()}check(e,n){let r=this.threshold;if(r<=0||n<r)return;this._stacks||(this._stacks=new Map);let s=this._stacks.get(e.value)||0;if(this._stacks.set(e.value,s+1),this._warnCountdown-=1,this._warnCountdown<=0){this._warnCountdown=r*.5;let[i,a]=this.getMostFrequentStack(),l=`[${this.name}] potential listener LEAK detected, having ${n} listeners already. MOST frequent listener (${a}):`;console.warn(l),console.warn(i);let u=new Fn(l,i);this._errorHandler(u)}return()=>{let i=this._stacks.get(e.value)||0;this._stacks.set(e.value,i-1)}}getMostFrequentStack(){if(!this._stacks)return;let e,n=0;for(let[r,s]of this._stacks)(!e||n<s)&&(e=[r,s],n=s);return e}},kn=class t{static create(){let e=new Error;return new t(e.stack??"")}constructor(e){this.value=e}print(){console.warn(this.value.split(`
-`).slice(2).join(`
-`))}},Fn=class extends Error{constructor(e,n){super(e),this.name="ListenerLeakError",this.stack=n}},Pn=class extends Error{constructor(e,n){super(e),this.name="ListenerRefusalError",this.stack=n}},ct=class{constructor(e){this.value=e}},N1=2,Z=class{constructor(e){this._size=0,this._options=e,this._leakageMon=this._options?.leakWarningThreshold?new Mn(e?.onListenerError??Pe,this._options?.leakWarningThreshold??v1):void 0,this._perfMon=this._options?._profName?new En(this._options._profName):void 0,this._deliveryQueue=this._options?.deliveryQueue}dispose(){this._disposed||(this._disposed=!0,this._deliveryQueue?.current===this&&this._deliveryQueue.reset(),this._listeners&&(this._listeners=void 0,this._size=0),this._options?.onDidRemoveLastListener?.(),this._leakageMon?.dispose())}get event(){return this._event??=(e,n,r)=>{if(this._leakageMon&&this._size>this._leakageMon.threshold**2){let l=`[${this._leakageMon.name}] REFUSES to accept new listeners because it exceeded its threshold by far (${this._size} vs ${this._leakageMon.threshold})`;console.warn(l);let u=this._leakageMon.getMostFrequentStack()??["UNKNOWN stack",-1],c=new Pn(`${l}. HINT: Stack shows most frequent listener (${u[1]}-times)`,u[0]);return(this._options?.onListenerError||Pe)(c),se.None}if(this._disposed)return se.None;n&&(e=e.bind(n));let s=new ct(e),i;this._leakageMon&&this._size>=Math.ceil(this._leakageMon.threshold*.2)&&(s.stack=kn.create(),i=this._leakageMon.check(s.stack,this._size+1)),this._listeners?this._listeners instanceof ct?(this._deliveryQueue??=new Dn,this._listeners=[this._listeners,s]):this._listeners.push(s):(this._options?.onWillAddFirstListener?.(this),this._listeners=s,this._options?.onDidAddFirstListener?.(this)),this._options?.onDidAddListener?.(this),this._size++;let a=_e(()=>{i?.(),this._removeListener(s)});return r instanceof De?r.add(a):Array.isArray(r)&&r.push(a),a},this._event}_removeListener(e){if(this._options?.onWillRemoveListener?.(this),!this._listeners)return;if(this._size===1){this._listeners=void 0,this._options?.onDidRemoveLastListener?.(this),this._size=0;return}let n=this._listeners,r=n.indexOf(e);if(r===-1)throw console.log("disposed?",this._disposed),console.log("size?",this._size),console.log("arr?",JSON.stringify(this._listeners)),new Error("Attempted to dispose unknown listener");this._size--,n[r]=void 0;let s=this._deliveryQueue.current===this;if(this._size*N1<=n.length){let i=0;for(let a=0;a<n.length;a++)n[a]?n[i++]=n[a]:s&&i<this._deliveryQueue.end&&(this._deliveryQueue.end--,i<this._deliveryQueue.i&&this._deliveryQueue.i--);n.length=i}}_deliver(e,n){if(!e)return;let r=this._options?.onListenerError||Pe;if(!r){e.value(n);return}try{e.value(n)}catch(s){r(s)}}_deliverQueue(e){let n=e.current._listeners;for(;e.i<e.end;)this._deliver(n[e.i++],e.value);e.reset()}fire(e){if(this._deliveryQueue?.current&&(this._deliverQueue(this._deliveryQueue),this._perfMon?.stop()),this._perfMon?.start(this._size),this._listeners)if(this._listeners instanceof ct)this._deliver(this._listeners,e);else{let n=this._deliveryQueue;n.enqueue(this,e,this._listeners.length),this._deliverQueue(n)}this._perfMon?.stop()}hasListeners(){return this._size>0}};var Dn=class{constructor(){this.i=-1,this.end=0}enqueue(e,n,r){this.i=0,this.end=r,this.current=e,this.value=n}reset(){this.i=this.end,this.current=void 0,this.value=void 0}};function Tr(){return globalThis._VSCODE_NLS_MESSAGES}function Mt(){return globalThis._VSCODE_NLS_LANGUAGE}var S1=Mt()==="pseudo"||typeof document<"u"&&document.location&&typeof document.location.hash=="string"&&document.location.hash.indexOf("pseudo=true")>=0;function Ir(t,e){let n;return e.length===0?n=t:n=t.replace(/\{(\d+)\}/g,(r,s)=>{let i=s[0],a=e[i],l=r;return typeof a=="string"?l=a:(typeof a=="number"||typeof a=="boolean"||a===void 0||a===null)&&(l=String(a)),l}),S1&&(n="\uFF3B"+n.replace(/[aouei]/g,"$&$&")+"\uFF3D"),n}function F(t,e,...n){return Ir(typeof t=="number"?R1(t,e):e,n)}function R1(t,e){let n=Tr()?.[t];if(typeof n!="string"){if(typeof e=="string")return e;throw new Error(`!!! NLS MISSING: ${t} !!!`)}return n}var Te="en",Pt=!1,Dt=!1,Ft=!1,A1=!1,Vr=!1,C1=!1,E1=!1,kt,Tn=Te,Br=Te,M1,fe,me=globalThis,te;typeof me.vscode<"u"&&typeof me.vscode.process<"u"?te=me.vscode.process:typeof process<"u"&&typeof process?.versions?.node=="string"&&(te=process);var k1=typeof te?.versions?.electron=="string",F1=k1&&te?.type==="renderer";if(typeof te=="object"){Pt=te.platform==="win32",Dt=te.platform==="darwin",Ft=te.platform==="linux",Ft&&te.env.SNAP&&te.env.SNAP_REVISION,te.env.CI||te.env.BUILD_ARTIFACTSTAGINGDIRECTORY||te.env.GITHUB_WORKSPACE,kt=Te,Tn=Te;let t=te.env.VSCODE_NLS_CONFIG;if(t)try{let e=JSON.parse(t);kt=e.userLocale,Br=e.osLocale,Tn=e.resolvedLanguage||Te,M1=e.languagePack?.translationsConfigFile}catch{}A1=!0}else typeof navigator=="object"&&!F1?(fe=navigator.userAgent,Pt=fe.indexOf("Windows")>=0,Dt=fe.indexOf("Macintosh")>=0,C1=(fe.indexOf("Macintosh")>=0||fe.indexOf("iPad")>=0||fe.indexOf("iPhone")>=0)&&!!navigator.maxTouchPoints&&navigator.maxTouchPoints>0,Ft=fe.indexOf("Linux")>=0,E1=fe?.indexOf("Mobi")>=0,Vr=!0,Tn=Mt()||Te,kt=navigator.language.toLowerCase(),Br=kt):console.error("Unable to resolve platform.");var In=0;Dt?In=1:Pt?In=3:Ft&&(In=2);var Ie=Pt,qr=Dt;var P1=Vr&&typeof me.importScripts=="function",la=P1?me.origin:void 0;var ae=fe;var D1=typeof me.postMessage=="function"&&!me.importScripts,Ur=(()=>{if(D1){let t=[];me.addEventListener("message",n=>{if(n.data&&n.data.vscodeScheduleAsyncWork)for(let r=0,s=t.length;r<s;r++){let i=t[r];if(i.id===n.data.vscodeScheduleAsyncWork){t.splice(r,1),i.callback();return}}});let e=0;return n=>{let r=++e;t.push({id:r,callback:n}),me.postMessage({vscodeScheduleAsyncWork:r},"*")}}return t=>setTimeout(t)})();var T1=!!(ae&&ae.indexOf("Chrome")>=0),ua=!!(ae&&ae.indexOf("Firefox")>=0),ca=!!(!T1&&ae&&ae.indexOf("Safari")>=0),ha=!!(ae&&ae.indexOf("Edg/")>=0),fa=!!(ae&&ae.indexOf("Android")>=0);function I1(t){return t}var Tt=class{constructor(e,n){this.lastCache=void 0,this.lastArgKey=void 0,typeof e=="function"?(this._fn=e,this._computeKey=I1):(this._fn=n,this._computeKey=e.getCacheKey)}get(e){let n=this._computeKey(e);return this.lastArgKey!==n&&(this.lastArgKey=n,this.lastCache=this._fn(e)),this.lastCache}};var Be;(function(t){t[t.Uninitialized=0]="Uninitialized",t[t.Running=1]="Running",t[t.Completed=2]="Completed"})(Be||(Be={}));var ye=class{constructor(e){this.executor=e,this._state=Be.Uninitialized}get value(){if(this._state===Be.Uninitialized){this._state=Be.Running;try{this._value=this.executor()}catch(e){this._error=e}finally{this._state=Be.Completed}}else if(this._state===Be.Running)throw new Error("Cannot read the value of a lazy that is being initialized");if(this._error)throw this._error;return this._value}get rawValue(){return this._value}};function zr(t){return t.replace(/[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]/g,"\\$&")}function $r(t){return t.source==="^"||t.source==="^$"||t.source==="$"||t.source==="^\\s*$"?!1:!!(t.exec("")&&t.lastIndex===0)}function Or(t){return t.split(/\r\n|\r|\n/)}function Hr(t){for(let e=0,n=t.length;e<n;e++){let r=t.charCodeAt(e);if(r!==32&&r!==9)return e}return-1}function Gr(t,e=t.length-1){for(let n=e;n>=0;n--){let r=t.charCodeAt(n);if(r!==32&&r!==9)return n}return-1}function Bn(t){return t>=65&&t<=90}function jr(t,e){let n=Math.min(t.length,e.length),r;for(r=0;r<n;r++)if(t.charCodeAt(r)!==e.charCodeAt(r))return r;return n}function Xr(t,e){let n=Math.min(t.length,e.length),r,s=t.length-1,i=e.length-1;for(r=0;r<n;r++)if(t.charCodeAt(s-r)!==e.charCodeAt(i-r))return r;return n}function Qe(t){return 55296<=t&&t<=56319}function It(t){return 56320<=t&&t<=57343}function Vn(t,e){return(t-55296<<10)+(e-56320)+65536}function Qr(t,e,n){let r=t.charCodeAt(n);if(Qe(r)&&n+1<e){let s=t.charCodeAt(n+1);if(It(s))return Vn(r,s)}return r}var B1=/^[\t\n\r\x20-\x7E]*$/;function Jr(t){return B1.test(t)}var Wr=class t{static{this._INSTANCE=null}static getInstance(){return t._INSTANCE||(t._INSTANCE=new t),t._INSTANCE}constructor(){this._data=V1()}getGraphemeBreakType(e){if(e<32)return e===10?3:e===13?2:4;if(e<127)return 0;let n=this._data,r=n.length/3,s=1;for(;s<=r;)if(e<n[3*s])s=2*s;else if(e>n[3*s+1])s=2*s+1;else return n[3*s+2];return 0}};function V1(){return JSON.parse("[0,0,0,51229,51255,12,44061,44087,12,127462,127487,6,7083,7085,5,47645,47671,12,54813,54839,12,128678,128678,14,3270,3270,5,9919,9923,14,45853,45879,12,49437,49463,12,53021,53047,12,71216,71218,7,128398,128399,14,129360,129374,14,2519,2519,5,4448,4519,9,9742,9742,14,12336,12336,14,44957,44983,12,46749,46775,12,48541,48567,12,50333,50359,12,52125,52151,12,53917,53943,12,69888,69890,5,73018,73018,5,127990,127990,14,128558,128559,14,128759,128760,14,129653,129655,14,2027,2035,5,2891,2892,7,3761,3761,5,6683,6683,5,8293,8293,4,9825,9826,14,9999,9999,14,43452,43453,5,44509,44535,12,45405,45431,12,46301,46327,12,47197,47223,12,48093,48119,12,48989,49015,12,49885,49911,12,50781,50807,12,51677,51703,12,52573,52599,12,53469,53495,12,54365,54391,12,65279,65279,4,70471,70472,7,72145,72147,7,119173,119179,5,127799,127818,14,128240,128244,14,128512,128512,14,128652,128652,14,128721,128722,14,129292,129292,14,129445,129450,14,129734,129743,14,1476,1477,5,2366,2368,7,2750,2752,7,3076,3076,5,3415,3415,5,4141,4144,5,6109,6109,5,6964,6964,5,7394,7400,5,9197,9198,14,9770,9770,14,9877,9877,14,9968,9969,14,10084,10084,14,43052,43052,5,43713,43713,5,44285,44311,12,44733,44759,12,45181,45207,12,45629,45655,12,46077,46103,12,46525,46551,12,46973,46999,12,47421,47447,12,47869,47895,12,48317,48343,12,48765,48791,12,49213,49239,12,49661,49687,12,50109,50135,12,50557,50583,12,51005,51031,12,51453,51479,12,51901,51927,12,52349,52375,12,52797,52823,12,53245,53271,12,53693,53719,12,54141,54167,12,54589,54615,12,55037,55063,12,69506,69509,5,70191,70193,5,70841,70841,7,71463,71467,5,72330,72342,5,94031,94031,5,123628,123631,5,127763,127765,14,127941,127941,14,128043,128062,14,128302,128317,14,128465,128467,14,128539,128539,14,128640,128640,14,128662,128662,14,128703,128703,14,128745,128745,14,129004,129007,14,129329,129330,14,129402,129402,14,129483,129483,14,129686,129704,14,130048,131069,14,173,173,4,1757,1757,1,2200,2207,5,2434,2435,7,2631,2632,5,2817,2817,5,3008,3008,5,3201,3201,5,3387,3388,5,3542,3542,5,3902,3903,7,4190,4192,5,6002,6003,5,6439,6440,5,6765,6770,7,7019,7027,5,7154,7155,7,8205,8205,13,8505,8505,14,9654,9654,14,9757,9757,14,9792,9792,14,9852,9853,14,9890,9894,14,9937,9937,14,9981,9981,14,10035,10036,14,11035,11036,14,42654,42655,5,43346,43347,7,43587,43587,5,44006,44007,7,44173,44199,12,44397,44423,12,44621,44647,12,44845,44871,12,45069,45095,12,45293,45319,12,45517,45543,12,45741,45767,12,45965,45991,12,46189,46215,12,46413,46439,12,46637,46663,12,46861,46887,12,47085,47111,12,47309,47335,12,47533,47559,12,47757,47783,12,47981,48007,12,48205,48231,12,48429,48455,12,48653,48679,12,48877,48903,12,49101,49127,12,49325,49351,12,49549,49575,12,49773,49799,12,49997,50023,12,50221,50247,12,50445,50471,12,50669,50695,12,50893,50919,12,51117,51143,12,51341,51367,12,51565,51591,12,51789,51815,12,52013,52039,12,52237,52263,12,52461,52487,12,52685,52711,12,52909,52935,12,53133,53159,12,53357,53383,12,53581,53607,12,53805,53831,12,54029,54055,12,54253,54279,12,54477,54503,12,54701,54727,12,54925,54951,12,55149,55175,12,68101,68102,5,69762,69762,7,70067,70069,7,70371,70378,5,70720,70721,7,71087,71087,5,71341,71341,5,71995,71996,5,72249,72249,7,72850,72871,5,73109,73109,5,118576,118598,5,121505,121519,5,127245,127247,14,127568,127569,14,127777,127777,14,127872,127891,14,127956,127967,14,128015,128016,14,128110,128172,14,128259,128259,14,128367,128368,14,128424,128424,14,128488,128488,14,128530,128532,14,128550,128551,14,128566,128566,14,128647,128647,14,128656,128656,14,128667,128673,14,128691,128693,14,128715,128715,14,128728,128732,14,128752,128752,14,128765,128767,14,129096,129103,14,129311,129311,14,129344,129349,14,129394,129394,14,129413,129425,14,129466,129471,14,129511,129535,14,129664,129666,14,129719,129722,14,129760,129767,14,917536,917631,5,13,13,2,1160,1161,5,1564,1564,4,1807,1807,1,2085,2087,5,2307,2307,7,2382,2383,7,2497,2500,5,2563,2563,7,2677,2677,5,2763,2764,7,2879,2879,5,2914,2915,5,3021,3021,5,3142,3144,5,3263,3263,5,3285,3286,5,3398,3400,7,3530,3530,5,3633,3633,5,3864,3865,5,3974,3975,5,4155,4156,7,4229,4230,5,5909,5909,7,6078,6085,7,6277,6278,5,6451,6456,7,6744,6750,5,6846,6846,5,6972,6972,5,7074,7077,5,7146,7148,7,7222,7223,5,7416,7417,5,8234,8238,4,8417,8417,5,9000,9000,14,9203,9203,14,9730,9731,14,9748,9749,14,9762,9763,14,9776,9783,14,9800,9811,14,9831,9831,14,9872,9873,14,9882,9882,14,9900,9903,14,9929,9933,14,9941,9960,14,9974,9974,14,9989,9989,14,10006,10006,14,10062,10062,14,10160,10160,14,11647,11647,5,12953,12953,14,43019,43019,5,43232,43249,5,43443,43443,5,43567,43568,7,43696,43696,5,43765,43765,7,44013,44013,5,44117,44143,12,44229,44255,12,44341,44367,12,44453,44479,12,44565,44591,12,44677,44703,12,44789,44815,12,44901,44927,12,45013,45039,12,45125,45151,12,45237,45263,12,45349,45375,12,45461,45487,12,45573,45599,12,45685,45711,12,45797,45823,12,45909,45935,12,46021,46047,12,46133,46159,12,46245,46271,12,46357,46383,12,46469,46495,12,46581,46607,12,46693,46719,12,46805,46831,12,46917,46943,12,47029,47055,12,47141,47167,12,47253,47279,12,47365,47391,12,47477,47503,12,47589,47615,12,47701,47727,12,47813,47839,12,47925,47951,12,48037,48063,12,48149,48175,12,48261,48287,12,48373,48399,12,48485,48511,12,48597,48623,12,48709,48735,12,48821,48847,12,48933,48959,12,49045,49071,12,49157,49183,12,49269,49295,12,49381,49407,12,49493,49519,12,49605,49631,12,49717,49743,12,49829,49855,12,49941,49967,12,50053,50079,12,50165,50191,12,50277,50303,12,50389,50415,12,50501,50527,12,50613,50639,12,50725,50751,12,50837,50863,12,50949,50975,12,51061,51087,12,51173,51199,12,51285,51311,12,51397,51423,12,51509,51535,12,51621,51647,12,51733,51759,12,51845,51871,12,51957,51983,12,52069,52095,12,52181,52207,12,52293,52319,12,52405,52431,12,52517,52543,12,52629,52655,12,52741,52767,12,52853,52879,12,52965,52991,12,53077,53103,12,53189,53215,12,53301,53327,12,53413,53439,12,53525,53551,12,53637,53663,12,53749,53775,12,53861,53887,12,53973,53999,12,54085,54111,12,54197,54223,12,54309,54335,12,54421,54447,12,54533,54559,12,54645,54671,12,54757,54783,12,54869,54895,12,54981,55007,12,55093,55119,12,55243,55291,10,66045,66045,5,68325,68326,5,69688,69702,5,69817,69818,5,69957,69958,7,70089,70092,5,70198,70199,5,70462,70462,5,70502,70508,5,70750,70750,5,70846,70846,7,71100,71101,5,71230,71230,7,71351,71351,5,71737,71738,5,72000,72000,7,72160,72160,5,72273,72278,5,72752,72758,5,72882,72883,5,73031,73031,5,73461,73462,7,94192,94193,7,119149,119149,7,121403,121452,5,122915,122916,5,126980,126980,14,127358,127359,14,127535,127535,14,127759,127759,14,127771,127771,14,127792,127793,14,127825,127867,14,127897,127899,14,127945,127945,14,127985,127986,14,128000,128007,14,128021,128021,14,128066,128100,14,128184,128235,14,128249,128252,14,128266,128276,14,128335,128335,14,128379,128390,14,128407,128419,14,128444,128444,14,128481,128481,14,128499,128499,14,128526,128526,14,128536,128536,14,128543,128543,14,128556,128556,14,128564,128564,14,128577,128580,14,128643,128645,14,128649,128649,14,128654,128654,14,128660,128660,14,128664,128664,14,128675,128675,14,128686,128689,14,128695,128696,14,128705,128709,14,128717,128719,14,128725,128725,14,128736,128741,14,128747,128748,14,128755,128755,14,128762,128762,14,128981,128991,14,129009,129023,14,129160,129167,14,129296,129304,14,129320,129327,14,129340,129342,14,129356,129356,14,129388,129392,14,129399,129400,14,129404,129407,14,129432,129442,14,129454,129455,14,129473,129474,14,129485,129487,14,129648,129651,14,129659,129660,14,129671,129679,14,129709,129711,14,129728,129730,14,129751,129753,14,129776,129782,14,917505,917505,4,917760,917999,5,10,10,3,127,159,4,768,879,5,1471,1471,5,1536,1541,1,1648,1648,5,1767,1768,5,1840,1866,5,2070,2073,5,2137,2139,5,2274,2274,1,2363,2363,7,2377,2380,7,2402,2403,5,2494,2494,5,2507,2508,7,2558,2558,5,2622,2624,7,2641,2641,5,2691,2691,7,2759,2760,5,2786,2787,5,2876,2876,5,2881,2884,5,2901,2902,5,3006,3006,5,3014,3016,7,3072,3072,5,3134,3136,5,3157,3158,5,3260,3260,5,3266,3266,5,3274,3275,7,3328,3329,5,3391,3392,7,3405,3405,5,3457,3457,5,3536,3537,7,3551,3551,5,3636,3642,5,3764,3772,5,3895,3895,5,3967,3967,7,3993,4028,5,4146,4151,5,4182,4183,7,4226,4226,5,4253,4253,5,4957,4959,5,5940,5940,7,6070,6070,7,6087,6088,7,6158,6158,4,6432,6434,5,6448,6449,7,6679,6680,5,6742,6742,5,6754,6754,5,6783,6783,5,6912,6915,5,6966,6970,5,6978,6978,5,7042,7042,7,7080,7081,5,7143,7143,7,7150,7150,7,7212,7219,5,7380,7392,5,7412,7412,5,8203,8203,4,8232,8232,4,8265,8265,14,8400,8412,5,8421,8432,5,8617,8618,14,9167,9167,14,9200,9200,14,9410,9410,14,9723,9726,14,9733,9733,14,9745,9745,14,9752,9752,14,9760,9760,14,9766,9766,14,9774,9774,14,9786,9786,14,9794,9794,14,9823,9823,14,9828,9828,14,9833,9850,14,9855,9855,14,9875,9875,14,9880,9880,14,9885,9887,14,9896,9897,14,9906,9916,14,9926,9927,14,9935,9935,14,9939,9939,14,9962,9962,14,9972,9972,14,9978,9978,14,9986,9986,14,9997,9997,14,10002,10002,14,10017,10017,14,10055,10055,14,10071,10071,14,10133,10135,14,10548,10549,14,11093,11093,14,12330,12333,5,12441,12442,5,42608,42610,5,43010,43010,5,43045,43046,5,43188,43203,7,43302,43309,5,43392,43394,5,43446,43449,5,43493,43493,5,43571,43572,7,43597,43597,7,43703,43704,5,43756,43757,5,44003,44004,7,44009,44010,7,44033,44059,12,44089,44115,12,44145,44171,12,44201,44227,12,44257,44283,12,44313,44339,12,44369,44395,12,44425,44451,12,44481,44507,12,44537,44563,12,44593,44619,12,44649,44675,12,44705,44731,12,44761,44787,12,44817,44843,12,44873,44899,12,44929,44955,12,44985,45011,12,45041,45067,12,45097,45123,12,45153,45179,12,45209,45235,12,45265,45291,12,45321,45347,12,45377,45403,12,45433,45459,12,45489,45515,12,45545,45571,12,45601,45627,12,45657,45683,12,45713,45739,12,45769,45795,12,45825,45851,12,45881,45907,12,45937,45963,12,45993,46019,12,46049,46075,12,46105,46131,12,46161,46187,12,46217,46243,12,46273,46299,12,46329,46355,12,46385,46411,12,46441,46467,12,46497,46523,12,46553,46579,12,46609,46635,12,46665,46691,12,46721,46747,12,46777,46803,12,46833,46859,12,46889,46915,12,46945,46971,12,47001,47027,12,47057,47083,12,47113,47139,12,47169,47195,12,47225,47251,12,47281,47307,12,47337,47363,12,47393,47419,12,47449,47475,12,47505,47531,12,47561,47587,12,47617,47643,12,47673,47699,12,47729,47755,12,47785,47811,12,47841,47867,12,47897,47923,12,47953,47979,12,48009,48035,12,48065,48091,12,48121,48147,12,48177,48203,12,48233,48259,12,48289,48315,12,48345,48371,12,48401,48427,12,48457,48483,12,48513,48539,12,48569,48595,12,48625,48651,12,48681,48707,12,48737,48763,12,48793,48819,12,48849,48875,12,48905,48931,12,48961,48987,12,49017,49043,12,49073,49099,12,49129,49155,12,49185,49211,12,49241,49267,12,49297,49323,12,49353,49379,12,49409,49435,12,49465,49491,12,49521,49547,12,49577,49603,12,49633,49659,12,49689,49715,12,49745,49771,12,49801,49827,12,49857,49883,12,49913,49939,12,49969,49995,12,50025,50051,12,50081,50107,12,50137,50163,12,50193,50219,12,50249,50275,12,50305,50331,12,50361,50387,12,50417,50443,12,50473,50499,12,50529,50555,12,50585,50611,12,50641,50667,12,50697,50723,12,50753,50779,12,50809,50835,12,50865,50891,12,50921,50947,12,50977,51003,12,51033,51059,12,51089,51115,12,51145,51171,12,51201,51227,12,51257,51283,12,51313,51339,12,51369,51395,12,51425,51451,12,51481,51507,12,51537,51563,12,51593,51619,12,51649,51675,12,51705,51731,12,51761,51787,12,51817,51843,12,51873,51899,12,51929,51955,12,51985,52011,12,52041,52067,12,52097,52123,12,52153,52179,12,52209,52235,12,52265,52291,12,52321,52347,12,52377,52403,12,52433,52459,12,52489,52515,12,52545,52571,12,52601,52627,12,52657,52683,12,52713,52739,12,52769,52795,12,52825,52851,12,52881,52907,12,52937,52963,12,52993,53019,12,53049,53075,12,53105,53131,12,53161,53187,12,53217,53243,12,53273,53299,12,53329,53355,12,53385,53411,12,53441,53467,12,53497,53523,12,53553,53579,12,53609,53635,12,53665,53691,12,53721,53747,12,53777,53803,12,53833,53859,12,53889,53915,12,53945,53971,12,54001,54027,12,54057,54083,12,54113,54139,12,54169,54195,12,54225,54251,12,54281,54307,12,54337,54363,12,54393,54419,12,54449,54475,12,54505,54531,12,54561,54587,12,54617,54643,12,54673,54699,12,54729,54755,12,54785,54811,12,54841,54867,12,54897,54923,12,54953,54979,12,55009,55035,12,55065,55091,12,55121,55147,12,55177,55203,12,65024,65039,5,65520,65528,4,66422,66426,5,68152,68154,5,69291,69292,5,69633,69633,5,69747,69748,5,69811,69814,5,69826,69826,5,69932,69932,7,70016,70017,5,70079,70080,7,70095,70095,5,70196,70196,5,70367,70367,5,70402,70403,7,70464,70464,5,70487,70487,5,70709,70711,7,70725,70725,7,70833,70834,7,70843,70844,7,70849,70849,7,71090,71093,5,71103,71104,5,71227,71228,7,71339,71339,5,71344,71349,5,71458,71461,5,71727,71735,5,71985,71989,7,71998,71998,5,72002,72002,7,72154,72155,5,72193,72202,5,72251,72254,5,72281,72283,5,72344,72345,5,72766,72766,7,72874,72880,5,72885,72886,5,73023,73029,5,73104,73105,5,73111,73111,5,92912,92916,5,94095,94098,5,113824,113827,4,119142,119142,7,119155,119162,4,119362,119364,5,121476,121476,5,122888,122904,5,123184,123190,5,125252,125258,5,127183,127183,14,127340,127343,14,127377,127386,14,127491,127503,14,127548,127551,14,127744,127756,14,127761,127761,14,127769,127769,14,127773,127774,14,127780,127788,14,127796,127797,14,127820,127823,14,127869,127869,14,127894,127895,14,127902,127903,14,127943,127943,14,127947,127950,14,127972,127972,14,127988,127988,14,127992,127994,14,128009,128011,14,128019,128019,14,128023,128041,14,128064,128064,14,128102,128107,14,128174,128181,14,128238,128238,14,128246,128247,14,128254,128254,14,128264,128264,14,128278,128299,14,128329,128330,14,128348,128359,14,128371,128377,14,128392,128393,14,128401,128404,14,128421,128421,14,128433,128434,14,128450,128452,14,128476,128478,14,128483,128483,14,128495,128495,14,128506,128506,14,128519,128520,14,128528,128528,14,128534,128534,14,128538,128538,14,128540,128542,14,128544,128549,14,128552,128555,14,128557,128557,14,128560,128563,14,128565,128565,14,128567,128576,14,128581,128591,14,128641,128642,14,128646,128646,14,128648,128648,14,128650,128651,14,128653,128653,14,128655,128655,14,128657,128659,14,128661,128661,14,128663,128663,14,128665,128666,14,128674,128674,14,128676,128677,14,128679,128685,14,128690,128690,14,128694,128694,14,128697,128702,14,128704,128704,14,128710,128714,14,128716,128716,14,128720,128720,14,128723,128724,14,128726,128727,14,128733,128735,14,128742,128744,14,128746,128746,14,128749,128751,14,128753,128754,14,128756,128758,14,128761,128761,14,128763,128764,14,128884,128895,14,128992,129003,14,129008,129008,14,129036,129039,14,129114,129119,14,129198,129279,14,129293,129295,14,129305,129310,14,129312,129319,14,129328,129328,14,129331,129338,14,129343,129343,14,129351,129355,14,129357,129359,14,129375,129387,14,129393,129393,14,129395,129398,14,129401,129401,14,129403,129403,14,129408,129412,14,129426,129431,14,129443,129444,14,129451,129453,14,129456,129465,14,129472,129472,14,129475,129482,14,129484,129484,14,129488,129510,14,129536,129647,14,129652,129652,14,129656,129658,14,129661,129663,14,129667,129670,14,129680,129685,14,129705,129708,14,129712,129718,14,129723,129727,14,129731,129733,14,129744,129750,14,129754,129759,14,129768,129775,14,129783,129791,14,917504,917504,4,917506,917535,4,917632,917759,4,918000,921599,4,0,9,4,11,12,4,14,31,4,169,169,14,174,174,14,1155,1159,5,1425,1469,5,1473,1474,5,1479,1479,5,1552,1562,5,1611,1631,5,1750,1756,5,1759,1764,5,1770,1773,5,1809,1809,5,1958,1968,5,2045,2045,5,2075,2083,5,2089,2093,5,2192,2193,1,2250,2273,5,2275,2306,5,2362,2362,5,2364,2364,5,2369,2376,5,2381,2381,5,2385,2391,5,2433,2433,5,2492,2492,5,2495,2496,7,2503,2504,7,2509,2509,5,2530,2531,5,2561,2562,5,2620,2620,5,2625,2626,5,2635,2637,5,2672,2673,5,2689,2690,5,2748,2748,5,2753,2757,5,2761,2761,7,2765,2765,5,2810,2815,5,2818,2819,7,2878,2878,5,2880,2880,7,2887,2888,7,2893,2893,5,2903,2903,5,2946,2946,5,3007,3007,7,3009,3010,7,3018,3020,7,3031,3031,5,3073,3075,7,3132,3132,5,3137,3140,7,3146,3149,5,3170,3171,5,3202,3203,7,3262,3262,7,3264,3265,7,3267,3268,7,3271,3272,7,3276,3277,5,3298,3299,5,3330,3331,7,3390,3390,5,3393,3396,5,3402,3404,7,3406,3406,1,3426,3427,5,3458,3459,7,3535,3535,5,3538,3540,5,3544,3550,7,3570,3571,7,3635,3635,7,3655,3662,5,3763,3763,7,3784,3789,5,3893,3893,5,3897,3897,5,3953,3966,5,3968,3972,5,3981,3991,5,4038,4038,5,4145,4145,7,4153,4154,5,4157,4158,5,4184,4185,5,4209,4212,5,4228,4228,7,4237,4237,5,4352,4447,8,4520,4607,10,5906,5908,5,5938,5939,5,5970,5971,5,6068,6069,5,6071,6077,5,6086,6086,5,6089,6099,5,6155,6157,5,6159,6159,5,6313,6313,5,6435,6438,7,6441,6443,7,6450,6450,5,6457,6459,5,6681,6682,7,6741,6741,7,6743,6743,7,6752,6752,5,6757,6764,5,6771,6780,5,6832,6845,5,6847,6862,5,6916,6916,7,6965,6965,5,6971,6971,7,6973,6977,7,6979,6980,7,7040,7041,5,7073,7073,7,7078,7079,7,7082,7082,7,7142,7142,5,7144,7145,5,7149,7149,5,7151,7153,5,7204,7211,7,7220,7221,7,7376,7378,5,7393,7393,7,7405,7405,5,7415,7415,7,7616,7679,5,8204,8204,5,8206,8207,4,8233,8233,4,8252,8252,14,8288,8292,4,8294,8303,4,8413,8416,5,8418,8420,5,8482,8482,14,8596,8601,14,8986,8987,14,9096,9096,14,9193,9196,14,9199,9199,14,9201,9202,14,9208,9210,14,9642,9643,14,9664,9664,14,9728,9729,14,9732,9732,14,9735,9741,14,9743,9744,14,9746,9746,14,9750,9751,14,9753,9756,14,9758,9759,14,9761,9761,14,9764,9765,14,9767,9769,14,9771,9773,14,9775,9775,14,9784,9785,14,9787,9791,14,9793,9793,14,9795,9799,14,9812,9822,14,9824,9824,14,9827,9827,14,9829,9830,14,9832,9832,14,9851,9851,14,9854,9854,14,9856,9861,14,9874,9874,14,9876,9876,14,9878,9879,14,9881,9881,14,9883,9884,14,9888,9889,14,9895,9895,14,9898,9899,14,9904,9905,14,9917,9918,14,9924,9925,14,9928,9928,14,9934,9934,14,9936,9936,14,9938,9938,14,9940,9940,14,9961,9961,14,9963,9967,14,9970,9971,14,9973,9973,14,9975,9977,14,9979,9980,14,9982,9985,14,9987,9988,14,9992,9996,14,9998,9998,14,10000,10001,14,10004,10004,14,10013,10013,14,10024,10024,14,10052,10052,14,10060,10060,14,10067,10069,14,10083,10083,14,10085,10087,14,10145,10145,14,10175,10175,14,11013,11015,14,11088,11088,14,11503,11505,5,11744,11775,5,12334,12335,5,12349,12349,14,12951,12951,14,42607,42607,5,42612,42621,5,42736,42737,5,43014,43014,5,43043,43044,7,43047,43047,7,43136,43137,7,43204,43205,5,43263,43263,5,43335,43345,5,43360,43388,8,43395,43395,7,43444,43445,7,43450,43451,7,43454,43456,7,43561,43566,5,43569,43570,5,43573,43574,5,43596,43596,5,43644,43644,5,43698,43700,5,43710,43711,5,43755,43755,7,43758,43759,7,43766,43766,5,44005,44005,5,44008,44008,5,44012,44012,7,44032,44032,11,44060,44060,11,44088,44088,11,44116,44116,11,44144,44144,11,44172,44172,11,44200,44200,11,44228,44228,11,44256,44256,11,44284,44284,11,44312,44312,11,44340,44340,11,44368,44368,11,44396,44396,11,44424,44424,11,44452,44452,11,44480,44480,11,44508,44508,11,44536,44536,11,44564,44564,11,44592,44592,11,44620,44620,11,44648,44648,11,44676,44676,11,44704,44704,11,44732,44732,11,44760,44760,11,44788,44788,11,44816,44816,11,44844,44844,11,44872,44872,11,44900,44900,11,44928,44928,11,44956,44956,11,44984,44984,11,45012,45012,11,45040,45040,11,45068,45068,11,45096,45096,11,45124,45124,11,45152,45152,11,45180,45180,11,45208,45208,11,45236,45236,11,45264,45264,11,45292,45292,11,45320,45320,11,45348,45348,11,45376,45376,11,45404,45404,11,45432,45432,11,45460,45460,11,45488,45488,11,45516,45516,11,45544,45544,11,45572,45572,11,45600,45600,11,45628,45628,11,45656,45656,11,45684,45684,11,45712,45712,11,45740,45740,11,45768,45768,11,45796,45796,11,45824,45824,11,45852,45852,11,45880,45880,11,45908,45908,11,45936,45936,11,45964,45964,11,45992,45992,11,46020,46020,11,46048,46048,11,46076,46076,11,46104,46104,11,46132,46132,11,46160,46160,11,46188,46188,11,46216,46216,11,46244,46244,11,46272,46272,11,46300,46300,11,46328,46328,11,46356,46356,11,46384,46384,11,46412,46412,11,46440,46440,11,46468,46468,11,46496,46496,11,46524,46524,11,46552,46552,11,46580,46580,11,46608,46608,11,46636,46636,11,46664,46664,11,46692,46692,11,46720,46720,11,46748,46748,11,46776,46776,11,46804,46804,11,46832,46832,11,46860,46860,11,46888,46888,11,46916,46916,11,46944,46944,11,46972,46972,11,47000,47000,11,47028,47028,11,47056,47056,11,47084,47084,11,47112,47112,11,47140,47140,11,47168,47168,11,47196,47196,11,47224,47224,11,47252,47252,11,47280,47280,11,47308,47308,11,47336,47336,11,47364,47364,11,47392,47392,11,47420,47420,11,47448,47448,11,47476,47476,11,47504,47504,11,47532,47532,11,47560,47560,11,47588,47588,11,47616,47616,11,47644,47644,11,47672,47672,11,47700,47700,11,47728,47728,11,47756,47756,11,47784,47784,11,47812,47812,11,47840,47840,11,47868,47868,11,47896,47896,11,47924,47924,11,47952,47952,11,47980,47980,11,48008,48008,11,48036,48036,11,48064,48064,11,48092,48092,11,48120,48120,11,48148,48148,11,48176,48176,11,48204,48204,11,48232,48232,11,48260,48260,11,48288,48288,11,48316,48316,11,48344,48344,11,48372,48372,11,48400,48400,11,48428,48428,11,48456,48456,11,48484,48484,11,48512,48512,11,48540,48540,11,48568,48568,11,48596,48596,11,48624,48624,11,48652,48652,11,48680,48680,11,48708,48708,11,48736,48736,11,48764,48764,11,48792,48792,11,48820,48820,11,48848,48848,11,48876,48876,11,48904,48904,11,48932,48932,11,48960,48960,11,48988,48988,11,49016,49016,11,49044,49044,11,49072,49072,11,49100,49100,11,49128,49128,11,49156,49156,11,49184,49184,11,49212,49212,11,49240,49240,11,49268,49268,11,49296,49296,11,49324,49324,11,49352,49352,11,49380,49380,11,49408,49408,11,49436,49436,11,49464,49464,11,49492,49492,11,49520,49520,11,49548,49548,11,49576,49576,11,49604,49604,11,49632,49632,11,49660,49660,11,49688,49688,11,49716,49716,11,49744,49744,11,49772,49772,11,49800,49800,11,49828,49828,11,49856,49856,11,49884,49884,11,49912,49912,11,49940,49940,11,49968,49968,11,49996,49996,11,50024,50024,11,50052,50052,11,50080,50080,11,50108,50108,11,50136,50136,11,50164,50164,11,50192,50192,11,50220,50220,11,50248,50248,11,50276,50276,11,50304,50304,11,50332,50332,11,50360,50360,11,50388,50388,11,50416,50416,11,50444,50444,11,50472,50472,11,50500,50500,11,50528,50528,11,50556,50556,11,50584,50584,11,50612,50612,11,50640,50640,11,50668,50668,11,50696,50696,11,50724,50724,11,50752,50752,11,50780,50780,11,50808,50808,11,50836,50836,11,50864,50864,11,50892,50892,11,50920,50920,11,50948,50948,11,50976,50976,11,51004,51004,11,51032,51032,11,51060,51060,11,51088,51088,11,51116,51116,11,51144,51144,11,51172,51172,11,51200,51200,11,51228,51228,11,51256,51256,11,51284,51284,11,51312,51312,11,51340,51340,11,51368,51368,11,51396,51396,11,51424,51424,11,51452,51452,11,51480,51480,11,51508,51508,11,51536,51536,11,51564,51564,11,51592,51592,11,51620,51620,11,51648,51648,11,51676,51676,11,51704,51704,11,51732,51732,11,51760,51760,11,51788,51788,11,51816,51816,11,51844,51844,11,51872,51872,11,51900,51900,11,51928,51928,11,51956,51956,11,51984,51984,11,52012,52012,11,52040,52040,11,52068,52068,11,52096,52096,11,52124,52124,11,52152,52152,11,52180,52180,11,52208,52208,11,52236,52236,11,52264,52264,11,52292,52292,11,52320,52320,11,52348,52348,11,52376,52376,11,52404,52404,11,52432,52432,11,52460,52460,11,52488,52488,11,52516,52516,11,52544,52544,11,52572,52572,11,52600,52600,11,52628,52628,11,52656,52656,11,52684,52684,11,52712,52712,11,52740,52740,11,52768,52768,11,52796,52796,11,52824,52824,11,52852,52852,11,52880,52880,11,52908,52908,11,52936,52936,11,52964,52964,11,52992,52992,11,53020,53020,11,53048,53048,11,53076,53076,11,53104,53104,11,53132,53132,11,53160,53160,11,53188,53188,11,53216,53216,11,53244,53244,11,53272,53272,11,53300,53300,11,53328,53328,11,53356,53356,11,53384,53384,11,53412,53412,11,53440,53440,11,53468,53468,11,53496,53496,11,53524,53524,11,53552,53552,11,53580,53580,11,53608,53608,11,53636,53636,11,53664,53664,11,53692,53692,11,53720,53720,11,53748,53748,11,53776,53776,11,53804,53804,11,53832,53832,11,53860,53860,11,53888,53888,11,53916,53916,11,53944,53944,11,53972,53972,11,54000,54000,11,54028,54028,11,54056,54056,11,54084,54084,11,54112,54112,11,54140,54140,11,54168,54168,11,54196,54196,11,54224,54224,11,54252,54252,11,54280,54280,11,54308,54308,11,54336,54336,11,54364,54364,11,54392,54392,11,54420,54420,11,54448,54448,11,54476,54476,11,54504,54504,11,54532,54532,11,54560,54560,11,54588,54588,11,54616,54616,11,54644,54644,11,54672,54672,11,54700,54700,11,54728,54728,11,54756,54756,11,54784,54784,11,54812,54812,11,54840,54840,11,54868,54868,11,54896,54896,11,54924,54924,11,54952,54952,11,54980,54980,11,55008,55008,11,55036,55036,11,55064,55064,11,55092,55092,11,55120,55120,11,55148,55148,11,55176,55176,11,55216,55238,9,64286,64286,5,65056,65071,5,65438,65439,5,65529,65531,4,66272,66272,5,68097,68099,5,68108,68111,5,68159,68159,5,68900,68903,5,69446,69456,5,69632,69632,7,69634,69634,7,69744,69744,5,69759,69761,5,69808,69810,7,69815,69816,7,69821,69821,1,69837,69837,1,69927,69931,5,69933,69940,5,70003,70003,5,70018,70018,7,70070,70078,5,70082,70083,1,70094,70094,7,70188,70190,7,70194,70195,7,70197,70197,7,70206,70206,5,70368,70370,7,70400,70401,5,70459,70460,5,70463,70463,7,70465,70468,7,70475,70477,7,70498,70499,7,70512,70516,5,70712,70719,5,70722,70724,5,70726,70726,5,70832,70832,5,70835,70840,5,70842,70842,5,70845,70845,5,70847,70848,5,70850,70851,5,71088,71089,7,71096,71099,7,71102,71102,7,71132,71133,5,71219,71226,5,71229,71229,5,71231,71232,5,71340,71340,7,71342,71343,7,71350,71350,7,71453,71455,5,71462,71462,7,71724,71726,7,71736,71736,7,71984,71984,5,71991,71992,7,71997,71997,7,71999,71999,1,72001,72001,1,72003,72003,5,72148,72151,5,72156,72159,7,72164,72164,7,72243,72248,5,72250,72250,1,72263,72263,5,72279,72280,7,72324,72329,1,72343,72343,7,72751,72751,7,72760,72765,5,72767,72767,5,72873,72873,7,72881,72881,7,72884,72884,7,73009,73014,5,73020,73021,5,73030,73030,1,73098,73102,7,73107,73108,7,73110,73110,7,73459,73460,5,78896,78904,4,92976,92982,5,94033,94087,7,94180,94180,5,113821,113822,5,118528,118573,5,119141,119141,5,119143,119145,5,119150,119154,5,119163,119170,5,119210,119213,5,121344,121398,5,121461,121461,5,121499,121503,5,122880,122886,5,122907,122913,5,122918,122922,5,123566,123566,5,125136,125142,5,126976,126979,14,126981,127182,14,127184,127231,14,127279,127279,14,127344,127345,14,127374,127374,14,127405,127461,14,127489,127490,14,127514,127514,14,127538,127546,14,127561,127567,14,127570,127743,14,127757,127758,14,127760,127760,14,127762,127762,14,127766,127768,14,127770,127770,14,127772,127772,14,127775,127776,14,127778,127779,14,127789,127791,14,127794,127795,14,127798,127798,14,127819,127819,14,127824,127824,14,127868,127868,14,127870,127871,14,127892,127893,14,127896,127896,14,127900,127901,14,127904,127940,14,127942,127942,14,127944,127944,14,127946,127946,14,127951,127955,14,127968,127971,14,127973,127984,14,127987,127987,14,127989,127989,14,127991,127991,14,127995,127999,5,128008,128008,14,128012,128014,14,128017,128018,14,128020,128020,14,128022,128022,14,128042,128042,14,128063,128063,14,128065,128065,14,128101,128101,14,128108,128109,14,128173,128173,14,128182,128183,14,128236,128237,14,128239,128239,14,128245,128245,14,128248,128248,14,128253,128253,14,128255,128258,14,128260,128263,14,128265,128265,14,128277,128277,14,128300,128301,14,128326,128328,14,128331,128334,14,128336,128347,14,128360,128366,14,128369,128370,14,128378,128378,14,128391,128391,14,128394,128397,14,128400,128400,14,128405,128406,14,128420,128420,14,128422,128423,14,128425,128432,14,128435,128443,14,128445,128449,14,128453,128464,14,128468,128475,14,128479,128480,14,128482,128482,14,128484,128487,14,128489,128494,14,128496,128498,14,128500,128505,14,128507,128511,14,128513,128518,14,128521,128525,14,128527,128527,14,128529,128529,14,128533,128533,14,128535,128535,14,128537,128537,14]")}var je=class t{static{this.ambiguousCharacterData=new ye(()=>JSON.parse('{"_common":[8232,32,8233,32,5760,32,8192,32,8193,32,8194,32,8195,32,8196,32,8197,32,8198,32,8200,32,8201,32,8202,32,8287,32,8199,32,8239,32,2042,95,65101,95,65102,95,65103,95,8208,45,8209,45,8210,45,65112,45,1748,45,8259,45,727,45,8722,45,10134,45,11450,45,1549,44,1643,44,184,44,42233,44,894,59,2307,58,2691,58,1417,58,1795,58,1796,58,5868,58,65072,58,6147,58,6153,58,8282,58,1475,58,760,58,42889,58,8758,58,720,58,42237,58,451,33,11601,33,660,63,577,63,2429,63,5038,63,42731,63,119149,46,8228,46,1793,46,1794,46,42510,46,68176,46,1632,46,1776,46,42232,46,1373,96,65287,96,8219,96,1523,96,8242,96,1370,96,8175,96,65344,96,900,96,8189,96,8125,96,8127,96,8190,96,697,96,884,96,712,96,714,96,715,96,756,96,699,96,701,96,700,96,702,96,42892,96,1497,96,2036,96,2037,96,5194,96,5836,96,94033,96,94034,96,65339,91,10088,40,10098,40,12308,40,64830,40,65341,93,10089,41,10099,41,12309,41,64831,41,10100,123,119060,123,10101,125,65342,94,8270,42,1645,42,8727,42,66335,42,5941,47,8257,47,8725,47,8260,47,9585,47,10187,47,10744,47,119354,47,12755,47,12339,47,11462,47,20031,47,12035,47,65340,92,65128,92,8726,92,10189,92,10741,92,10745,92,119311,92,119355,92,12756,92,20022,92,12034,92,42872,38,708,94,710,94,5869,43,10133,43,66203,43,8249,60,10094,60,706,60,119350,60,5176,60,5810,60,5120,61,11840,61,12448,61,42239,61,8250,62,10095,62,707,62,119351,62,5171,62,94015,62,8275,126,732,126,8128,126,8764,126,65372,124,65293,45,118002,50,120784,50,120794,50,120804,50,120814,50,120824,50,130034,50,42842,50,423,50,1000,50,42564,50,5311,50,42735,50,119302,51,118003,51,120785,51,120795,51,120805,51,120815,51,120825,51,130035,51,42923,51,540,51,439,51,42858,51,11468,51,1248,51,94011,51,71882,51,118004,52,120786,52,120796,52,120806,52,120816,52,120826,52,130036,52,5070,52,71855,52,118005,53,120787,53,120797,53,120807,53,120817,53,120827,53,130037,53,444,53,71867,53,118006,54,120788,54,120798,54,120808,54,120818,54,120828,54,130038,54,11474,54,5102,54,71893,54,119314,55,118007,55,120789,55,120799,55,120809,55,120819,55,120829,55,130039,55,66770,55,71878,55,2819,56,2538,56,2666,56,125131,56,118008,56,120790,56,120800,56,120810,56,120820,56,120830,56,130040,56,547,56,546,56,66330,56,2663,57,2920,57,2541,57,3437,57,118009,57,120791,57,120801,57,120811,57,120821,57,120831,57,130041,57,42862,57,11466,57,71884,57,71852,57,71894,57,9082,97,65345,97,119834,97,119886,97,119938,97,119990,97,120042,97,120094,97,120146,97,120198,97,120250,97,120302,97,120354,97,120406,97,120458,97,593,97,945,97,120514,97,120572,97,120630,97,120688,97,120746,97,65313,65,117974,65,119808,65,119860,65,119912,65,119964,65,120016,65,120068,65,120120,65,120172,65,120224,65,120276,65,120328,65,120380,65,120432,65,913,65,120488,65,120546,65,120604,65,120662,65,120720,65,5034,65,5573,65,42222,65,94016,65,66208,65,119835,98,119887,98,119939,98,119991,98,120043,98,120095,98,120147,98,120199,98,120251,98,120303,98,120355,98,120407,98,120459,98,388,98,5071,98,5234,98,5551,98,65314,66,8492,66,117975,66,119809,66,119861,66,119913,66,120017,66,120069,66,120121,66,120173,66,120225,66,120277,66,120329,66,120381,66,120433,66,42932,66,914,66,120489,66,120547,66,120605,66,120663,66,120721,66,5108,66,5623,66,42192,66,66178,66,66209,66,66305,66,65347,99,8573,99,119836,99,119888,99,119940,99,119992,99,120044,99,120096,99,120148,99,120200,99,120252,99,120304,99,120356,99,120408,99,120460,99,7428,99,1010,99,11429,99,43951,99,66621,99,128844,67,71913,67,71922,67,65315,67,8557,67,8450,67,8493,67,117976,67,119810,67,119862,67,119914,67,119966,67,120018,67,120174,67,120226,67,120278,67,120330,67,120382,67,120434,67,1017,67,11428,67,5087,67,42202,67,66210,67,66306,67,66581,67,66844,67,8574,100,8518,100,119837,100,119889,100,119941,100,119993,100,120045,100,120097,100,120149,100,120201,100,120253,100,120305,100,120357,100,120409,100,120461,100,1281,100,5095,100,5231,100,42194,100,8558,68,8517,68,117977,68,119811,68,119863,68,119915,68,119967,68,120019,68,120071,68,120123,68,120175,68,120227,68,120279,68,120331,68,120383,68,120435,68,5024,68,5598,68,5610,68,42195,68,8494,101,65349,101,8495,101,8519,101,119838,101,119890,101,119942,101,120046,101,120098,101,120150,101,120202,101,120254,101,120306,101,120358,101,120410,101,120462,101,43826,101,1213,101,8959,69,65317,69,8496,69,117978,69,119812,69,119864,69,119916,69,120020,69,120072,69,120124,69,120176,69,120228,69,120280,69,120332,69,120384,69,120436,69,917,69,120492,69,120550,69,120608,69,120666,69,120724,69,11577,69,5036,69,42224,69,71846,69,71854,69,66182,69,119839,102,119891,102,119943,102,119995,102,120047,102,120099,102,120151,102,120203,102,120255,102,120307,102,120359,102,120411,102,120463,102,43829,102,42905,102,383,102,7837,102,1412,102,119315,70,8497,70,117979,70,119813,70,119865,70,119917,70,120021,70,120073,70,120125,70,120177,70,120229,70,120281,70,120333,70,120385,70,120437,70,42904,70,988,70,120778,70,5556,70,42205,70,71874,70,71842,70,66183,70,66213,70,66853,70,65351,103,8458,103,119840,103,119892,103,119944,103,120048,103,120100,103,120152,103,120204,103,120256,103,120308,103,120360,103,120412,103,120464,103,609,103,7555,103,397,103,1409,103,117980,71,119814,71,119866,71,119918,71,119970,71,120022,71,120074,71,120126,71,120178,71,120230,71,120282,71,120334,71,120386,71,120438,71,1292,71,5056,71,5107,71,42198,71,65352,104,8462,104,119841,104,119945,104,119997,104,120049,104,120101,104,120153,104,120205,104,120257,104,120309,104,120361,104,120413,104,120465,104,1211,104,1392,104,5058,104,65320,72,8459,72,8460,72,8461,72,117981,72,119815,72,119867,72,119919,72,120023,72,120179,72,120231,72,120283,72,120335,72,120387,72,120439,72,919,72,120494,72,120552,72,120610,72,120668,72,120726,72,11406,72,5051,72,5500,72,42215,72,66255,72,731,105,9075,105,65353,105,8560,105,8505,105,8520,105,119842,105,119894,105,119946,105,119998,105,120050,105,120102,105,120154,105,120206,105,120258,105,120310,105,120362,105,120414,105,120466,105,120484,105,618,105,617,105,953,105,8126,105,890,105,120522,105,120580,105,120638,105,120696,105,120754,105,1110,105,42567,105,1231,105,43893,105,5029,105,71875,105,65354,106,8521,106,119843,106,119895,106,119947,106,119999,106,120051,106,120103,106,120155,106,120207,106,120259,106,120311,106,120363,106,120415,106,120467,106,1011,106,1112,106,65322,74,117983,74,119817,74,119869,74,119921,74,119973,74,120025,74,120077,74,120129,74,120181,74,120233,74,120285,74,120337,74,120389,74,120441,74,42930,74,895,74,1032,74,5035,74,5261,74,42201,74,119844,107,119896,107,119948,107,120000,107,120052,107,120104,107,120156,107,120208,107,120260,107,120312,107,120364,107,120416,107,120468,107,8490,75,65323,75,117984,75,119818,75,119870,75,119922,75,119974,75,120026,75,120078,75,120130,75,120182,75,120234,75,120286,75,120338,75,120390,75,120442,75,922,75,120497,75,120555,75,120613,75,120671,75,120729,75,11412,75,5094,75,5845,75,42199,75,66840,75,1472,108,8739,73,9213,73,65512,73,1633,108,1777,73,66336,108,125127,108,118001,108,120783,73,120793,73,120803,73,120813,73,120823,73,130033,73,65321,73,8544,73,8464,73,8465,73,117982,108,119816,73,119868,73,119920,73,120024,73,120128,73,120180,73,120232,73,120284,73,120336,73,120388,73,120440,73,65356,108,8572,73,8467,108,119845,108,119897,108,119949,108,120001,108,120053,108,120105,73,120157,73,120209,73,120261,73,120313,73,120365,73,120417,73,120469,73,448,73,120496,73,120554,73,120612,73,120670,73,120728,73,11410,73,1030,73,1216,73,1493,108,1503,108,1575,108,126464,108,126592,108,65166,108,65165,108,1994,108,11599,73,5825,73,42226,73,93992,73,66186,124,66313,124,119338,76,8556,76,8466,76,117985,76,119819,76,119871,76,119923,76,120027,76,120079,76,120131,76,120183,76,120235,76,120287,76,120339,76,120391,76,120443,76,11472,76,5086,76,5290,76,42209,76,93974,76,71843,76,71858,76,66587,76,66854,76,65325,77,8559,77,8499,77,117986,77,119820,77,119872,77,119924,77,120028,77,120080,77,120132,77,120184,77,120236,77,120288,77,120340,77,120392,77,120444,77,924,77,120499,77,120557,77,120615,77,120673,77,120731,77,1018,77,11416,77,5047,77,5616,77,5846,77,42207,77,66224,77,66321,77,119847,110,119899,110,119951,110,120003,110,120055,110,120107,110,120159,110,120211,110,120263,110,120315,110,120367,110,120419,110,120471,110,1400,110,1404,110,65326,78,8469,78,117987,78,119821,78,119873,78,119925,78,119977,78,120029,78,120081,78,120185,78,120237,78,120289,78,120341,78,120393,78,120445,78,925,78,120500,78,120558,78,120616,78,120674,78,120732,78,11418,78,42208,78,66835,78,3074,111,3202,111,3330,111,3458,111,2406,111,2662,111,2790,111,3046,111,3174,111,3302,111,3430,111,3664,111,3792,111,4160,111,1637,111,1781,111,65359,111,8500,111,119848,111,119900,111,119952,111,120056,111,120108,111,120160,111,120212,111,120264,111,120316,111,120368,111,120420,111,120472,111,7439,111,7441,111,43837,111,959,111,120528,111,120586,111,120644,111,120702,111,120760,111,963,111,120532,111,120590,111,120648,111,120706,111,120764,111,11423,111,4351,111,1413,111,1505,111,1607,111,126500,111,126564,111,126596,111,65259,111,65260,111,65258,111,65257,111,1726,111,64428,111,64429,111,64427,111,64426,111,1729,111,64424,111,64425,111,64423,111,64422,111,1749,111,3360,111,4125,111,66794,111,71880,111,71895,111,66604,111,1984,79,2534,79,2918,79,12295,79,70864,79,71904,79,118000,79,120782,79,120792,79,120802,79,120812,79,120822,79,130032,79,65327,79,117988,79,119822,79,119874,79,119926,79,119978,79,120030,79,120082,79,120134,79,120186,79,120238,79,120290,79,120342,79,120394,79,120446,79,927,79,120502,79,120560,79,120618,79,120676,79,120734,79,11422,79,1365,79,11604,79,4816,79,2848,79,66754,79,42227,79,71861,79,66194,79,66219,79,66564,79,66838,79,9076,112,65360,112,119849,112,119901,112,119953,112,120005,112,120057,112,120109,112,120161,112,120213,112,120265,112,120317,112,120369,112,120421,112,120473,112,961,112,120530,112,120544,112,120588,112,120602,112,120646,112,120660,112,120704,112,120718,112,120762,112,120776,112,11427,112,65328,80,8473,80,117989,80,119823,80,119875,80,119927,80,119979,80,120031,80,120083,80,120187,80,120239,80,120291,80,120343,80,120395,80,120447,80,929,80,120504,80,120562,80,120620,80,120678,80,120736,80,11426,80,5090,80,5229,80,42193,80,66197,80,119850,113,119902,113,119954,113,120006,113,120058,113,120110,113,120162,113,120214,113,120266,113,120318,113,120370,113,120422,113,120474,113,1307,113,1379,113,1382,113,8474,81,117990,81,119824,81,119876,81,119928,81,119980,81,120032,81,120084,81,120188,81,120240,81,120292,81,120344,81,120396,81,120448,81,11605,81,119851,114,119903,114,119955,114,120007,114,120059,114,120111,114,120163,114,120215,114,120267,114,120319,114,120371,114,120423,114,120475,114,43847,114,43848,114,7462,114,11397,114,43905,114,119318,82,8475,82,8476,82,8477,82,117991,82,119825,82,119877,82,119929,82,120033,82,120189,82,120241,82,120293,82,120345,82,120397,82,120449,82,422,82,5025,82,5074,82,66740,82,5511,82,42211,82,94005,82,65363,115,119852,115,119904,115,119956,115,120008,115,120060,115,120112,115,120164,115,120216,115,120268,115,120320,115,120372,115,120424,115,120476,115,42801,115,445,115,1109,115,43946,115,71873,115,66632,115,65331,83,117992,83,119826,83,119878,83,119930,83,119982,83,120034,83,120086,83,120138,83,120190,83,120242,83,120294,83,120346,83,120398,83,120450,83,1029,83,1359,83,5077,83,5082,83,42210,83,94010,83,66198,83,66592,83,119853,116,119905,116,119957,116,120009,116,120061,116,120113,116,120165,116,120217,116,120269,116,120321,116,120373,116,120425,116,120477,116,8868,84,10201,84,128872,84,65332,84,117993,84,119827,84,119879,84,119931,84,119983,84,120035,84,120087,84,120139,84,120191,84,120243,84,120295,84,120347,84,120399,84,120451,84,932,84,120507,84,120565,84,120623,84,120681,84,120739,84,11430,84,5026,84,42196,84,93962,84,71868,84,66199,84,66225,84,66325,84,119854,117,119906,117,119958,117,120010,117,120062,117,120114,117,120166,117,120218,117,120270,117,120322,117,120374,117,120426,117,120478,117,42911,117,7452,117,43854,117,43858,117,651,117,965,117,120534,117,120592,117,120650,117,120708,117,120766,117,1405,117,66806,117,71896,117,8746,85,8899,85,117994,85,119828,85,119880,85,119932,85,119984,85,120036,85,120088,85,120140,85,120192,85,120244,85,120296,85,120348,85,120400,85,120452,85,1357,85,4608,85,66766,85,5196,85,42228,85,94018,85,71864,85,8744,118,8897,118,65366,118,8564,118,119855,118,119907,118,119959,118,120011,118,120063,118,120115,118,120167,118,120219,118,120271,118,120323,118,120375,118,120427,118,120479,118,7456,118,957,118,120526,118,120584,118,120642,118,120700,118,120758,118,1141,118,1496,118,71430,118,43945,118,71872,118,119309,86,1639,86,1783,86,8548,86,117995,86,119829,86,119881,86,119933,86,119985,86,120037,86,120089,86,120141,86,120193,86,120245,86,120297,86,120349,86,120401,86,120453,86,1140,86,11576,86,5081,86,5167,86,42719,86,42214,86,93960,86,71840,86,66845,86,623,119,119856,119,119908,119,119960,119,120012,119,120064,119,120116,119,120168,119,120220,119,120272,119,120324,119,120376,119,120428,119,120480,119,7457,119,1121,119,1309,119,1377,119,71434,119,71438,119,71439,119,43907,119,71910,87,71919,87,117996,87,119830,87,119882,87,119934,87,119986,87,120038,87,120090,87,120142,87,120194,87,120246,87,120298,87,120350,87,120402,87,120454,87,1308,87,5043,87,5076,87,42218,87,5742,120,10539,120,10540,120,10799,120,65368,120,8569,120,119857,120,119909,120,119961,120,120013,120,120065,120,120117,120,120169,120,120221,120,120273,120,120325,120,120377,120,120429,120,120481,120,5441,120,5501,120,5741,88,9587,88,66338,88,71916,88,65336,88,8553,88,117997,88,119831,88,119883,88,119935,88,119987,88,120039,88,120091,88,120143,88,120195,88,120247,88,120299,88,120351,88,120403,88,120455,88,42931,88,935,88,120510,88,120568,88,120626,88,120684,88,120742,88,11436,88,11613,88,5815,88,42219,88,66192,88,66228,88,66327,88,66855,88,611,121,7564,121,65369,121,119858,121,119910,121,119962,121,120014,121,120066,121,120118,121,120170,121,120222,121,120274,121,120326,121,120378,121,120430,121,120482,121,655,121,7935,121,43866,121,947,121,8509,121,120516,121,120574,121,120632,121,120690,121,120748,121,1199,121,4327,121,71900,121,65337,89,117998,89,119832,89,119884,89,119936,89,119988,89,120040,89,120092,89,120144,89,120196,89,120248,89,120300,89,120352,89,120404,89,120456,89,933,89,978,89,120508,89,120566,89,120624,89,120682,89,120740,89,11432,89,1198,89,5033,89,5053,89,42220,89,94019,89,71844,89,66226,89,119859,122,119911,122,119963,122,120015,122,120067,122,120119,122,120171,122,120223,122,120275,122,120327,122,120379,122,120431,122,120483,122,7458,122,43923,122,71876,122,71909,90,66293,90,65338,90,8484,90,8488,90,117999,90,119833,90,119885,90,119937,90,119989,90,120041,90,120197,90,120249,90,120301,90,120353,90,120405,90,120457,90,918,90,120493,90,120551,90,120609,90,120667,90,120725,90,5059,90,42204,90,71849,90,65282,34,65283,35,65284,36,65285,37,65286,38,65290,42,65291,43,65294,46,65295,47,65296,48,65298,50,65299,51,65300,52,65301,53,65302,54,65303,55,65304,56,65305,57,65308,60,65309,61,65310,62,65312,64,65316,68,65318,70,65319,71,65324,76,65329,81,65330,82,65333,85,65334,86,65335,87,65343,95,65346,98,65348,100,65350,102,65355,107,65357,109,65358,110,65361,113,65362,114,65364,116,65365,117,65367,119,65370,122,65371,123,65373,125,119846,109],"_default":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8216,96,8217,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"cs":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"de":[65374,126,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"es":[8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"fr":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"it":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"ja":[8211,45,8218,44,65281,33,8216,96,8245,96,180,96,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65292,44,65297,49,65307,59],"ko":[8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"pl":[65374,126,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"pt-BR":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"qps-ploc":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"ru":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,305,105,921,73,1009,112,215,120,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"tr":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"zh-hans":[160,32,65374,126,8218,44,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65297,49],"zh-hant":[8211,45,65374,126,8218,44,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89]}'))}static{this.cache=new Tt({getCacheKey:JSON.stringify},e=>{function n(f){let h=new Map;for(let m=0;m<f.length;m+=2)h.set(f[m],f[m+1]);return h}function r(f,h){let m=new Map(f);for(let[b,p]of h)m.set(b,p);return m}function s(f,h){if(!f)return h;let m=new Map;for(let[b,p]of f)h.has(b)&&m.set(b,p);return m}let i=this.ambiguousCharacterData.value,a=e.filter(f=>!f.startsWith("_")&&Object.hasOwn(i,f));a.length===0&&(a=["_default"]);let l;for(let f of a){let h=n(i[f]);l=s(l,h)}let u=n(i._common),c=r(u,l);return new t(c)})}static getInstance(e){return t.cache.get(Array.from(e))}static{this._locales=new ye(()=>Object.keys(t.ambiguousCharacterData.value).filter(e=>!e.startsWith("_")))}static getLocales(){return t._locales.value}constructor(e){this.confusableDictionary=e}isAmbiguous(e){return this.confusableDictionary.has(e)}getPrimaryConfusable(e){return this.confusableDictionary.get(e)}getConfusableCodePoints(){return new Set(this.confusableDictionary.keys())}},Xe=class t{static getRawData(){return JSON.parse('{"_common":[11,12,13,127,847,1564,4447,4448,6068,6069,6155,6156,6157,6158,7355,7356,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8204,8205,8206,8207,8234,8235,8236,8237,8238,8239,8287,8288,8289,8290,8291,8292,8293,8294,8295,8296,8297,8298,8299,8300,8301,8302,8303,10240,12644,65024,65025,65026,65027,65028,65029,65030,65031,65032,65033,65034,65035,65036,65037,65038,65039,65279,65440,65520,65521,65522,65523,65524,65525,65526,65527,65528,65532,78844,119155,119156,119157,119158,119159,119160,119161,119162,917504,917505,917506,917507,917508,917509,917510,917511,917512,917513,917514,917515,917516,917517,917518,917519,917520,917521,917522,917523,917524,917525,917526,917527,917528,917529,917530,917531,917532,917533,917534,917535,917536,917537,917538,917539,917540,917541,917542,917543,917544,917545,917546,917547,917548,917549,917550,917551,917552,917553,917554,917555,917556,917557,917558,917559,917560,917561,917562,917563,917564,917565,917566,917567,917568,917569,917570,917571,917572,917573,917574,917575,917576,917577,917578,917579,917580,917581,917582,917583,917584,917585,917586,917587,917588,917589,917590,917591,917592,917593,917594,917595,917596,917597,917598,917599,917600,917601,917602,917603,917604,917605,917606,917607,917608,917609,917610,917611,917612,917613,917614,917615,917616,917617,917618,917619,917620,917621,917622,917623,917624,917625,917626,917627,917628,917629,917630,917631,917760,917761,917762,917763,917764,917765,917766,917767,917768,917769,917770,917771,917772,917773,917774,917775,917776,917777,917778,917779,917780,917781,917782,917783,917784,917785,917786,917787,917788,917789,917790,917791,917792,917793,917794,917795,917796,917797,917798,917799,917800,917801,917802,917803,917804,917805,917806,917807,917808,917809,917810,917811,917812,917813,917814,917815,917816,917817,917818,917819,917820,917821,917822,917823,917824,917825,917826,917827,917828,917829,917830,917831,917832,917833,917834,917835,917836,917837,917838,917839,917840,917841,917842,917843,917844,917845,917846,917847,917848,917849,917850,917851,917852,917853,917854,917855,917856,917857,917858,917859,917860,917861,917862,917863,917864,917865,917866,917867,917868,917869,917870,917871,917872,917873,917874,917875,917876,917877,917878,917879,917880,917881,917882,917883,917884,917885,917886,917887,917888,917889,917890,917891,917892,917893,917894,917895,917896,917897,917898,917899,917900,917901,917902,917903,917904,917905,917906,917907,917908,917909,917910,917911,917912,917913,917914,917915,917916,917917,917918,917919,917920,917921,917922,917923,917924,917925,917926,917927,917928,917929,917930,917931,917932,917933,917934,917935,917936,917937,917938,917939,917940,917941,917942,917943,917944,917945,917946,917947,917948,917949,917950,917951,917952,917953,917954,917955,917956,917957,917958,917959,917960,917961,917962,917963,917964,917965,917966,917967,917968,917969,917970,917971,917972,917973,917974,917975,917976,917977,917978,917979,917980,917981,917982,917983,917984,917985,917986,917987,917988,917989,917990,917991,917992,917993,917994,917995,917996,917997,917998,917999],"cs":[173,8203,12288],"de":[173,8203,12288],"es":[8203,12288],"fr":[173,8203,12288],"it":[160,173,12288],"ja":[173],"ko":[173,12288],"pl":[173,8203,12288],"pt-BR":[173,8203,12288],"qps-ploc":[160,173,8203,12288],"ru":[173,12288],"tr":[160,173,8203,12288],"zh-hans":[160,173,8203,12288],"zh-hant":[173,12288]}')}static{this._data=void 0}static getData(){return this._data||(this._data=new Set([...Object.values(t.getRawData())].flat())),this._data}static isInvisibleCharacter(e){return t.getData().has(e)}static get codePoints(){return t.getData()}};var qn="default",q1="$initialize";var Un=class{constructor(e,n,r,s,i){this.vsWorker=e,this.req=n,this.channel=r,this.method=s,this.args=i,this.type=0}},Bt=class{constructor(e,n,r,s){this.vsWorker=e,this.seq=n,this.res=r,this.err=s,this.type=1}},Wn=class{constructor(e,n,r,s,i){this.vsWorker=e,this.req=n,this.channel=r,this.eventName=s,this.arg=i,this.type=2}},zn=class{constructor(e,n,r){this.vsWorker=e,this.req=n,this.event=r,this.type=3}},$n=class{constructor(e,n){this.vsWorker=e,this.req=n,this.type=4}},On=class{constructor(e){this._workerId=-1,this._handler=e,this._lastSentReq=0,this._pendingReplies=Object.create(null),this._pendingEmitters=new Map,this._pendingEvents=new Map}setWorkerId(e){this._workerId=e}async sendMessage(e,n,r){let s=String(++this._lastSentReq);return new Promise((i,a)=>{this._pendingReplies[s]={resolve:i,reject:a},this._send(new Un(this._workerId,s,e,n,r))})}listen(e,n,r){let s=null,i=new Z({onWillAddFirstListener:()=>{s=String(++this._lastSentReq),this._pendingEmitters.set(s,i),this._send(new Wn(this._workerId,s,e,n,r))},onDidRemoveLastListener:()=>{this._pendingEmitters.delete(s),this._send(new $n(this._workerId,s)),s=null}});return i.event}handleMessage(e){!e||!e.vsWorker||this._workerId!==-1&&e.vsWorker!==this._workerId||this._handleMessage(e)}createProxyToRemoteChannel(e,n){let r={get:(s,i)=>(typeof i=="string"&&!s[i]&&(Zr(i)?s[i]=a=>this.listen(e,i,a):Yr(i)?s[i]=this.listen(e,i,void 0):i.charCodeAt(0)===36&&(s[i]=async(...a)=>(await n?.(),this.sendMessage(e,i,a)))),s[i])};return new Proxy(Object.create(null),r)}_handleMessage(e){switch(e.type){case 1:return this._handleReplyMessage(e);case 0:return this._handleRequestMessage(e);case 2:return this._handleSubscribeEventMessage(e);case 3:return this._handleEventMessage(e);case 4:return this._handleUnsubscribeEventMessage(e)}}_handleReplyMessage(e){if(!this._pendingReplies[e.seq]){console.warn("Got reply to unknown seq");return}let n=this._pendingReplies[e.seq];if(delete this._pendingReplies[e.seq],e.err){let r=e.err;if(e.err.$isError){let s=new Error;s.name=e.err.name,s.message=e.err.message,s.stack=e.err.stack,r=s}n.reject(r);return}n.resolve(e.res)}_handleRequestMessage(e){let n=e.req;this._handler.handleMessage(e.channel,e.method,e.args).then(s=>{this._send(new Bt(this._workerId,n,s,void 0))},s=>{s.detail instanceof Error&&(s.detail=Ct(s.detail)),this._send(new Bt(this._workerId,n,void 0,Ct(s)))})}_handleSubscribeEventMessage(e){let n=e.req,r=this._handler.handleEvent(e.channel,e.eventName,e.arg)(s=>{this._send(new zn(this._workerId,n,s))});this._pendingEvents.set(n,r)}_handleEventMessage(e){if(!this._pendingEmitters.has(e.req)){console.warn("Got event for unknown req");return}this._pendingEmitters.get(e.req).fire(e.event)}_handleUnsubscribeEventMessage(e){if(!this._pendingEvents.has(e.req)){console.warn("Got unsubscribe for unknown req");return}this._pendingEvents.get(e.req).dispose(),this._pendingEvents.delete(e.req)}_send(e){let n=[];if(e.type===0)for(let r=0;r<e.args.length;r++){let s=e.args[r];s instanceof ArrayBuffer&&n.push(s)}else e.type===1&&e.res instanceof ArrayBuffer&&n.push(e.res);this._handler.sendMessage(e,n)}};function Yr(t){return t[0]==="o"&&t[1]==="n"&&Bn(t.charCodeAt(2))}function Zr(t){return/^onDynamic/.test(t)&&Bn(t.charCodeAt(9))}var Vt=class{constructor(e,n){this._localChannels=new Map,this._remoteChannels=new Map,this._protocol=new On({sendMessage:(r,s)=>{e(r,s)},handleMessage:(r,s,i)=>this._handleMessage(r,s,i),handleEvent:(r,s,i)=>this._handleEvent(r,s,i)}),this.requestHandler=n(this)}onmessage(e){this._protocol.handleMessage(e)}_handleMessage(e,n,r){if(e===qn&&n===q1)return this.initialize(r[0]);let s=e===qn?this.requestHandler:this._localChannels.get(e);if(!s)return Promise.reject(new Error(`Missing channel ${e} on worker thread`));let i=s[n];if(typeof i!="function")return Promise.reject(new Error(`Missing method ${n} on worker thread channel ${e}`));try{return Promise.resolve(i.apply(s,r))}catch(a){return Promise.reject(a)}}_handleEvent(e,n,r){let s=e===qn?this.requestHandler:this._localChannels.get(e);if(!s)throw new Error(`Missing channel ${e} on worker thread`);if(Zr(n)){let i=s[n];if(typeof i!="function")throw new Error(`Missing dynamic event ${n} on request handler.`);let a=i.call(s,r);if(typeof a!="function")throw new Error(`Missing dynamic event ${n} on request handler.`);return a}if(Yr(n)){let i=s[n];if(typeof i!="function")throw new Error(`Missing event ${n} on request handler.`);return i}throw new Error(`Malformed event name ${n}`)}getChannel(e){if(!this._remoteChannels.has(e)){let n=this._protocol.createProxyToRemoteChannel(e);this._remoteChannels.set(e,n)}return this._remoteChannels.get(e)}async initialize(e){this._protocol.setWorkerId(e)}};var Kr=!1;function es(t){if(Kr)throw new Error("WebWorker already initialized!");Kr=!0;let e=new Vt(n=>globalThis.postMessage(n),n=>t(n));return globalThis.onmessage=n=>{e.onmessage(n.data)},e}var ie=class{constructor(e,n,r,s){this.originalStart=e,this.originalLength=n,this.modifiedStart=r,this.modifiedLength=s}getOriginalEnd(){return this.originalStart+this.originalLength}getModifiedEnd(){return this.modifiedStart+this.modifiedLength}};var ts=typeof Buffer<"u";new ye(()=>new Uint8Array(256));var Hn,qt=class t{static wrap(e){return ts&&!Buffer.isBuffer(e)&&(e=Buffer.from(e.buffer,e.byteOffset,e.byteLength)),new t(e)}constructor(e){this.buffer=e,this.byteLength=this.buffer.byteLength}toString(){return ts?this.buffer.toString():(Hn||(Hn=new TextDecoder),Hn.decode(this.buffer))}};var ns="0123456789abcdef";function rs({buffer:t}){let e="";for(let n=0;n<t.length;n++){let r=t[n];e+=ns[r>>>4],e+=ns[r&15]}return e}function ss(t,e){return(e<<5)-e+t|0}function os(t,e){e=ss(149417,e);for(let n=0,r=t.length;n<r;n++)e=ss(t.charCodeAt(n),e);return e}function Gn(t,e,n=32){let r=n-e,s=~((1<<r)-1);return(t<<e|(s&t)>>>r)>>>0}function ht(t,e=32){return t instanceof ArrayBuffer?rs(qt.wrap(new Uint8Array(t))):(t>>>0).toString(16).padStart(e/4,"0")}var is=class t{static{this._bigBlock32=new DataView(new ArrayBuffer(320))}constructor(){this._h0=1732584193,this._h1=4023233417,this._h2=2562383102,this._h3=271733878,this._h4=3285377520,this._buff=new Uint8Array(67),this._buffDV=new DataView(this._buff.buffer),this._buffLen=0,this._totalLen=0,this._leftoverHighSurrogate=0,this._finished=!1}update(e){let n=e.length;if(n===0)return;let r=this._buff,s=this._buffLen,i=this._leftoverHighSurrogate,a,l;for(i!==0?(a=i,l=-1,i=0):(a=e.charCodeAt(0),l=0);;){let u=a;if(Qe(a))if(l+1<n){let c=e.charCodeAt(l+1);It(c)?(l++,u=Vn(a,c)):u=65533}else{i=a;break}else It(a)&&(u=65533);if(s=this._push(r,s,u),l++,l<n)a=e.charCodeAt(l);else break}this._buffLen=s,this._leftoverHighSurrogate=i}_push(e,n,r){return r<128?e[n++]=r:r<2048?(e[n++]=192|(r&1984)>>>6,e[n++]=128|(r&63)>>>0):r<65536?(e[n++]=224|(r&61440)>>>12,e[n++]=128|(r&4032)>>>6,e[n++]=128|(r&63)>>>0):(e[n++]=240|(r&1835008)>>>18,e[n++]=128|(r&258048)>>>12,e[n++]=128|(r&4032)>>>6,e[n++]=128|(r&63)>>>0),n>=64&&(this._step(),n-=64,this._totalLen+=64,e[0]=e[64],e[1]=e[65],e[2]=e[66]),n}digest(){return this._finished||(this._finished=!0,this._leftoverHighSurrogate&&(this._leftoverHighSurrogate=0,this._buffLen=this._push(this._buff,this._buffLen,65533)),this._totalLen+=this._buffLen,this._wrapUp()),ht(this._h0)+ht(this._h1)+ht(this._h2)+ht(this._h3)+ht(this._h4)}_wrapUp(){this._buff[this._buffLen++]=128,this._buff.subarray(this._buffLen).fill(0),this._buffLen>56&&(this._step(),this._buff.fill(0));let e=8*this._totalLen;this._buffDV.setUint32(56,Math.floor(e/4294967296),!1),this._buffDV.setUint32(60,e%4294967296,!1),this._step()}_step(){let e=t._bigBlock32,n=this._buffDV;for(let h=0;h<64;h+=4)e.setUint32(h,n.getUint32(h,!1),!1);for(let h=64;h<320;h+=4)e.setUint32(h,Gn(e.getUint32(h-12,!1)^e.getUint32(h-32,!1)^e.getUint32(h-56,!1)^e.getUint32(h-64,!1),1),!1);let r=this._h0,s=this._h1,i=this._h2,a=this._h3,l=this._h4,u,c,f;for(let h=0;h<80;h++)h<20?(u=s&i|~s&a,c=1518500249):h<40?(u=s^i^a,c=1859775393):h<60?(u=s&i|s&a|i&a,c=2400959708):(u=s^i^a,c=3395469782),f=Gn(r,5)+u+l+c+e.getUint32(h*4,!1)&4294967295,l=a,a=i,i=Gn(s,30),s=r,r=f;this._h0=this._h0+r&4294967295,this._h1=this._h1+s&4294967295,this._h2=this._h2+i&4294967295,this._h3=this._h3+a&4294967295,this._h4=this._h4+l&4294967295}};var Ut=class{constructor(e){this.source=e}getElements(){let e=this.source,n=new Int32Array(e.length);for(let r=0,s=e.length;r<s;r++)n[r]=e.charCodeAt(r);return n}};function as(t,e,n){return new ft(new Ut(t),new Ut(e)).ComputeDiff(n).changes}var Le=class{static Assert(e,n){if(!e)throw new Error(n)}},ve=class{static Copy(e,n,r,s,i){for(let a=0;a<i;a++)r[s+a]=e[n+a]}static Copy2(e,n,r,s,i){for(let a=0;a<i;a++)r[s+a]=e[n+a]}},Wt=class{constructor(){this.m_changes=[],this.m_originalStart=1073741824,this.m_modifiedStart=1073741824,this.m_originalCount=0,this.m_modifiedCount=0}MarkNextChange(){(this.m_originalCount>0||this.m_modifiedCount>0)&&this.m_changes.push(new ie(this.m_originalStart,this.m_originalCount,this.m_modifiedStart,this.m_modifiedCount)),this.m_originalCount=0,this.m_modifiedCount=0,this.m_originalStart=1073741824,this.m_modifiedStart=1073741824}AddOriginalElement(e,n){this.m_originalStart=Math.min(this.m_originalStart,e),this.m_modifiedStart=Math.min(this.m_modifiedStart,n),this.m_originalCount++}AddModifiedElement(e,n){this.m_originalStart=Math.min(this.m_originalStart,e),this.m_modifiedStart=Math.min(this.m_modifiedStart,n),this.m_modifiedCount++}getChanges(){return(this.m_originalCount>0||this.m_modifiedCount>0)&&this.MarkNextChange(),this.m_changes}getReverseChanges(){return(this.m_originalCount>0||this.m_modifiedCount>0)&&this.MarkNextChange(),this.m_changes.reverse(),this.m_changes}},ft=class t{constructor(e,n,r=null){this.ContinueProcessingPredicate=r,this._originalSequence=e,this._modifiedSequence=n;let[s,i,a]=t._getElements(e),[l,u,c]=t._getElements(n);this._hasStrings=a&&c,this._originalStringElements=s,this._originalElementsOrHash=i,this._modifiedStringElements=l,this._modifiedElementsOrHash=u,this.m_forwardHistory=[],this.m_reverseHistory=[]}static _isStringArray(e){return e.length>0&&typeof e[0]=="string"}static _getElements(e){let n=e.getElements();if(t._isStringArray(n)){let r=new Int32Array(n.length);for(let s=0,i=n.length;s<i;s++)r[s]=os(n[s],0);return[n,r,!0]}return n instanceof Int32Array?[[],n,!1]:[[],new Int32Array(n),!1]}ElementsAreEqual(e,n){return this._originalElementsOrHash[e]!==this._modifiedElementsOrHash[n]?!1:this._hasStrings?this._originalStringElements[e]===this._modifiedStringElements[n]:!0}ElementsAreStrictEqual(e,n){if(!this.ElementsAreEqual(e,n))return!1;let r=t._getStrictElement(this._originalSequence,e),s=t._getStrictElement(this._modifiedSequence,n);return r===s}static _getStrictElement(e,n){return typeof e.getStrictElement=="function"?e.getStrictElement(n):null}OriginalElementsAreEqual(e,n){return this._originalElementsOrHash[e]!==this._originalElementsOrHash[n]?!1:this._hasStrings?this._originalStringElements[e]===this._originalStringElements[n]:!0}ModifiedElementsAreEqual(e,n){return this._modifiedElementsOrHash[e]!==this._modifiedElementsOrHash[n]?!1:this._hasStrings?this._modifiedStringElements[e]===this._modifiedStringElements[n]:!0}ComputeDiff(e){return this._ComputeDiff(0,this._originalElementsOrHash.length-1,0,this._modifiedElementsOrHash.length-1,e)}_ComputeDiff(e,n,r,s,i){let a=[!1],l=this.ComputeDiffRecursive(e,n,r,s,a);return i&&(l=this.PrettifyChanges(l)),{quitEarly:a[0],changes:l}}ComputeDiffRecursive(e,n,r,s,i){for(i[0]=!1;e<=n&&r<=s&&this.ElementsAreEqual(e,r);)e++,r++;for(;n>=e&&s>=r&&this.ElementsAreEqual(n,s);)n--,s--;if(e>n||r>s){let h;return r<=s?(Le.Assert(e===n+1,"originalStart should only be one more than originalEnd"),h=[new ie(e,0,r,s-r+1)]):e<=n?(Le.Assert(r===s+1,"modifiedStart should only be one more than modifiedEnd"),h=[new ie(e,n-e+1,r,0)]):(Le.Assert(e===n+1,"originalStart should only be one more than originalEnd"),Le.Assert(r===s+1,"modifiedStart should only be one more than modifiedEnd"),h=[]),h}let a=[0],l=[0],u=this.ComputeRecursionPoint(e,n,r,s,a,l,i),c=a[0],f=l[0];if(u!==null)return u;if(!i[0]){let h=this.ComputeDiffRecursive(e,c,r,f,i),m=[];return i[0]?m=[new ie(c+1,n-(c+1)+1,f+1,s-(f+1)+1)]:m=this.ComputeDiffRecursive(c+1,n,f+1,s,i),this.ConcatenateChanges(h,m)}return[new ie(e,n-e+1,r,s-r+1)]}WALKTRACE(e,n,r,s,i,a,l,u,c,f,h,m,b,p,d,x,N,v){let L=null,C=null,D=new Wt,q=n,w=r,_=b[0]-x[0]-s,R=-1073741824,T=this.m_forwardHistory.length-1;do{let I=_+e;I===q||I<w&&c[I-1]<c[I+1]?(h=c[I+1],p=h-_-s,h<R&&D.MarkNextChange(),R=h,D.AddModifiedElement(h+1,p),_=I+1-e):(h=c[I-1]+1,p=h-_-s,h<R&&D.MarkNextChange(),R=h-1,D.AddOriginalElement(h,p+1),_=I-1-e),T>=0&&(c=this.m_forwardHistory[T],e=c[0],q=1,w=c.length-1)}while(--T>=-1);if(L=D.getReverseChanges(),v[0]){let I=b[0]+1,y=x[0]+1;if(L!==null&&L.length>0){let S=L[L.length-1];I=Math.max(I,S.getOriginalEnd()),y=Math.max(y,S.getModifiedEnd())}C=[new ie(I,m-I+1,y,d-y+1)]}else{D=new Wt,q=a,w=l,_=b[0]-x[0]-u,R=1073741824,T=N?this.m_reverseHistory.length-1:this.m_reverseHistory.length-2;do{let I=_+i;I===q||I<w&&f[I-1]>=f[I+1]?(h=f[I+1]-1,p=h-_-u,h>R&&D.MarkNextChange(),R=h+1,D.AddOriginalElement(h+1,p+1),_=I+1-i):(h=f[I-1],p=h-_-u,h>R&&D.MarkNextChange(),R=h,D.AddModifiedElement(h+1,p+1),_=I-1-i),T>=0&&(f=this.m_reverseHistory[T],i=f[0],q=1,w=f.length-1)}while(--T>=-1);C=D.getChanges()}return this.ConcatenateChanges(L,C)}ComputeRecursionPoint(e,n,r,s,i,a,l){let u=0,c=0,f=0,h=0,m=0,b=0;e--,r--,i[0]=0,a[0]=0,this.m_forwardHistory=[],this.m_reverseHistory=[];let p=n-e+(s-r),d=p+1,x=new Int32Array(d),N=new Int32Array(d),v=s-r,L=n-e,C=e-r,D=n-s,w=(L-v)%2===0;x[v]=e,N[L]=n,l[0]=!1;for(let _=1;_<=p/2+1;_++){let R=0,T=0;f=this.ClipDiagonalBound(v-_,_,v,d),h=this.ClipDiagonalBound(v+_,_,v,d);for(let y=f;y<=h;y+=2){y===f||y<h&&x[y-1]<x[y+1]?u=x[y+1]:u=x[y-1]+1,c=u-(y-v)-C;let S=u;for(;u<n&&c<s&&this.ElementsAreEqual(u+1,c+1);)u++,c++;if(x[y]=u,u+c>R+T&&(R=u,T=c),!w&&Math.abs(y-L)<=_-1&&u>=N[y])return i[0]=u,a[0]=c,S<=N[y]&&_<=1448?this.WALKTRACE(v,f,h,C,L,m,b,D,x,N,u,n,i,c,s,a,w,l):null}let I=(R-e+(T-r)-_)/2;if(this.ContinueProcessingPredicate!==null&&!this.ContinueProcessingPredicate(R,I))return l[0]=!0,i[0]=R,a[0]=T,I>0&&_<=1448?this.WALKTRACE(v,f,h,C,L,m,b,D,x,N,u,n,i,c,s,a,w,l):(e++,r++,[new ie(e,n-e+1,r,s-r+1)]);m=this.ClipDiagonalBound(L-_,_,L,d),b=this.ClipDiagonalBound(L+_,_,L,d);for(let y=m;y<=b;y+=2){y===m||y<b&&N[y-1]>=N[y+1]?u=N[y+1]-1:u=N[y-1],c=u-(y-L)-D;let S=u;for(;u>e&&c>r&&this.ElementsAreEqual(u,c);)u--,c--;if(N[y]=u,w&&Math.abs(y-v)<=_&&u<=x[y])return i[0]=u,a[0]=c,S>=x[y]&&_<=1448?this.WALKTRACE(v,f,h,C,L,m,b,D,x,N,u,n,i,c,s,a,w,l):null}if(_<=1447){let y=new Int32Array(h-f+2);y[0]=v-f+1,ve.Copy2(x,f,y,1,h-f+1),this.m_forwardHistory.push(y),y=new Int32Array(b-m+2),y[0]=L-m+1,ve.Copy2(N,m,y,1,b-m+1),this.m_reverseHistory.push(y)}}return this.WALKTRACE(v,f,h,C,L,m,b,D,x,N,u,n,i,c,s,a,w,l)}PrettifyChanges(e){for(let n=0;n<e.length;n++){let r=e[n],s=n<e.length-1?e[n+1].originalStart:this._originalElementsOrHash.length,i=n<e.length-1?e[n+1].modifiedStart:this._modifiedElementsOrHash.length,a=r.originalLength>0,l=r.modifiedLength>0;for(;r.originalStart+r.originalLength<s&&r.modifiedStart+r.modifiedLength<i&&(!a||this.OriginalElementsAreEqual(r.originalStart,r.originalStart+r.originalLength))&&(!l||this.ModifiedElementsAreEqual(r.modifiedStart,r.modifiedStart+r.modifiedLength));){let c=this.ElementsAreStrictEqual(r.originalStart,r.modifiedStart);if(this.ElementsAreStrictEqual(r.originalStart+r.originalLength,r.modifiedStart+r.modifiedLength)&&!c)break;r.originalStart++,r.modifiedStart++}let u=[null];if(n<e.length-1&&this.ChangesOverlap(e[n],e[n+1],u)){e[n]=u[0],e.splice(n+1,1),n--;continue}}for(let n=e.length-1;n>=0;n--){let r=e[n],s=0,i=0;if(n>0){let h=e[n-1];s=h.originalStart+h.originalLength,i=h.modifiedStart+h.modifiedLength}let a=r.originalLength>0,l=r.modifiedLength>0,u=0,c=this._boundaryScore(r.originalStart,r.originalLength,r.modifiedStart,r.modifiedLength);for(let h=1;;h++){let m=r.originalStart-h,b=r.modifiedStart-h;if(m<s||b<i||a&&!this.OriginalElementsAreEqual(m,m+r.originalLength)||l&&!this.ModifiedElementsAreEqual(b,b+r.modifiedLength))break;let d=(m===s&&b===i?5:0)+this._boundaryScore(m,r.originalLength,b,r.modifiedLength);d>c&&(c=d,u=h)}r.originalStart-=u,r.modifiedStart-=u;let f=[null];if(n>0&&this.ChangesOverlap(e[n-1],e[n],f)){e[n-1]=f[0],e.splice(n,1),n++;continue}}if(this._hasStrings)for(let n=1,r=e.length;n<r;n++){let s=e[n-1],i=e[n],a=i.originalStart-s.originalStart-s.originalLength,l=s.originalStart,u=i.originalStart+i.originalLength,c=u-l,f=s.modifiedStart,h=i.modifiedStart+i.modifiedLength,m=h-f;if(a<5&&c<20&&m<20){let b=this._findBetterContiguousSequence(l,c,f,m,a);if(b){let[p,d]=b;(p!==s.originalStart+s.originalLength||d!==s.modifiedStart+s.modifiedLength)&&(s.originalLength=p-s.originalStart,s.modifiedLength=d-s.modifiedStart,i.originalStart=p+a,i.modifiedStart=d+a,i.originalLength=u-i.originalStart,i.modifiedLength=h-i.modifiedStart)}}}return e}_findBetterContiguousSequence(e,n,r,s,i){if(n<i||s<i)return null;let a=e+n-i+1,l=r+s-i+1,u=0,c=0,f=0;for(let h=e;h<a;h++)for(let m=r;m<l;m++){let b=this._contiguousSequenceScore(h,m,i);b>0&&b>u&&(u=b,c=h,f=m)}return u>0?[c,f]:null}_contiguousSequenceScore(e,n,r){let s=0;for(let i=0;i<r;i++){if(!this.ElementsAreEqual(e+i,n+i))return 0;s+=this._originalStringElements[e+i].length}return s}_OriginalIsBoundary(e){return e<=0||e>=this._originalElementsOrHash.length-1?!0:this._hasStrings&&/^\s*$/.test(this._originalStringElements[e])}_OriginalRegionIsBoundary(e,n){if(this._OriginalIsBoundary(e)||this._OriginalIsBoundary(e-1))return!0;if(n>0){let r=e+n;if(this._OriginalIsBoundary(r-1)||this._OriginalIsBoundary(r))return!0}return!1}_ModifiedIsBoundary(e){return e<=0||e>=this._modifiedElementsOrHash.length-1?!0:this._hasStrings&&/^\s*$/.test(this._modifiedStringElements[e])}_ModifiedRegionIsBoundary(e,n){if(this._ModifiedIsBoundary(e)||this._ModifiedIsBoundary(e-1))return!0;if(n>0){let r=e+n;if(this._ModifiedIsBoundary(r-1)||this._ModifiedIsBoundary(r))return!0}return!1}_boundaryScore(e,n,r,s){let i=this._OriginalRegionIsBoundary(e,n)?1:0,a=this._ModifiedRegionIsBoundary(r,s)?1:0;return i+a}ConcatenateChanges(e,n){let r=[];if(e.length===0||n.length===0)return n.length>0?n:e;if(this.ChangesOverlap(e[e.length-1],n[0],r)){let s=new Array(e.length+n.length-1);return ve.Copy(e,0,s,0,e.length-1),s[e.length-1]=r[0],ve.Copy(n,1,s,e.length,n.length-1),s}else{let s=new Array(e.length+n.length);return ve.Copy(e,0,s,0,e.length),ve.Copy(n,0,s,e.length,n.length),s}}ChangesOverlap(e,n,r){if(Le.Assert(e.originalStart<=n.originalStart,"Left change is not less than or equal to right change"),Le.Assert(e.modifiedStart<=n.modifiedStart,"Left change is not less than or equal to right change"),e.originalStart+e.originalLength>=n.originalStart||e.modifiedStart+e.modifiedLength>=n.modifiedStart){let s=e.originalStart,i=e.originalLength,a=e.modifiedStart,l=e.modifiedLength;return e.originalStart+e.originalLength>=n.originalStart&&(i=n.originalStart+n.originalLength-e.originalStart),e.modifiedStart+e.modifiedLength>=n.modifiedStart&&(l=n.modifiedStart+n.modifiedLength-e.modifiedStart),r[0]=new ie(s,i,a,l),!0}else return r[0]=null,!1}ClipDiagonalBound(e,n,r,s){if(e>=0&&e<s)return e;let i=r,a=s-r-1,l=n%2===0;if(e<0){let u=i%2===0;return l===u?0:1}else{let u=a%2===0;return l===u?s-1:s-2}}};var B=class t{constructor(e,n){this.lineNumber=e,this.column=n}with(e=this.lineNumber,n=this.column){return e===this.lineNumber&&n===this.column?this:new t(e,n)}delta(e=0,n=0){return this.with(Math.max(1,this.lineNumber+e),Math.max(1,this.column+n))}equals(e){return t.equals(this,e)}static equals(e,n){return!e&&!n?!0:!!e&&!!n&&e.lineNumber===n.lineNumber&&e.column===n.column}isBefore(e){return t.isBefore(this,e)}static isBefore(e,n){return e.lineNumber<n.lineNumber?!0:n.lineNumber<e.lineNumber?!1:e.column<n.column}isBeforeOrEqual(e){return t.isBeforeOrEqual(this,e)}static isBeforeOrEqual(e,n){return e.lineNumber<n.lineNumber?!0:n.lineNumber<e.lineNumber?!1:e.column<=n.column}static compare(e,n){let r=e.lineNumber|0,s=n.lineNumber|0;if(r===s){let i=e.column|0,a=n.column|0;return i-a}return r-s}clone(){return new t(this.lineNumber,this.column)}toString(){return"("+this.lineNumber+","+this.column+")"}static lift(e){return new t(e.lineNumber,e.column)}static isIPosition(e){return!!e&&typeof e.lineNumber=="number"&&typeof e.column=="number"}toJSON(){return{lineNumber:this.lineNumber,column:this.column}}};var E=class t{constructor(e,n,r,s){e>r||e===r&&n>s?(this.startLineNumber=r,this.startColumn=s,this.endLineNumber=e,this.endColumn=n):(this.startLineNumber=e,this.startColumn=n,this.endLineNumber=r,this.endColumn=s)}isEmpty(){return t.isEmpty(this)}static isEmpty(e){return e.startLineNumber===e.endLineNumber&&e.startColumn===e.endColumn}containsPosition(e){return t.containsPosition(this,e)}static containsPosition(e,n){return!(n.lineNumber<e.startLineNumber||n.lineNumber>e.endLineNumber||n.lineNumber===e.startLineNumber&&n.column<e.startColumn||n.lineNumber===e.endLineNumber&&n.column>e.endColumn)}static strictContainsPosition(e,n){return!(n.lineNumber<e.startLineNumber||n.lineNumber>e.endLineNumber||n.lineNumber===e.startLineNumber&&n.column<=e.startColumn||n.lineNumber===e.endLineNumber&&n.column>=e.endColumn)}containsRange(e){return t.containsRange(this,e)}static containsRange(e,n){return!(n.startLineNumber<e.startLineNumber||n.endLineNumber<e.startLineNumber||n.startLineNumber>e.endLineNumber||n.endLineNumber>e.endLineNumber||n.startLineNumber===e.startLineNumber&&n.startColumn<e.startColumn||n.endLineNumber===e.endLineNumber&&n.endColumn>e.endColumn)}strictContainsRange(e){return t.strictContainsRange(this,e)}static strictContainsRange(e,n){return!(n.startLineNumber<e.startLineNumber||n.endLineNumber<e.startLineNumber||n.startLineNumber>e.endLineNumber||n.endLineNumber>e.endLineNumber||n.startLineNumber===e.startLineNumber&&n.startColumn<=e.startColumn||n.endLineNumber===e.endLineNumber&&n.endColumn>=e.endColumn)}plusRange(e){return t.plusRange(this,e)}static plusRange(e,n){let r,s,i,a;return n.startLineNumber<e.startLineNumber?(r=n.startLineNumber,s=n.startColumn):n.startLineNumber===e.startLineNumber?(r=n.startLineNumber,s=Math.min(n.startColumn,e.startColumn)):(r=e.startLineNumber,s=e.startColumn),n.endLineNumber>e.endLineNumber?(i=n.endLineNumber,a=n.endColumn):n.endLineNumber===e.endLineNumber?(i=n.endLineNumber,a=Math.max(n.endColumn,e.endColumn)):(i=e.endLineNumber,a=e.endColumn),new t(r,s,i,a)}intersectRanges(e){return t.intersectRanges(this,e)}static intersectRanges(e,n){let r=e.startLineNumber,s=e.startColumn,i=e.endLineNumber,a=e.endColumn,l=n.startLineNumber,u=n.startColumn,c=n.endLineNumber,f=n.endColumn;return r<l?(r=l,s=u):r===l&&(s=Math.max(s,u)),i>c?(i=c,a=f):i===c&&(a=Math.min(a,f)),r>i||r===i&&s>a?null:new t(r,s,i,a)}equalsRange(e){return t.equalsRange(this,e)}static equalsRange(e,n){return!e&&!n?!0:!!e&&!!n&&e.startLineNumber===n.startLineNumber&&e.startColumn===n.startColumn&&e.endLineNumber===n.endLineNumber&&e.endColumn===n.endColumn}getEndPosition(){return t.getEndPosition(this)}static getEndPosition(e){return new B(e.endLineNumber,e.endColumn)}getStartPosition(){return t.getStartPosition(this)}static getStartPosition(e){return new B(e.startLineNumber,e.startColumn)}toString(){return"["+this.startLineNumber+","+this.startColumn+" -> "+this.endLineNumber+","+this.endColumn+"]"}setEndPosition(e,n){return new t(this.startLineNumber,this.startColumn,e,n)}setStartPosition(e,n){return new t(e,n,this.endLineNumber,this.endColumn)}collapseToStart(){return t.collapseToStart(this)}static collapseToStart(e){return new t(e.startLineNumber,e.startColumn,e.startLineNumber,e.startColumn)}collapseToEnd(){return t.collapseToEnd(this)}static collapseToEnd(e){return new t(e.endLineNumber,e.endColumn,e.endLineNumber,e.endColumn)}delta(e){return new t(this.startLineNumber+e,this.startColumn,this.endLineNumber+e,this.endColumn)}isSingleLine(){return this.startLineNumber===this.endLineNumber}static fromPositions(e,n=e){return new t(e.lineNumber,e.column,n.lineNumber,n.column)}static lift(e){return e?new t(e.startLineNumber,e.startColumn,e.endLineNumber,e.endColumn):null}static isIRange(e){return!!e&&typeof e.startLineNumber=="number"&&typeof e.startColumn=="number"&&typeof e.endLineNumber=="number"&&typeof e.endColumn=="number"}static areIntersectingOrTouching(e,n){return!(e.endLineNumber<n.startLineNumber||e.endLineNumber===n.startLineNumber&&e.endColumn<n.startColumn||n.endLineNumber<e.startLineNumber||n.endLineNumber===e.startLineNumber&&n.endColumn<e.startColumn)}static areIntersecting(e,n){return!(e.endLineNumber<n.startLineNumber||e.endLineNumber===n.startLineNumber&&e.endColumn<=n.startColumn||n.endLineNumber<e.startLineNumber||n.endLineNumber===e.startLineNumber&&n.endColumn<=e.startColumn)}static areOnlyIntersecting(e,n){return!(e.endLineNumber<n.startLineNumber-1||e.endLineNumber===n.startLineNumber&&e.endColumn<n.startColumn-1||n.endLineNumber<e.startLineNumber-1||n.endLineNumber===e.startLineNumber&&n.endColumn<e.startColumn-1)}static compareRangesUsingStarts(e,n){if(e&&n){let i=e.startLineNumber|0,a=n.startLineNumber|0;if(i===a){let l=e.startColumn|0,u=n.startColumn|0;if(l===u){let c=e.endLineNumber|0,f=n.endLineNumber|0;if(c===f){let h=e.endColumn|0,m=n.endColumn|0;return h-m}return c-f}return l-u}return i-a}return(e?1:0)-(n?1:0)}static compareRangesUsingEnds(e,n){return e.endLineNumber===n.endLineNumber?e.endColumn===n.endColumn?e.startLineNumber===n.startLineNumber?e.startColumn-n.startColumn:e.startLineNumber-n.startLineNumber:e.endColumn-n.endColumn:e.endLineNumber-n.endLineNumber}static spansMultipleLines(e){return e.endLineNumber>e.startLineNumber}toJSON(){return this}};function jn(t){return t<0?0:t>255?255:t|0}function Ve(t){return t<0?0:t>4294967295?4294967295:t|0}var mt=class t{constructor(e){let n=jn(e);this._defaultValue=n,this._asciiMap=t._createAsciiMap(n),this._map=new Map}static _createAsciiMap(e){let n=new Uint8Array(256);return n.fill(e),n}set(e,n){let r=jn(n);e>=0&&e<256?this._asciiMap[e]=r:this._map.set(e,r)}get(e){return e>=0&&e<256?this._asciiMap[e]:this._map.get(e)||this._defaultValue}clear(){this._asciiMap.fill(this._defaultValue),this._map.clear()}};var Qn=class{constructor(e,n,r){let s=new Uint8Array(e*n);for(let i=0,a=e*n;i<a;i++)s[i]=r;this._data=s,this.rows=e,this.cols=n}get(e,n){return this._data[e*this.cols+n]}set(e,n,r){this._data[e*this.cols+n]=r}},Jn=class{constructor(e){let n=0,r=0;for(let i=0,a=e.length;i<a;i++){let[l,u,c]=e[i];u>n&&(n=u),l>r&&(r=l),c>r&&(r=c)}n++,r++;let s=new Qn(r,n,0);for(let i=0,a=e.length;i<a;i++){let[l,u,c]=e[i];s.set(l,u,c)}this._states=s,this._maxCharCode=n}nextState(e,n){return n<0||n>=this._maxCharCode?0:this._states.get(e,n)}},Xn=null;function U1(){return Xn===null&&(Xn=new Jn([[1,104,2],[1,72,2],[1,102,6],[1,70,6],[2,116,3],[2,84,3],[3,116,4],[3,84,4],[4,112,5],[4,80,5],[5,115,9],[5,83,9],[5,58,10],[6,105,7],[6,73,7],[7,108,8],[7,76,8],[8,101,9],[8,69,9],[9,58,10],[10,47,11],[11,47,12]])),Xn}var dt=null;function W1(){if(dt===null){dt=new mt(0);let t=` 	<>'"\u3001\u3002\uFF61\uFF64\uFF0C\uFF0E\uFF1A\uFF1B\u2018\u3008\u300C\u300E\u3014\uFF08\uFF3B\uFF5B\uFF62\uFF63\uFF5D\uFF3D\uFF09\u3015\u300F\u300D\u3009\u2019\uFF40\uFF5E\u2026|`;for(let n=0;n<t.length;n++)dt.set(t.charCodeAt(n),1);let e=".,;:";for(let n=0;n<e.length;n++)dt.set(e.charCodeAt(n),2)}return dt}var Yn=class t{static _createLink(e,n,r,s,i){let a=i-1;do{let l=n.charCodeAt(a);if(e.get(l)!==2)break;a--}while(a>s);if(s>0){let l=n.charCodeAt(s-1),u=n.charCodeAt(a);(l===40&&u===41||l===91&&u===93||l===123&&u===125)&&a--}return{range:{startLineNumber:r,startColumn:s+1,endLineNumber:r,endColumn:a+2},url:n.substring(s,a+1)}}static computeLinks(e,n=U1()){let r=W1(),s=[];for(let i=1,a=e.getLineCount();i<=a;i++){let l=e.getLineContent(i),u=l.length,c=0,f=0,h=0,m=1,b=!1,p=!1,d=!1,x=!1;for(;c<u;){let N=!1,v=l.charCodeAt(c);if(m===13){let L;switch(v){case 40:b=!0,L=0;break;case 41:L=b?0:1;break;case 91:d=!0,p=!0,L=0;break;case 93:d=!1,L=p?0:1;break;case 123:x=!0,L=0;break;case 125:L=x?0:1;break;case 39:case 34:case 96:h===v?L=1:h===39||h===34||h===96?L=0:L=1;break;case 42:L=h===42?1:0;break;case 32:L=d?0:1;break;default:L=r.get(v)}L===1&&(s.push(t._createLink(r,l,i,f,c)),N=!0)}else if(m===12){let L;v===91?(p=!0,L=0):L=r.get(v),L===1?N=!0:m=13}else m=n.nextState(m,v),m===0&&(N=!0);N&&(m=1,b=!1,p=!1,x=!1,f=c+1,h=v),c++}m===13&&s.push(t._createLink(r,l,i,f,u))}return s}};function ls(t){return!t||typeof t.getLineCount!="function"||typeof t.getLineContent!="function"?[]:Yn.computeLinks(t)}var zt=class t{constructor(){this._defaultValueSet=[["true","false"],["True","False"],["Private","Public","Friend","ReadOnly","Partial","Protected","WriteOnly"],["public","protected","private"]]}static{this.INSTANCE=new t}navigateValueSet(e,n,r,s,i){if(e&&n){let a=this.doNavigateValueSet(n,i);if(a)return{range:e,value:a}}if(r&&s){let a=this.doNavigateValueSet(s,i);if(a)return{range:r,value:a}}return null}doNavigateValueSet(e,n){let r=this.numberReplace(e,n);return r!==null?r:this.textReplace(e,n)}numberReplace(e,n){let r=Math.pow(10,e.length-(e.lastIndexOf(".")+1)),s=Number(e),i=parseFloat(e);return!isNaN(s)&&!isNaN(i)&&s===i?s===0&&!n?null:(s=Math.floor(s*r),s+=n?r:-r,String(s/r)):null}textReplace(e,n){return this.valueSetsReplace(this._defaultValueSet,e,n)}valueSetsReplace(e,n,r){let s=null;for(let i=0,a=e.length;s===null&&i<a;i++)s=this.valueSetReplace(e[i],n,r);return s}valueSetReplace(e,n,r){let s=e.indexOf(n);return s>=0?(s+=r?1:-1,s<0?s=e.length-1:s%=e.length,e[s]):null}};var us=Object.freeze(function(t,e){let n=setTimeout(t.bind(e),0);return{dispose(){clearTimeout(n)}}}),$t;(function(t){function e(n){return n===t.None||n===t.Cancelled||n instanceof Je?!0:!n||typeof n!="object"?!1:typeof n.isCancellationRequested=="boolean"&&typeof n.onCancellationRequested=="function"}t.isCancellationToken=e,t.None=Object.freeze({isCancellationRequested:!1,onCancellationRequested:Et.None}),t.Cancelled=Object.freeze({isCancellationRequested:!0,onCancellationRequested:us})})($t||($t={}));var Je=class{constructor(){this._isCancelled=!1,this._emitter=null}cancel(){this._isCancelled||(this._isCancelled=!0,this._emitter&&(this._emitter.fire(void 0),this.dispose()))}get isCancellationRequested(){return this._isCancelled}get onCancellationRequested(){return this._isCancelled?us:(this._emitter||(this._emitter=new Z),this._emitter.event)}dispose(){this._emitter&&(this._emitter.dispose(),this._emitter=null)}},gt=class{constructor(e){this._token=void 0,this._parentListener=void 0,this._parentListener=e&&e.onCancellationRequested(this.cancel,this)}get token(){return this._token||(this._token=new Je),this._token}cancel(){this._token?this._token instanceof Je&&this._token.cancel():this._token=$t.Cancelled}dispose(e=!1){e&&this.cancel(),this._parentListener?.dispose(),this._token?this._token instanceof Je&&this._token.dispose():this._token=$t.None}};var pt=class{constructor(){this._keyCodeToStr=[],this._strToKeyCode=Object.create(null)}define(e,n){this._keyCodeToStr[e]=n,this._strToKeyCode[n.toLowerCase()]=e}keyCodeToStr(e){return this._keyCodeToStr[e]}strToKeyCode(e){return this._strToKeyCode[e.toLowerCase()]||0}},Ot=new pt,Zn=new pt,Kn=new pt,z1=new Array(230),$1=Object.create(null),O1=Object.create(null),hs=[];for(let t=0;t<=193;t++)hs[t]=-1;(function(){let e=[[1,0,"None",0,"unknown",0,"VK_UNKNOWN","",""],[1,1,"Hyper",0,"",0,"","",""],[1,2,"Super",0,"",0,"","",""],[1,3,"Fn",0,"",0,"","",""],[1,4,"FnLock",0,"",0,"","",""],[1,5,"Suspend",0,"",0,"","",""],[1,6,"Resume",0,"",0,"","",""],[1,7,"Turbo",0,"",0,"","",""],[1,8,"Sleep",0,"",0,"VK_SLEEP","",""],[1,9,"WakeUp",0,"",0,"","",""],[0,10,"KeyA",31,"A",65,"VK_A","",""],[0,11,"KeyB",32,"B",66,"VK_B","",""],[0,12,"KeyC",33,"C",67,"VK_C","",""],[0,13,"KeyD",34,"D",68,"VK_D","",""],[0,14,"KeyE",35,"E",69,"VK_E","",""],[0,15,"KeyF",36,"F",70,"VK_F","",""],[0,16,"KeyG",37,"G",71,"VK_G","",""],[0,17,"KeyH",38,"H",72,"VK_H","",""],[0,18,"KeyI",39,"I",73,"VK_I","",""],[0,19,"KeyJ",40,"J",74,"VK_J","",""],[0,20,"KeyK",41,"K",75,"VK_K","",""],[0,21,"KeyL",42,"L",76,"VK_L","",""],[0,22,"KeyM",43,"M",77,"VK_M","",""],[0,23,"KeyN",44,"N",78,"VK_N","",""],[0,24,"KeyO",45,"O",79,"VK_O","",""],[0,25,"KeyP",46,"P",80,"VK_P","",""],[0,26,"KeyQ",47,"Q",81,"VK_Q","",""],[0,27,"KeyR",48,"R",82,"VK_R","",""],[0,28,"KeyS",49,"S",83,"VK_S","",""],[0,29,"KeyT",50,"T",84,"VK_T","",""],[0,30,"KeyU",51,"U",85,"VK_U","",""],[0,31,"KeyV",52,"V",86,"VK_V","",""],[0,32,"KeyW",53,"W",87,"VK_W","",""],[0,33,"KeyX",54,"X",88,"VK_X","",""],[0,34,"KeyY",55,"Y",89,"VK_Y","",""],[0,35,"KeyZ",56,"Z",90,"VK_Z","",""],[0,36,"Digit1",22,"1",49,"VK_1","",""],[0,37,"Digit2",23,"2",50,"VK_2","",""],[0,38,"Digit3",24,"3",51,"VK_3","",""],[0,39,"Digit4",25,"4",52,"VK_4","",""],[0,40,"Digit5",26,"5",53,"VK_5","",""],[0,41,"Digit6",27,"6",54,"VK_6","",""],[0,42,"Digit7",28,"7",55,"VK_7","",""],[0,43,"Digit8",29,"8",56,"VK_8","",""],[0,44,"Digit9",30,"9",57,"VK_9","",""],[0,45,"Digit0",21,"0",48,"VK_0","",""],[1,46,"Enter",3,"Enter",13,"VK_RETURN","",""],[1,47,"Escape",9,"Escape",27,"VK_ESCAPE","",""],[1,48,"Backspace",1,"Backspace",8,"VK_BACK","",""],[1,49,"Tab",2,"Tab",9,"VK_TAB","",""],[1,50,"Space",10,"Space",32,"VK_SPACE","",""],[0,51,"Minus",88,"-",189,"VK_OEM_MINUS","-","OEM_MINUS"],[0,52,"Equal",86,"=",187,"VK_OEM_PLUS","=","OEM_PLUS"],[0,53,"BracketLeft",92,"[",219,"VK_OEM_4","[","OEM_4"],[0,54,"BracketRight",94,"]",221,"VK_OEM_6","]","OEM_6"],[0,55,"Backslash",93,"\\",220,"VK_OEM_5","\\","OEM_5"],[0,56,"IntlHash",0,"",0,"","",""],[0,57,"Semicolon",85,";",186,"VK_OEM_1",";","OEM_1"],[0,58,"Quote",95,"'",222,"VK_OEM_7","'","OEM_7"],[0,59,"Backquote",91,"`",192,"VK_OEM_3","`","OEM_3"],[0,60,"Comma",87,",",188,"VK_OEM_COMMA",",","OEM_COMMA"],[0,61,"Period",89,".",190,"VK_OEM_PERIOD",".","OEM_PERIOD"],[0,62,"Slash",90,"/",191,"VK_OEM_2","/","OEM_2"],[1,63,"CapsLock",8,"CapsLock",20,"VK_CAPITAL","",""],[1,64,"F1",59,"F1",112,"VK_F1","",""],[1,65,"F2",60,"F2",113,"VK_F2","",""],[1,66,"F3",61,"F3",114,"VK_F3","",""],[1,67,"F4",62,"F4",115,"VK_F4","",""],[1,68,"F5",63,"F5",116,"VK_F5","",""],[1,69,"F6",64,"F6",117,"VK_F6","",""],[1,70,"F7",65,"F7",118,"VK_F7","",""],[1,71,"F8",66,"F8",119,"VK_F8","",""],[1,72,"F9",67,"F9",120,"VK_F9","",""],[1,73,"F10",68,"F10",121,"VK_F10","",""],[1,74,"F11",69,"F11",122,"VK_F11","",""],[1,75,"F12",70,"F12",123,"VK_F12","",""],[1,76,"PrintScreen",0,"",0,"","",""],[1,77,"ScrollLock",84,"ScrollLock",145,"VK_SCROLL","",""],[1,78,"Pause",7,"PauseBreak",19,"VK_PAUSE","",""],[1,79,"Insert",19,"Insert",45,"VK_INSERT","",""],[1,80,"Home",14,"Home",36,"VK_HOME","",""],[1,81,"PageUp",11,"PageUp",33,"VK_PRIOR","",""],[1,82,"Delete",20,"Delete",46,"VK_DELETE","",""],[1,83,"End",13,"End",35,"VK_END","",""],[1,84,"PageDown",12,"PageDown",34,"VK_NEXT","",""],[1,85,"ArrowRight",17,"RightArrow",39,"VK_RIGHT","Right",""],[1,86,"ArrowLeft",15,"LeftArrow",37,"VK_LEFT","Left",""],[1,87,"ArrowDown",18,"DownArrow",40,"VK_DOWN","Down",""],[1,88,"ArrowUp",16,"UpArrow",38,"VK_UP","Up",""],[1,89,"NumLock",83,"NumLock",144,"VK_NUMLOCK","",""],[1,90,"NumpadDivide",113,"NumPad_Divide",111,"VK_DIVIDE","",""],[1,91,"NumpadMultiply",108,"NumPad_Multiply",106,"VK_MULTIPLY","",""],[1,92,"NumpadSubtract",111,"NumPad_Subtract",109,"VK_SUBTRACT","",""],[1,93,"NumpadAdd",109,"NumPad_Add",107,"VK_ADD","",""],[1,94,"NumpadEnter",3,"",0,"","",""],[1,95,"Numpad1",99,"NumPad1",97,"VK_NUMPAD1","",""],[1,96,"Numpad2",100,"NumPad2",98,"VK_NUMPAD2","",""],[1,97,"Numpad3",101,"NumPad3",99,"VK_NUMPAD3","",""],[1,98,"Numpad4",102,"NumPad4",100,"VK_NUMPAD4","",""],[1,99,"Numpad5",103,"NumPad5",101,"VK_NUMPAD5","",""],[1,100,"Numpad6",104,"NumPad6",102,"VK_NUMPAD6","",""],[1,101,"Numpad7",105,"NumPad7",103,"VK_NUMPAD7","",""],[1,102,"Numpad8",106,"NumPad8",104,"VK_NUMPAD8","",""],[1,103,"Numpad9",107,"NumPad9",105,"VK_NUMPAD9","",""],[1,104,"Numpad0",98,"NumPad0",96,"VK_NUMPAD0","",""],[1,105,"NumpadDecimal",112,"NumPad_Decimal",110,"VK_DECIMAL","",""],[0,106,"IntlBackslash",97,"OEM_102",226,"VK_OEM_102","",""],[1,107,"ContextMenu",58,"ContextMenu",93,"","",""],[1,108,"Power",0,"",0,"","",""],[1,109,"NumpadEqual",0,"",0,"","",""],[1,110,"F13",71,"F13",124,"VK_F13","",""],[1,111,"F14",72,"F14",125,"VK_F14","",""],[1,112,"F15",73,"F15",126,"VK_F15","",""],[1,113,"F16",74,"F16",127,"VK_F16","",""],[1,114,"F17",75,"F17",128,"VK_F17","",""],[1,115,"F18",76,"F18",129,"VK_F18","",""],[1,116,"F19",77,"F19",130,"VK_F19","",""],[1,117,"F20",78,"F20",131,"VK_F20","",""],[1,118,"F21",79,"F21",132,"VK_F21","",""],[1,119,"F22",80,"F22",133,"VK_F22","",""],[1,120,"F23",81,"F23",134,"VK_F23","",""],[1,121,"F24",82,"F24",135,"VK_F24","",""],[1,122,"Open",0,"",0,"","",""],[1,123,"Help",0,"",0,"","",""],[1,124,"Select",0,"",0,"","",""],[1,125,"Again",0,"",0,"","",""],[1,126,"Undo",0,"",0,"","",""],[1,127,"Cut",0,"",0,"","",""],[1,128,"Copy",0,"",0,"","",""],[1,129,"Paste",0,"",0,"","",""],[1,130,"Find",0,"",0,"","",""],[1,131,"AudioVolumeMute",117,"AudioVolumeMute",173,"VK_VOLUME_MUTE","",""],[1,132,"AudioVolumeUp",118,"AudioVolumeUp",175,"VK_VOLUME_UP","",""],[1,133,"AudioVolumeDown",119,"AudioVolumeDown",174,"VK_VOLUME_DOWN","",""],[1,134,"NumpadComma",110,"NumPad_Separator",108,"VK_SEPARATOR","",""],[0,135,"IntlRo",115,"ABNT_C1",193,"VK_ABNT_C1","",""],[1,136,"KanaMode",0,"",0,"","",""],[0,137,"IntlYen",0,"",0,"","",""],[1,138,"Convert",0,"",0,"","",""],[1,139,"NonConvert",0,"",0,"","",""],[1,140,"Lang1",0,"",0,"","",""],[1,141,"Lang2",0,"",0,"","",""],[1,142,"Lang3",0,"",0,"","",""],[1,143,"Lang4",0,"",0,"","",""],[1,144,"Lang5",0,"",0,"","",""],[1,145,"Abort",0,"",0,"","",""],[1,146,"Props",0,"",0,"","",""],[1,147,"NumpadParenLeft",0,"",0,"","",""],[1,148,"NumpadParenRight",0,"",0,"","",""],[1,149,"NumpadBackspace",0,"",0,"","",""],[1,150,"NumpadMemoryStore",0,"",0,"","",""],[1,151,"NumpadMemoryRecall",0,"",0,"","",""],[1,152,"NumpadMemoryClear",0,"",0,"","",""],[1,153,"NumpadMemoryAdd",0,"",0,"","",""],[1,154,"NumpadMemorySubtract",0,"",0,"","",""],[1,155,"NumpadClear",131,"Clear",12,"VK_CLEAR","",""],[1,156,"NumpadClearEntry",0,"",0,"","",""],[1,0,"",5,"Ctrl",17,"VK_CONTROL","",""],[1,0,"",4,"Shift",16,"VK_SHIFT","",""],[1,0,"",6,"Alt",18,"VK_MENU","",""],[1,0,"",57,"Meta",91,"VK_COMMAND","",""],[1,157,"ControlLeft",5,"",0,"VK_LCONTROL","",""],[1,158,"ShiftLeft",4,"",0,"VK_LSHIFT","",""],[1,159,"AltLeft",6,"",0,"VK_LMENU","",""],[1,160,"MetaLeft",57,"",0,"VK_LWIN","",""],[1,161,"ControlRight",5,"",0,"VK_RCONTROL","",""],[1,162,"ShiftRight",4,"",0,"VK_RSHIFT","",""],[1,163,"AltRight",6,"",0,"VK_RMENU","",""],[1,164,"MetaRight",57,"",0,"VK_RWIN","",""],[1,165,"BrightnessUp",0,"",0,"","",""],[1,166,"BrightnessDown",0,"",0,"","",""],[1,167,"MediaPlay",0,"",0,"","",""],[1,168,"MediaRecord",0,"",0,"","",""],[1,169,"MediaFastForward",0,"",0,"","",""],[1,170,"MediaRewind",0,"",0,"","",""],[1,171,"MediaTrackNext",124,"MediaTrackNext",176,"VK_MEDIA_NEXT_TRACK","",""],[1,172,"MediaTrackPrevious",125,"MediaTrackPrevious",177,"VK_MEDIA_PREV_TRACK","",""],[1,173,"MediaStop",126,"MediaStop",178,"VK_MEDIA_STOP","",""],[1,174,"Eject",0,"",0,"","",""],[1,175,"MediaPlayPause",127,"MediaPlayPause",179,"VK_MEDIA_PLAY_PAUSE","",""],[1,176,"MediaSelect",128,"LaunchMediaPlayer",181,"VK_MEDIA_LAUNCH_MEDIA_SELECT","",""],[1,177,"LaunchMail",129,"LaunchMail",180,"VK_MEDIA_LAUNCH_MAIL","",""],[1,178,"LaunchApp2",130,"LaunchApp2",183,"VK_MEDIA_LAUNCH_APP2","",""],[1,179,"LaunchApp1",0,"",0,"VK_MEDIA_LAUNCH_APP1","",""],[1,180,"SelectTask",0,"",0,"","",""],[1,181,"LaunchScreenSaver",0,"",0,"","",""],[1,182,"BrowserSearch",120,"BrowserSearch",170,"VK_BROWSER_SEARCH","",""],[1,183,"BrowserHome",121,"BrowserHome",172,"VK_BROWSER_HOME","",""],[1,184,"BrowserBack",122,"BrowserBack",166,"VK_BROWSER_BACK","",""],[1,185,"BrowserForward",123,"BrowserForward",167,"VK_BROWSER_FORWARD","",""],[1,186,"BrowserStop",0,"",0,"VK_BROWSER_STOP","",""],[1,187,"BrowserRefresh",0,"",0,"VK_BROWSER_REFRESH","",""],[1,188,"BrowserFavorites",0,"",0,"VK_BROWSER_FAVORITES","",""],[1,189,"ZoomToggle",0,"",0,"","",""],[1,190,"MailReply",0,"",0,"","",""],[1,191,"MailForward",0,"",0,"","",""],[1,192,"MailSend",0,"",0,"","",""],[1,0,"",114,"KeyInComposition",229,"","",""],[1,0,"",116,"ABNT_C2",194,"VK_ABNT_C2","",""],[1,0,"",96,"OEM_8",223,"VK_OEM_8","",""],[1,0,"",0,"",0,"VK_KANA","",""],[1,0,"",0,"",0,"VK_HANGUL","",""],[1,0,"",0,"",0,"VK_JUNJA","",""],[1,0,"",0,"",0,"VK_FINAL","",""],[1,0,"",0,"",0,"VK_HANJA","",""],[1,0,"",0,"",0,"VK_KANJI","",""],[1,0,"",0,"",0,"VK_CONVERT","",""],[1,0,"",0,"",0,"VK_NONCONVERT","",""],[1,0,"",0,"",0,"VK_ACCEPT","",""],[1,0,"",0,"",0,"VK_MODECHANGE","",""],[1,0,"",0,"",0,"VK_SELECT","",""],[1,0,"",0,"",0,"VK_PRINT","",""],[1,0,"",0,"",0,"VK_EXECUTE","",""],[1,0,"",0,"",0,"VK_SNAPSHOT","",""],[1,0,"",0,"",0,"VK_HELP","",""],[1,0,"",0,"",0,"VK_APPS","",""],[1,0,"",0,"",0,"VK_PROCESSKEY","",""],[1,0,"",0,"",0,"VK_PACKET","",""],[1,0,"",0,"",0,"VK_DBE_SBCSCHAR","",""],[1,0,"",0,"",0,"VK_DBE_DBCSCHAR","",""],[1,0,"",0,"",0,"VK_ATTN","",""],[1,0,"",0,"",0,"VK_CRSEL","",""],[1,0,"",0,"",0,"VK_EXSEL","",""],[1,0,"",0,"",0,"VK_EREOF","",""],[1,0,"",0,"",0,"VK_PLAY","",""],[1,0,"",0,"",0,"VK_ZOOM","",""],[1,0,"",0,"",0,"VK_NONAME","",""],[1,0,"",0,"",0,"VK_PA1","",""],[1,0,"",0,"",0,"VK_OEM_CLEAR","",""]],n=[],r=[];for(let s of e){let[i,a,l,u,c,f,h,m,b]=s;if(r[a]||(r[a]=!0,$1[l]=a,O1[l.toLowerCase()]=a,i&&(hs[a]=u)),!n[u]){if(n[u]=!0,!c)throw new Error(`String representation missing for key code ${u} around scan code ${l}`);Ot.define(u,c),Zn.define(u,m||c),Kn.define(u,b||m||c)}f&&(z1[f]=u)}})();var cs;(function(t){function e(l){return Ot.keyCodeToStr(l)}t.toString=e;function n(l){return Ot.strToKeyCode(l)}t.fromString=n;function r(l){return Zn.keyCodeToStr(l)}t.toUserSettingsUS=r;function s(l){return Kn.keyCodeToStr(l)}t.toUserSettingsGeneral=s;function i(l){return Zn.strToKeyCode(l)||Kn.strToKeyCode(l)}t.fromUserSettings=i;function a(l){if(l>=98&&l<=113)return null;switch(l){case 16:return"Up";case 18:return"Down";case 15:return"Left";case 17:return"Right"}return Ot.keyCodeToStr(l)}t.toElectronAccelerator=a})(cs||(cs={}));function fs(t,e){let n=(e&65535)<<16>>>0;return(t|n)>>>0}var Ye,er=globalThis.vscode;if(typeof er<"u"&&typeof er.process<"u"){let t=er.process;Ye={get platform(){return t.platform},get arch(){return t.arch},get env(){return t.env},cwd(){return t.cwd()}}}else typeof process<"u"&&typeof process?.versions?.node=="string"?Ye={get platform(){return process.platform},get arch(){return process.arch},get env(){return process.env},cwd(){return process.env.VSCODE_CWD||process.cwd()}}:Ye={get platform(){return Ie?"win32":qr?"darwin":"linux"},get arch(){},get env(){return{}},cwd(){return"/"}};var bt=Ye.cwd,ms=Ye.env,ds=Ye.platform;var H1=65,G1=97,j1=90,X1=122,qe=46,J=47,ne=92,de=58,Q1=63,Ht=class extends Error{constructor(e,n,r){let s;typeof n=="string"&&n.indexOf("not ")===0?(s="must not be",n=n.replace(/^not /,"")):s="must be";let i=e.indexOf(".")!==-1?"property":"argument",a=`The "${e}" ${i} ${s} of type ${n}`;a+=`. Received type ${typeof r}`,super(a),this.code="ERR_INVALID_ARG_TYPE"}};function J1(t,e){if(t===null||typeof t!="object")throw new Ht(e,"Object",t)}function j(t,e){if(typeof t!="string")throw new Ht(e,"string",t)}var Ne=ds==="win32";function V(t){return t===J||t===ne}function tr(t){return t===J}function ge(t){return t>=H1&&t<=j1||t>=G1&&t<=X1}function Gt(t,e,n,r){let s="",i=0,a=-1,l=0,u=0;for(let c=0;c<=t.length;++c){if(c<t.length)u=t.charCodeAt(c);else{if(r(u))break;u=J}if(r(u)){if(!(a===c-1||l===1))if(l===2){if(s.length<2||i!==2||s.charCodeAt(s.length-1)!==qe||s.charCodeAt(s.length-2)!==qe){if(s.length>2){let f=s.lastIndexOf(n);f===-1?(s="",i=0):(s=s.slice(0,f),i=s.length-1-s.lastIndexOf(n)),a=c,l=0;continue}else if(s.length!==0){s="",i=0,a=c,l=0;continue}}e&&(s+=s.length>0?`${n}..`:"..",i=2)}else s.length>0?s+=`${n}${t.slice(a+1,c)}`:s=t.slice(a+1,c),i=c-a-1;a=c,l=0}else u===qe&&l!==-1?++l:l=-1}return s}function Y1(t){return t?`${t[0]==="."?"":"."}${t}`:""}function gs(t,e){J1(e,"pathObject");let n=e.dir||e.root,r=e.base||`${e.name||""}${Y1(e.ext)}`;return n?n===e.root?`${n}${r}`:`${n}${t}${r}`:r}var K={resolve(...t){let e="",n="",r=!1;for(let s=t.length-1;s>=-1;s--){let i;if(s>=0){if(i=t[s],j(i,`paths[${s}]`),i.length===0)continue}else e.length===0?i=bt():(i=ms[`=${e}`]||bt(),(i===void 0||i.slice(0,2).toLowerCase()!==e.toLowerCase()&&i.charCodeAt(2)===ne)&&(i=`${e}\\`));let a=i.length,l=0,u="",c=!1,f=i.charCodeAt(0);if(a===1)V(f)&&(l=1,c=!0);else if(V(f))if(c=!0,V(i.charCodeAt(1))){let h=2,m=h;for(;h<a&&!V(i.charCodeAt(h));)h++;if(h<a&&h!==m){let b=i.slice(m,h);for(m=h;h<a&&V(i.charCodeAt(h));)h++;if(h<a&&h!==m){for(m=h;h<a&&!V(i.charCodeAt(h));)h++;(h===a||h!==m)&&(u=`\\\\${b}\\${i.slice(m,h)}`,l=h)}}}else l=1;else ge(f)&&i.charCodeAt(1)===de&&(u=i.slice(0,2),l=2,a>2&&V(i.charCodeAt(2))&&(c=!0,l=3));if(u.length>0)if(e.length>0){if(u.toLowerCase()!==e.toLowerCase())continue}else e=u;if(r){if(e.length>0)break}else if(n=`${i.slice(l)}\\${n}`,r=c,c&&e.length>0)break}return n=Gt(n,!r,"\\",V),r?`${e}\\${n}`:`${e}${n}`||"."},normalize(t){j(t,"path");let e=t.length;if(e===0)return".";let n=0,r,s=!1,i=t.charCodeAt(0);if(e===1)return tr(i)?"\\":t;if(V(i))if(s=!0,V(t.charCodeAt(1))){let l=2,u=l;for(;l<e&&!V(t.charCodeAt(l));)l++;if(l<e&&l!==u){let c=t.slice(u,l);for(u=l;l<e&&V(t.charCodeAt(l));)l++;if(l<e&&l!==u){for(u=l;l<e&&!V(t.charCodeAt(l));)l++;if(l===e)return`\\\\${c}\\${t.slice(u)}\\`;l!==u&&(r=`\\\\${c}\\${t.slice(u,l)}`,n=l)}}}else n=1;else ge(i)&&t.charCodeAt(1)===de&&(r=t.slice(0,2),n=2,e>2&&V(t.charCodeAt(2))&&(s=!0,n=3));let a=n<e?Gt(t.slice(n),!s,"\\",V):"";if(a.length===0&&!s&&(a="."),a.length>0&&V(t.charCodeAt(e-1))&&(a+="\\"),!s&&r===void 0&&t.includes(":")){if(a.length>=2&&ge(a.charCodeAt(0))&&a.charCodeAt(1)===de)return`.\\${a}`;let l=t.indexOf(":");do if(l===e-1||V(t.charCodeAt(l+1)))return`.\\${a}`;while((l=t.indexOf(":",l+1))!==-1)}return r===void 0?s?`\\${a}`:a:s?`${r}\\${a}`:`${r}${a}`},isAbsolute(t){j(t,"path");let e=t.length;if(e===0)return!1;let n=t.charCodeAt(0);return V(n)||e>2&&ge(n)&&t.charCodeAt(1)===de&&V(t.charCodeAt(2))},join(...t){if(t.length===0)return".";let e,n;for(let i=0;i<t.length;++i){let a=t[i];j(a,"path"),a.length>0&&(e===void 0?e=n=a:e+=`\\${a}`)}if(e===void 0)return".";let r=!0,s=0;if(typeof n=="string"&&V(n.charCodeAt(0))){++s;let i=n.length;i>1&&V(n.charCodeAt(1))&&(++s,i>2&&(V(n.charCodeAt(2))?++s:r=!1))}if(r){for(;s<e.length&&V(e.charCodeAt(s));)s++;s>=2&&(e=`\\${e.slice(s)}`)}return K.normalize(e)},relative(t,e){if(j(t,"from"),j(e,"to"),t===e)return"";let n=K.resolve(t),r=K.resolve(e);if(n===r||(t=n.toLowerCase(),e=r.toLowerCase(),t===e))return"";if(n.length!==t.length||r.length!==e.length){let p=n.split("\\"),d=r.split("\\");p[p.length-1]===""&&p.pop(),d[d.length-1]===""&&d.pop();let x=p.length,N=d.length,v=x<N?x:N,L;for(L=0;L<v&&p[L].toLowerCase()===d[L].toLowerCase();L++);return L===0?r:L===v?N>v?d.slice(L).join("\\"):x>v?"..\\".repeat(x-1-L)+"..":"":"..\\".repeat(x-L)+d.slice(L).join("\\")}let s=0;for(;s<t.length&&t.charCodeAt(s)===ne;)s++;let i=t.length;for(;i-1>s&&t.charCodeAt(i-1)===ne;)i--;let a=i-s,l=0;for(;l<e.length&&e.charCodeAt(l)===ne;)l++;let u=e.length;for(;u-1>l&&e.charCodeAt(u-1)===ne;)u--;let c=u-l,f=a<c?a:c,h=-1,m=0;for(;m<f;m++){let p=t.charCodeAt(s+m);if(p!==e.charCodeAt(l+m))break;p===ne&&(h=m)}if(m!==f){if(h===-1)return r}else{if(c>f){if(e.charCodeAt(l+m)===ne)return r.slice(l+m+1);if(m===2)return r.slice(l+m)}a>f&&(t.charCodeAt(s+m)===ne?h=m:m===2&&(h=3)),h===-1&&(h=0)}let b="";for(m=s+h+1;m<=i;++m)(m===i||t.charCodeAt(m)===ne)&&(b+=b.length===0?"..":"\\..");return l+=h,b.length>0?`${b}${r.slice(l,u)}`:(r.charCodeAt(l)===ne&&++l,r.slice(l,u))},toNamespacedPath(t){if(typeof t!="string"||t.length===0)return t;let e=K.resolve(t);if(e.length<=2)return t;if(e.charCodeAt(0)===ne){if(e.charCodeAt(1)===ne){let n=e.charCodeAt(2);if(n!==Q1&&n!==qe)return`\\\\?\\UNC\\${e.slice(2)}`}}else if(ge(e.charCodeAt(0))&&e.charCodeAt(1)===de&&e.charCodeAt(2)===ne)return`\\\\?\\${e}`;return e},dirname(t){j(t,"path");let e=t.length;if(e===0)return".";let n=-1,r=0,s=t.charCodeAt(0);if(e===1)return V(s)?t:".";if(V(s)){if(n=r=1,V(t.charCodeAt(1))){let l=2,u=l;for(;l<e&&!V(t.charCodeAt(l));)l++;if(l<e&&l!==u){for(u=l;l<e&&V(t.charCodeAt(l));)l++;if(l<e&&l!==u){for(u=l;l<e&&!V(t.charCodeAt(l));)l++;if(l===e)return t;l!==u&&(n=r=l+1)}}}}else ge(s)&&t.charCodeAt(1)===de&&(n=e>2&&V(t.charCodeAt(2))?3:2,r=n);let i=-1,a=!0;for(let l=e-1;l>=r;--l)if(V(t.charCodeAt(l))){if(!a){i=l;break}}else a=!1;if(i===-1){if(n===-1)return".";i=n}return t.slice(0,i)},basename(t,e){e!==void 0&&j(e,"suffix"),j(t,"path");let n=0,r=-1,s=!0,i;if(t.length>=2&&ge(t.charCodeAt(0))&&t.charCodeAt(1)===de&&(n=2),e!==void 0&&e.length>0&&e.length<=t.length){if(e===t)return"";let a=e.length-1,l=-1;for(i=t.length-1;i>=n;--i){let u=t.charCodeAt(i);if(V(u)){if(!s){n=i+1;break}}else l===-1&&(s=!1,l=i+1),a>=0&&(u===e.charCodeAt(a)?--a===-1&&(r=i):(a=-1,r=l))}return n===r?r=l:r===-1&&(r=t.length),t.slice(n,r)}for(i=t.length-1;i>=n;--i)if(V(t.charCodeAt(i))){if(!s){n=i+1;break}}else r===-1&&(s=!1,r=i+1);return r===-1?"":t.slice(n,r)},extname(t){j(t,"path");let e=0,n=-1,r=0,s=-1,i=!0,a=0;t.length>=2&&t.charCodeAt(1)===de&&ge(t.charCodeAt(0))&&(e=r=2);for(let l=t.length-1;l>=e;--l){let u=t.charCodeAt(l);if(V(u)){if(!i){r=l+1;break}continue}s===-1&&(i=!1,s=l+1),u===qe?n===-1?n=l:a!==1&&(a=1):n!==-1&&(a=-1)}return n===-1||s===-1||a===0||a===1&&n===s-1&&n===r+1?"":t.slice(n,s)},format:gs.bind(null,"\\"),parse(t){j(t,"path");let e={root:"",dir:"",base:"",ext:"",name:""};if(t.length===0)return e;let n=t.length,r=0,s=t.charCodeAt(0);if(n===1)return V(s)?(e.root=e.dir=t,e):(e.base=e.name=t,e);if(V(s)){if(r=1,V(t.charCodeAt(1))){let h=2,m=h;for(;h<n&&!V(t.charCodeAt(h));)h++;if(h<n&&h!==m){for(m=h;h<n&&V(t.charCodeAt(h));)h++;if(h<n&&h!==m){for(m=h;h<n&&!V(t.charCodeAt(h));)h++;h===n?r=h:h!==m&&(r=h+1)}}}}else if(ge(s)&&t.charCodeAt(1)===de){if(n<=2)return e.root=e.dir=t,e;if(r=2,V(t.charCodeAt(2))){if(n===3)return e.root=e.dir=t,e;r=3}}r>0&&(e.root=t.slice(0,r));let i=-1,a=r,l=-1,u=!0,c=t.length-1,f=0;for(;c>=r;--c){if(s=t.charCodeAt(c),V(s)){if(!u){a=c+1;break}continue}l===-1&&(u=!1,l=c+1),s===qe?i===-1?i=c:f!==1&&(f=1):i!==-1&&(f=-1)}return l!==-1&&(i===-1||f===0||f===1&&i===l-1&&i===a+1?e.base=e.name=t.slice(a,l):(e.name=t.slice(a,i),e.base=t.slice(a,l),e.ext=t.slice(i,l))),a>0&&a!==r?e.dir=t.slice(0,a-1):e.dir=e.root,e},sep:"\\",delimiter:";",win32:null,posix:null},Z1=(()=>{if(Ne){let t=/\\/g;return()=>{let e=bt().replace(t,"/");return e.slice(e.indexOf("/"))}}return()=>bt()})(),ee={resolve(...t){let e="",n=!1;for(let r=t.length-1;r>=0&&!n;r--){let s=t[r];j(s,`paths[${r}]`),s.length!==0&&(e=`${s}/${e}`,n=s.charCodeAt(0)===J)}if(!n){let r=Z1();e=`${r}/${e}`,n=r.charCodeAt(0)===J}return e=Gt(e,!n,"/",tr),n?`/${e}`:e.length>0?e:"."},normalize(t){if(j(t,"path"),t.length===0)return".";let e=t.charCodeAt(0)===J,n=t.charCodeAt(t.length-1)===J;return t=Gt(t,!e,"/",tr),t.length===0?e?"/":n?"./":".":(n&&(t+="/"),e?`/${t}`:t)},isAbsolute(t){return j(t,"path"),t.length>0&&t.charCodeAt(0)===J},join(...t){if(t.length===0)return".";let e=[];for(let n=0;n<t.length;++n){let r=t[n];j(r,"path"),r.length>0&&e.push(r)}return e.length===0?".":ee.normalize(e.join("/"))},relative(t,e){if(j(t,"from"),j(e,"to"),t===e||(t=ee.resolve(t),e=ee.resolve(e),t===e))return"";let n=1,r=t.length,s=r-n,i=1,a=e.length-i,l=s<a?s:a,u=-1,c=0;for(;c<l;c++){let h=t.charCodeAt(n+c);if(h!==e.charCodeAt(i+c))break;h===J&&(u=c)}if(c===l)if(a>l){if(e.charCodeAt(i+c)===J)return e.slice(i+c+1);if(c===0)return e.slice(i+c)}else s>l&&(t.charCodeAt(n+c)===J?u=c:c===0&&(u=0));let f="";for(c=n+u+1;c<=r;++c)(c===r||t.charCodeAt(c)===J)&&(f+=f.length===0?"..":"/..");return`${f}${e.slice(i+u)}`},toNamespacedPath(t){return t},dirname(t){if(j(t,"path"),t.length===0)return".";let e=t.charCodeAt(0)===J,n=-1,r=!0;for(let s=t.length-1;s>=1;--s)if(t.charCodeAt(s)===J){if(!r){n=s;break}}else r=!1;return n===-1?e?"/":".":e&&n===1?"//":t.slice(0,n)},basename(t,e){e!==void 0&&j(e,"suffix"),j(t,"path");let n=0,r=-1,s=!0,i;if(e!==void 0&&e.length>0&&e.length<=t.length){if(e===t)return"";let a=e.length-1,l=-1;for(i=t.length-1;i>=0;--i){let u=t.charCodeAt(i);if(u===J){if(!s){n=i+1;break}}else l===-1&&(s=!1,l=i+1),a>=0&&(u===e.charCodeAt(a)?--a===-1&&(r=i):(a=-1,r=l))}return n===r?r=l:r===-1&&(r=t.length),t.slice(n,r)}for(i=t.length-1;i>=0;--i)if(t.charCodeAt(i)===J){if(!s){n=i+1;break}}else r===-1&&(s=!1,r=i+1);return r===-1?"":t.slice(n,r)},extname(t){j(t,"path");let e=-1,n=0,r=-1,s=!0,i=0;for(let a=t.length-1;a>=0;--a){let l=t[a];if(l==="/"){if(!s){n=a+1;break}continue}r===-1&&(s=!1,r=a+1),l==="."?e===-1?e=a:i!==1&&(i=1):e!==-1&&(i=-1)}return e===-1||r===-1||i===0||i===1&&e===r-1&&e===n+1?"":t.slice(e,r)},format:gs.bind(null,"/"),parse(t){j(t,"path");let e={root:"",dir:"",base:"",ext:"",name:""};if(t.length===0)return e;let n=t.charCodeAt(0)===J,r;n?(e.root="/",r=1):r=0;let s=-1,i=0,a=-1,l=!0,u=t.length-1,c=0;for(;u>=r;--u){let f=t.charCodeAt(u);if(f===J){if(!l){i=u+1;break}continue}a===-1&&(l=!1,a=u+1),f===qe?s===-1?s=u:c!==1&&(c=1):s!==-1&&(c=-1)}if(a!==-1){let f=i===0&&n?1:i;s===-1||c===0||c===1&&s===a-1&&s===i+1?e.base=e.name=t.slice(f,a):(e.name=t.slice(f,s),e.base=t.slice(f,a),e.ext=t.slice(s,a))}return i>0?e.dir=t.slice(0,i-1):n&&(e.dir="/"),e},sep:"/",delimiter:":",win32:null,posix:null};ee.win32=K.win32=K;ee.posix=K.posix=ee;var Za=Ne?K.normalize:ee.normalize,Ka=Ne?K.resolve:ee.resolve,el=Ne?K.relative:ee.relative,tl=Ne?K.dirname:ee.dirname,nl=Ne?K.basename:ee.basename,rl=Ne?K.extname:ee.extname,sl=Ne?K.sep:ee.sep;var K1=/^\w[\w\d+.-]*$/,eo=/^\//,to=/^\/\//;function no(t,e){if(!t.scheme&&e)throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${t.authority}", path: "${t.path}", query: "${t.query}", fragment: "${t.fragment}"}`);if(t.scheme&&!K1.test(t.scheme))throw new Error("[UriError]: Scheme contains illegal characters.");if(t.path){if(t.authority){if(!eo.test(t.path))throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character')}else if(to.test(t.path))throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")')}}function ro(t,e){return!t&&!e?"file":t}function so(t,e){switch(t){case"https":case"http":case"file":e?e[0]!==oe&&(e=oe+e):e=oe;break}return e}var O="",oe="/",io=/^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/,Re=class t{static isUri(e){return e instanceof t?!0:!e||typeof e!="object"?!1:typeof e.authority=="string"&&typeof e.fragment=="string"&&typeof e.path=="string"&&typeof e.query=="string"&&typeof e.scheme=="string"&&typeof e.fsPath=="string"&&typeof e.with=="function"&&typeof e.toString=="function"}constructor(e,n,r,s,i,a=!1){typeof e=="object"?(this.scheme=e.scheme||O,this.authority=e.authority||O,this.path=e.path||O,this.query=e.query||O,this.fragment=e.fragment||O):(this.scheme=ro(e,a),this.authority=n||O,this.path=so(this.scheme,r||O),this.query=s||O,this.fragment=i||O,no(this,a))}get fsPath(){return nr(this,!1)}with(e){if(!e)return this;let{scheme:n,authority:r,path:s,query:i,fragment:a}=e;return n===void 0?n=this.scheme:n===null&&(n=O),r===void 0?r=this.authority:r===null&&(r=O),s===void 0?s=this.path:s===null&&(s=O),i===void 0?i=this.query:i===null&&(i=O),a===void 0?a=this.fragment:a===null&&(a=O),n===this.scheme&&r===this.authority&&s===this.path&&i===this.query&&a===this.fragment?this:new Se(n,r,s,i,a)}static parse(e,n=!1){let r=io.exec(e);return r?new Se(r[2]||O,jt(r[4]||O),jt(r[5]||O),jt(r[7]||O),jt(r[9]||O),n):new Se(O,O,O,O,O)}static file(e){let n=O;if(Ie&&(e=e.replace(/\\/g,oe)),e[0]===oe&&e[1]===oe){let r=e.indexOf(oe,2);r===-1?(n=e.substring(2),e=oe):(n=e.substring(2,r),e=e.substring(r)||oe)}return new Se("file",n,e,O,O)}static from(e,n){return new Se(e.scheme,e.authority,e.path,e.query,e.fragment,n)}static joinPath(e,...n){if(!e.path)throw new Error("[UriError]: cannot call joinPath on URI without path");let r;return Ie&&e.scheme==="file"?r=t.file(K.join(nr(e,!0),...n)).path:r=ee.join(e.path,...n),e.with({path:r})}toString(e=!1){return rr(this,e)}toJSON(){return this}static revive(e){if(e){if(e instanceof t)return e;{let n=new Se(e);return n._formatted=e.external??null,n._fsPath=e._sep===ws?e.fsPath??null:null,n}}else return e}},ws=Ie?1:void 0,Se=class extends Re{constructor(){super(...arguments),this._formatted=null,this._fsPath=null}get fsPath(){return this._fsPath||(this._fsPath=nr(this,!1)),this._fsPath}toString(e=!1){return e?rr(this,!0):(this._formatted||(this._formatted=rr(this,!1)),this._formatted)}toJSON(){let e={$mid:1};return this._fsPath&&(e.fsPath=this._fsPath,e._sep=ws),this._formatted&&(e.external=this._formatted),this.path&&(e.path=this.path),this.scheme&&(e.scheme=this.scheme),this.authority&&(e.authority=this.authority),this.query&&(e.query=this.query),this.fragment&&(e.fragment=this.fragment),e}},xs={58:"%3A",47:"%2F",63:"%3F",35:"%23",91:"%5B",93:"%5D",64:"%40",33:"%21",36:"%24",38:"%26",39:"%27",40:"%28",41:"%29",42:"%2A",43:"%2B",44:"%2C",59:"%3B",61:"%3D",32:"%20"};function ps(t,e,n){let r,s=-1;for(let i=0;i<t.length;i++){let a=t.charCodeAt(i);if(a>=97&&a<=122||a>=65&&a<=90||a>=48&&a<=57||a===45||a===46||a===95||a===126||e&&a===47||n&&a===91||n&&a===93||n&&a===58)s!==-1&&(r+=encodeURIComponent(t.substring(s,i)),s=-1),r!==void 0&&(r+=t.charAt(i));else{r===void 0&&(r=t.substr(0,i));let l=xs[a];l!==void 0?(s!==-1&&(r+=encodeURIComponent(t.substring(s,i)),s=-1),r+=l):s===-1&&(s=i)}}return s!==-1&&(r+=encodeURIComponent(t.substring(s))),r!==void 0?r:t}function oo(t){let e;for(let n=0;n<t.length;n++){let r=t.charCodeAt(n);r===35||r===63?(e===void 0&&(e=t.substr(0,n)),e+=xs[r]):e!==void 0&&(e+=t[n])}return e!==void 0?e:t}function nr(t,e){let n;return t.authority&&t.path.length>1&&t.scheme==="file"?n=`//${t.authority}${t.path}`:t.path.charCodeAt(0)===47&&(t.path.charCodeAt(1)>=65&&t.path.charCodeAt(1)<=90||t.path.charCodeAt(1)>=97&&t.path.charCodeAt(1)<=122)&&t.path.charCodeAt(2)===58?e?n=t.path.substr(1):n=t.path[1].toLowerCase()+t.path.substr(2):n=t.path,Ie&&(n=n.replace(/\//g,"\\")),n}function rr(t,e){let n=e?oo:ps,r="",{scheme:s,authority:i,path:a,query:l,fragment:u}=t;if(s&&(r+=s,r+=":"),(i||s==="file")&&(r+=oe,r+=oe),i){let c=i.indexOf("@");if(c!==-1){let f=i.substr(0,c);i=i.substr(c+1),c=f.lastIndexOf(":"),c===-1?r+=n(f,!1,!1):(r+=n(f.substr(0,c),!1,!1),r+=":",r+=n(f.substr(c+1),!1,!0)),r+="@"}i=i.toLowerCase(),c=i.lastIndexOf(":"),c===-1?r+=n(i,!1,!0):(r+=n(i.substr(0,c),!1,!0),r+=i.substr(c))}if(a){if(a.length>=3&&a.charCodeAt(0)===47&&a.charCodeAt(2)===58){let c=a.charCodeAt(1);c>=65&&c<=90&&(a=`/${String.fromCharCode(c+32)}:${a.substr(3)}`)}else if(a.length>=2&&a.charCodeAt(1)===58){let c=a.charCodeAt(0);c>=65&&c<=90&&(a=`${String.fromCharCode(c+32)}:${a.substr(2)}`)}r+=n(a,!0,!1)}return l&&(r+="?",r+=n(l,!1,!1)),u&&(r+="#",r+=e?u:ps(u,!1,!1)),r}function _s(t){try{return decodeURIComponent(t)}catch{return t.length>3?t.substr(0,3)+_s(t.substr(3)):t}}var bs=/(%[0-9A-Za-z][0-9A-Za-z])+/g;function jt(t){return t.match(bs)?t.replace(bs,e=>_s(e)):t}var Xt=class t extends E{constructor(e,n,r,s){super(e,n,r,s),this.selectionStartLineNumber=e,this.selectionStartColumn=n,this.positionLineNumber=r,this.positionColumn=s}toString(){return"["+this.selectionStartLineNumber+","+this.selectionStartColumn+" -> "+this.positionLineNumber+","+this.positionColumn+"]"}equalsSelection(e){return t.selectionsEqual(this,e)}static selectionsEqual(e,n){return e.selectionStartLineNumber===n.selectionStartLineNumber&&e.selectionStartColumn===n.selectionStartColumn&&e.positionLineNumber===n.positionLineNumber&&e.positionColumn===n.positionColumn}getDirection(){return this.selectionStartLineNumber===this.startLineNumber&&this.selectionStartColumn===this.startColumn?0:1}setEndPosition(e,n){return this.getDirection()===0?new t(this.startLineNumber,this.startColumn,e,n):new t(e,n,this.startLineNumber,this.startColumn)}getPosition(){return new B(this.positionLineNumber,this.positionColumn)}getSelectionStart(){return new B(this.selectionStartLineNumber,this.selectionStartColumn)}setStartPosition(e,n){return this.getDirection()===0?new t(e,n,this.endLineNumber,this.endColumn):new t(this.endLineNumber,this.endColumn,e,n)}static fromPositions(e,n=e){return new t(e.lineNumber,e.column,n.lineNumber,n.column)}static fromRange(e,n){return n===0?new t(e.startLineNumber,e.startColumn,e.endLineNumber,e.endColumn):new t(e.endLineNumber,e.endColumn,e.startLineNumber,e.startColumn)}static liftSelection(e){return new t(e.selectionStartLineNumber,e.selectionStartColumn,e.positionLineNumber,e.positionColumn)}static selectionsArrEqual(e,n){if(e&&!n||!e&&n)return!1;if(!e&&!n)return!0;if(e.length!==n.length)return!1;for(let r=0,s=e.length;r<s;r++)if(!this.selectionsEqual(e[r],n[r]))return!1;return!0}static isISelection(e){return!!e&&typeof e.selectionStartLineNumber=="number"&&typeof e.selectionStartColumn=="number"&&typeof e.positionLineNumber=="number"&&typeof e.positionColumn=="number"}static createWithDirection(e,n,r,s,i){return i===0?new t(e,n,r,s):new t(r,s,e,n)}};var ys=Object.create(null);function o(t,e){if(Fr(e)){let n=ys[e];if(n===void 0)throw new Error(`${t} references an unknown codicon: ${e}`);e=n}return ys[t]=e,{id:t}}var Ls={add:o("add",6e4),plus:o("plus",6e4),gistNew:o("gist-new",6e4),repoCreate:o("repo-create",6e4),lightbulb:o("lightbulb",60001),lightBulb:o("light-bulb",60001),repo:o("repo",60002),repoDelete:o("repo-delete",60002),gistFork:o("gist-fork",60003),repoForked:o("repo-forked",60003),gitPullRequest:o("git-pull-request",60004),gitPullRequestAbandoned:o("git-pull-request-abandoned",60004),recordKeys:o("record-keys",60005),keyboard:o("keyboard",60005),tag:o("tag",60006),gitPullRequestLabel:o("git-pull-request-label",60006),tagAdd:o("tag-add",60006),tagRemove:o("tag-remove",60006),person:o("person",60007),personFollow:o("person-follow",60007),personOutline:o("person-outline",60007),personFilled:o("person-filled",60007),sourceControl:o("source-control",60008),mirror:o("mirror",60009),mirrorPublic:o("mirror-public",60009),star:o("star",60010),starAdd:o("star-add",60010),starDelete:o("star-delete",60010),starEmpty:o("star-empty",60010),comment:o("comment",60011),commentAdd:o("comment-add",60011),alert:o("alert",60012),warning:o("warning",60012),search:o("search",60013),searchSave:o("search-save",60013),logOut:o("log-out",60014),signOut:o("sign-out",60014),logIn:o("log-in",60015),signIn:o("sign-in",60015),eye:o("eye",60016),eyeUnwatch:o("eye-unwatch",60016),eyeWatch:o("eye-watch",60016),circleFilled:o("circle-filled",60017),primitiveDot:o("primitive-dot",60017),closeDirty:o("close-dirty",60017),debugBreakpoint:o("debug-breakpoint",60017),debugBreakpointDisabled:o("debug-breakpoint-disabled",60017),debugHint:o("debug-hint",60017),terminalDecorationSuccess:o("terminal-decoration-success",60017),primitiveSquare:o("primitive-square",60018),edit:o("edit",60019),pencil:o("pencil",60019),info:o("info",60020),issueOpened:o("issue-opened",60020),gistPrivate:o("gist-private",60021),gitForkPrivate:o("git-fork-private",60021),lock:o("lock",60021),mirrorPrivate:o("mirror-private",60021),close:o("close",60022),removeClose:o("remove-close",60022),x:o("x",60022),repoSync:o("repo-sync",60023),sync:o("sync",60023),clone:o("clone",60024),desktopDownload:o("desktop-download",60024),beaker:o("beaker",60025),microscope:o("microscope",60025),vm:o("vm",60026),deviceDesktop:o("device-desktop",60026),file:o("file",60027),more:o("more",60028),ellipsis:o("ellipsis",60028),kebabHorizontal:o("kebab-horizontal",60028),mailReply:o("mail-reply",60029),reply:o("reply",60029),organization:o("organization",60030),organizationFilled:o("organization-filled",60030),organizationOutline:o("organization-outline",60030),newFile:o("new-file",60031),fileAdd:o("file-add",60031),newFolder:o("new-folder",60032),fileDirectoryCreate:o("file-directory-create",60032),trash:o("trash",60033),trashcan:o("trashcan",60033),history:o("history",60034),clock:o("clock",60034),folder:o("folder",60035),fileDirectory:o("file-directory",60035),symbolFolder:o("symbol-folder",60035),logoGithub:o("logo-github",60036),markGithub:o("mark-github",60036),github:o("github",60036),terminal:o("terminal",60037),console:o("console",60037),repl:o("repl",60037),zap:o("zap",60038),symbolEvent:o("symbol-event",60038),error:o("error",60039),stop:o("stop",60039),variable:o("variable",60040),symbolVariable:o("symbol-variable",60040),array:o("array",60042),symbolArray:o("symbol-array",60042),symbolModule:o("symbol-module",60043),symbolPackage:o("symbol-package",60043),symbolNamespace:o("symbol-namespace",60043),symbolObject:o("symbol-object",60043),symbolMethod:o("symbol-method",60044),symbolFunction:o("symbol-function",60044),symbolConstructor:o("symbol-constructor",60044),symbolBoolean:o("symbol-boolean",60047),symbolNull:o("symbol-null",60047),symbolNumeric:o("symbol-numeric",60048),symbolNumber:o("symbol-number",60048),symbolStructure:o("symbol-structure",60049),symbolStruct:o("symbol-struct",60049),symbolParameter:o("symbol-parameter",60050),symbolTypeParameter:o("symbol-type-parameter",60050),symbolKey:o("symbol-key",60051),symbolText:o("symbol-text",60051),symbolReference:o("symbol-reference",60052),goToFile:o("go-to-file",60052),symbolEnum:o("symbol-enum",60053),symbolValue:o("symbol-value",60053),symbolRuler:o("symbol-ruler",60054),symbolUnit:o("symbol-unit",60054),activateBreakpoints:o("activate-breakpoints",60055),archive:o("archive",60056),arrowBoth:o("arrow-both",60057),arrowDown:o("arrow-down",60058),arrowLeft:o("arrow-left",60059),arrowRight:o("arrow-right",60060),arrowSmallDown:o("arrow-small-down",60061),arrowSmallLeft:o("arrow-small-left",60062),arrowSmallRight:o("arrow-small-right",60063),arrowSmallUp:o("arrow-small-up",60064),arrowUp:o("arrow-up",60065),bell:o("bell",60066),bold:o("bold",60067),book:o("book",60068),bookmark:o("bookmark",60069),debugBreakpointConditionalUnverified:o("debug-breakpoint-conditional-unverified",60070),debugBreakpointConditional:o("debug-breakpoint-conditional",60071),debugBreakpointConditionalDisabled:o("debug-breakpoint-conditional-disabled",60071),debugBreakpointDataUnverified:o("debug-breakpoint-data-unverified",60072),debugBreakpointData:o("debug-breakpoint-data",60073),debugBreakpointDataDisabled:o("debug-breakpoint-data-disabled",60073),debugBreakpointLogUnverified:o("debug-breakpoint-log-unverified",60074),debugBreakpointLog:o("debug-breakpoint-log",60075),debugBreakpointLogDisabled:o("debug-breakpoint-log-disabled",60075),briefcase:o("briefcase",60076),broadcast:o("broadcast",60077),browser:o("browser",60078),bug:o("bug",60079),calendar:o("calendar",60080),caseSensitive:o("case-sensitive",60081),check:o("check",60082),checklist:o("checklist",60083),chevronDown:o("chevron-down",60084),chevronLeft:o("chevron-left",60085),chevronRight:o("chevron-right",60086),chevronUp:o("chevron-up",60087),chromeClose:o("chrome-close",60088),chromeMaximize:o("chrome-maximize",60089),chromeMinimize:o("chrome-minimize",60090),chromeRestore:o("chrome-restore",60091),circleOutline:o("circle-outline",60092),circle:o("circle",60092),debugBreakpointUnverified:o("debug-breakpoint-unverified",60092),terminalDecorationIncomplete:o("terminal-decoration-incomplete",60092),circleSlash:o("circle-slash",60093),circuitBoard:o("circuit-board",60094),clearAll:o("clear-all",60095),clippy:o("clippy",60096),closeAll:o("close-all",60097),cloudDownload:o("cloud-download",60098),cloudUpload:o("cloud-upload",60099),code:o("code",60100),collapseAll:o("collapse-all",60101),colorMode:o("color-mode",60102),commentDiscussion:o("comment-discussion",60103),creditCard:o("credit-card",60105),dash:o("dash",60108),dashboard:o("dashboard",60109),database:o("database",60110),debugContinue:o("debug-continue",60111),debugDisconnect:o("debug-disconnect",60112),debugPause:o("debug-pause",60113),debugRestart:o("debug-restart",60114),debugStart:o("debug-start",60115),debugStepInto:o("debug-step-into",60116),debugStepOut:o("debug-step-out",60117),debugStepOver:o("debug-step-over",60118),debugStop:o("debug-stop",60119),debug:o("debug",60120),deviceCameraVideo:o("device-camera-video",60121),deviceCamera:o("device-camera",60122),deviceMobile:o("device-mobile",60123),diffAdded:o("diff-added",60124),diffIgnored:o("diff-ignored",60125),diffModified:o("diff-modified",60126),diffRemoved:o("diff-removed",60127),diffRenamed:o("diff-renamed",60128),diff:o("diff",60129),diffSidebyside:o("diff-sidebyside",60129),discard:o("discard",60130),editorLayout:o("editor-layout",60131),emptyWindow:o("empty-window",60132),exclude:o("exclude",60133),extensions:o("extensions",60134),eyeClosed:o("eye-closed",60135),fileBinary:o("file-binary",60136),fileCode:o("file-code",60137),fileMedia:o("file-media",60138),filePdf:o("file-pdf",60139),fileSubmodule:o("file-submodule",60140),fileSymlinkDirectory:o("file-symlink-directory",60141),fileSymlinkFile:o("file-symlink-file",60142),fileZip:o("file-zip",60143),files:o("files",60144),filter:o("filter",60145),flame:o("flame",60146),foldDown:o("fold-down",60147),foldUp:o("fold-up",60148),fold:o("fold",60149),folderActive:o("folder-active",60150),folderOpened:o("folder-opened",60151),gear:o("gear",60152),gift:o("gift",60153),gistSecret:o("gist-secret",60154),gist:o("gist",60155),gitCommit:o("git-commit",60156),gitCompare:o("git-compare",60157),compareChanges:o("compare-changes",60157),gitMerge:o("git-merge",60158),githubAction:o("github-action",60159),githubAlt:o("github-alt",60160),globe:o("globe",60161),grabber:o("grabber",60162),graph:o("graph",60163),gripper:o("gripper",60164),heart:o("heart",60165),home:o("home",60166),horizontalRule:o("horizontal-rule",60167),hubot:o("hubot",60168),inbox:o("inbox",60169),issueReopened:o("issue-reopened",60171),issues:o("issues",60172),italic:o("italic",60173),jersey:o("jersey",60174),json:o("json",60175),kebabVertical:o("kebab-vertical",60176),key:o("key",60177),law:o("law",60178),lightbulbAutofix:o("lightbulb-autofix",60179),linkExternal:o("link-external",60180),link:o("link",60181),listOrdered:o("list-ordered",60182),listUnordered:o("list-unordered",60183),liveShare:o("live-share",60184),loading:o("loading",60185),location:o("location",60186),mailRead:o("mail-read",60187),mail:o("mail",60188),markdown:o("markdown",60189),megaphone:o("megaphone",60190),mention:o("mention",60191),milestone:o("milestone",60192),gitPullRequestMilestone:o("git-pull-request-milestone",60192),mortarBoard:o("mortar-board",60193),move:o("move",60194),multipleWindows:o("multiple-windows",60195),mute:o("mute",60196),noNewline:o("no-newline",60197),note:o("note",60198),octoface:o("octoface",60199),openPreview:o("open-preview",60200),package:o("package",60201),paintcan:o("paintcan",60202),pin:o("pin",60203),play:o("play",60204),run:o("run",60204),plug:o("plug",60205),preserveCase:o("preserve-case",60206),preview:o("preview",60207),project:o("project",60208),pulse:o("pulse",60209),question:o("question",60210),quote:o("quote",60211),radioTower:o("radio-tower",60212),reactions:o("reactions",60213),references:o("references",60214),refresh:o("refresh",60215),regex:o("regex",60216),remoteExplorer:o("remote-explorer",60217),remote:o("remote",60218),remove:o("remove",60219),replaceAll:o("replace-all",60220),replace:o("replace",60221),repoClone:o("repo-clone",60222),repoForcePush:o("repo-force-push",60223),repoPull:o("repo-pull",60224),repoPush:o("repo-push",60225),report:o("report",60226),requestChanges:o("request-changes",60227),rocket:o("rocket",60228),rootFolderOpened:o("root-folder-opened",60229),rootFolder:o("root-folder",60230),rss:o("rss",60231),ruby:o("ruby",60232),saveAll:o("save-all",60233),saveAs:o("save-as",60234),save:o("save",60235),screenFull:o("screen-full",60236),screenNormal:o("screen-normal",60237),searchStop:o("search-stop",60238),server:o("server",60240),settingsGear:o("settings-gear",60241),settings:o("settings",60242),shield:o("shield",60243),smiley:o("smiley",60244),sortPrecedence:o("sort-precedence",60245),splitHorizontal:o("split-horizontal",60246),splitVertical:o("split-vertical",60247),squirrel:o("squirrel",60248),starFull:o("star-full",60249),starHalf:o("star-half",60250),symbolClass:o("symbol-class",60251),symbolColor:o("symbol-color",60252),symbolConstant:o("symbol-constant",60253),symbolEnumMember:o("symbol-enum-member",60254),symbolField:o("symbol-field",60255),symbolFile:o("symbol-file",60256),symbolInterface:o("symbol-interface",60257),symbolKeyword:o("symbol-keyword",60258),symbolMisc:o("symbol-misc",60259),symbolOperator:o("symbol-operator",60260),symbolProperty:o("symbol-property",60261),wrench:o("wrench",60261),wrenchSubaction:o("wrench-subaction",60261),symbolSnippet:o("symbol-snippet",60262),tasklist:o("tasklist",60263),telescope:o("telescope",60264),textSize:o("text-size",60265),threeBars:o("three-bars",60266),thumbsdown:o("thumbsdown",60267),thumbsup:o("thumbsup",60268),tools:o("tools",60269),triangleDown:o("triangle-down",60270),triangleLeft:o("triangle-left",60271),triangleRight:o("triangle-right",60272),triangleUp:o("triangle-up",60273),twitter:o("twitter",60274),unfold:o("unfold",60275),unlock:o("unlock",60276),unmute:o("unmute",60277),unverified:o("unverified",60278),verified:o("verified",60279),versions:o("versions",60280),vmActive:o("vm-active",60281),vmOutline:o("vm-outline",60282),vmRunning:o("vm-running",60283),watch:o("watch",60284),whitespace:o("whitespace",60285),wholeWord:o("whole-word",60286),window:o("window",60287),wordWrap:o("word-wrap",60288),zoomIn:o("zoom-in",60289),zoomOut:o("zoom-out",60290),listFilter:o("list-filter",60291),listFlat:o("list-flat",60292),listSelection:o("list-selection",60293),selection:o("selection",60293),listTree:o("list-tree",60294),debugBreakpointFunctionUnverified:o("debug-breakpoint-function-unverified",60295),debugBreakpointFunction:o("debug-breakpoint-function",60296),debugBreakpointFunctionDisabled:o("debug-breakpoint-function-disabled",60296),debugStackframeActive:o("debug-stackframe-active",60297),circleSmallFilled:o("circle-small-filled",60298),debugStackframeDot:o("debug-stackframe-dot",60298),terminalDecorationMark:o("terminal-decoration-mark",60298),debugStackframe:o("debug-stackframe",60299),debugStackframeFocused:o("debug-stackframe-focused",60299),debugBreakpointUnsupported:o("debug-breakpoint-unsupported",60300),symbolString:o("symbol-string",60301),debugReverseContinue:o("debug-reverse-continue",60302),debugStepBack:o("debug-step-back",60303),debugRestartFrame:o("debug-restart-frame",60304),debugAlt:o("debug-alt",60305),callIncoming:o("call-incoming",60306),callOutgoing:o("call-outgoing",60307),menu:o("menu",60308),expandAll:o("expand-all",60309),feedback:o("feedback",60310),gitPullRequestReviewer:o("git-pull-request-reviewer",60310),groupByRefType:o("group-by-ref-type",60311),ungroupByRefType:o("ungroup-by-ref-type",60312),account:o("account",60313),gitPullRequestAssignee:o("git-pull-request-assignee",60313),bellDot:o("bell-dot",60314),debugConsole:o("debug-console",60315),library:o("library",60316),output:o("output",60317),runAll:o("run-all",60318),syncIgnored:o("sync-ignored",60319),pinned:o("pinned",60320),githubInverted:o("github-inverted",60321),serverProcess:o("server-process",60322),serverEnvironment:o("server-environment",60323),pass:o("pass",60324),issueClosed:o("issue-closed",60324),stopCircle:o("stop-circle",60325),playCircle:o("play-circle",60326),record:o("record",60327),debugAltSmall:o("debug-alt-small",60328),vmConnect:o("vm-connect",60329),cloud:o("cloud",60330),merge:o("merge",60331),export:o("export",60332),graphLeft:o("graph-left",60333),magnet:o("magnet",60334),notebook:o("notebook",60335),redo:o("redo",60336),checkAll:o("check-all",60337),pinnedDirty:o("pinned-dirty",60338),passFilled:o("pass-filled",60339),circleLargeFilled:o("circle-large-filled",60340),circleLarge:o("circle-large",60341),circleLargeOutline:o("circle-large-outline",60341),combine:o("combine",60342),gather:o("gather",60342),table:o("table",60343),variableGroup:o("variable-group",60344),typeHierarchy:o("type-hierarchy",60345),typeHierarchySub:o("type-hierarchy-sub",60346),typeHierarchySuper:o("type-hierarchy-super",60347),gitPullRequestCreate:o("git-pull-request-create",60348),runAbove:o("run-above",60349),runBelow:o("run-below",60350),notebookTemplate:o("notebook-template",60351),debugRerun:o("debug-rerun",60352),workspaceTrusted:o("workspace-trusted",60353),workspaceUntrusted:o("workspace-untrusted",60354),workspaceUnknown:o("workspace-unknown",60355),terminalCmd:o("terminal-cmd",60356),terminalDebian:o("terminal-debian",60357),terminalLinux:o("terminal-linux",60358),terminalPowershell:o("terminal-powershell",60359),terminalTmux:o("terminal-tmux",60360),terminalUbuntu:o("terminal-ubuntu",60361),terminalBash:o("terminal-bash",60362),arrowSwap:o("arrow-swap",60363),copy:o("copy",60364),personAdd:o("person-add",60365),filterFilled:o("filter-filled",60366),wand:o("wand",60367),debugLineByLine:o("debug-line-by-line",60368),inspect:o("inspect",60369),layers:o("layers",60370),layersDot:o("layers-dot",60371),layersActive:o("layers-active",60372),compass:o("compass",60373),compassDot:o("compass-dot",60374),compassActive:o("compass-active",60375),azure:o("azure",60376),issueDraft:o("issue-draft",60377),gitPullRequestClosed:o("git-pull-request-closed",60378),gitPullRequestDraft:o("git-pull-request-draft",60379),debugAll:o("debug-all",60380),debugCoverage:o("debug-coverage",60381),runErrors:o("run-errors",60382),folderLibrary:o("folder-library",60383),debugContinueSmall:o("debug-continue-small",60384),beakerStop:o("beaker-stop",60385),graphLine:o("graph-line",60386),graphScatter:o("graph-scatter",60387),pieChart:o("pie-chart",60388),bracket:o("bracket",60175),bracketDot:o("bracket-dot",60389),bracketError:o("bracket-error",60390),lockSmall:o("lock-small",60391),azureDevops:o("azure-devops",60392),verifiedFilled:o("verified-filled",60393),newline:o("newline",60394),layout:o("layout",60395),layoutActivitybarLeft:o("layout-activitybar-left",60396),layoutActivitybarRight:o("layout-activitybar-right",60397),layoutPanelLeft:o("layout-panel-left",60398),layoutPanelCenter:o("layout-panel-center",60399),layoutPanelJustify:o("layout-panel-justify",60400),layoutPanelRight:o("layout-panel-right",60401),layoutPanel:o("layout-panel",60402),layoutSidebarLeft:o("layout-sidebar-left",60403),layoutSidebarRight:o("layout-sidebar-right",60404),layoutStatusbar:o("layout-statusbar",60405),layoutMenubar:o("layout-menubar",60406),layoutCentered:o("layout-centered",60407),target:o("target",60408),indent:o("indent",60409),recordSmall:o("record-small",60410),errorSmall:o("error-small",60411),terminalDecorationError:o("terminal-decoration-error",60411),arrowCircleDown:o("arrow-circle-down",60412),arrowCircleLeft:o("arrow-circle-left",60413),arrowCircleRight:o("arrow-circle-right",60414),arrowCircleUp:o("arrow-circle-up",60415),layoutSidebarRightOff:o("layout-sidebar-right-off",60416),layoutPanelOff:o("layout-panel-off",60417),layoutSidebarLeftOff:o("layout-sidebar-left-off",60418),blank:o("blank",60419),heartFilled:o("heart-filled",60420),map:o("map",60421),mapHorizontal:o("map-horizontal",60421),foldHorizontal:o("fold-horizontal",60421),mapFilled:o("map-filled",60422),mapHorizontalFilled:o("map-horizontal-filled",60422),foldHorizontalFilled:o("fold-horizontal-filled",60422),circleSmall:o("circle-small",60423),bellSlash:o("bell-slash",60424),bellSlashDot:o("bell-slash-dot",60425),commentUnresolved:o("comment-unresolved",60426),gitPullRequestGoToChanges:o("git-pull-request-go-to-changes",60427),gitPullRequestNewChanges:o("git-pull-request-new-changes",60428),searchFuzzy:o("search-fuzzy",60429),commentDraft:o("comment-draft",60430),send:o("send",60431),sparkle:o("sparkle",60432),insert:o("insert",60433),mic:o("mic",60434),thumbsdownFilled:o("thumbsdown-filled",60435),thumbsupFilled:o("thumbsup-filled",60436),coffee:o("coffee",60437),snake:o("snake",60438),game:o("game",60439),vr:o("vr",60440),chip:o("chip",60441),piano:o("piano",60442),music:o("music",60443),micFilled:o("mic-filled",60444),repoFetch:o("repo-fetch",60445),copilot:o("copilot",60446),lightbulbSparkle:o("lightbulb-sparkle",60447),robot:o("robot",60448),sparkleFilled:o("sparkle-filled",60449),diffSingle:o("diff-single",60450),diffMultiple:o("diff-multiple",60451),surroundWith:o("surround-with",60452),share:o("share",60453),gitStash:o("git-stash",60454),gitStashApply:o("git-stash-apply",60455),gitStashPop:o("git-stash-pop",60456),vscode:o("vscode",60457),vscodeInsiders:o("vscode-insiders",60458),codeOss:o("code-oss",60459),runCoverage:o("run-coverage",60460),runAllCoverage:o("run-all-coverage",60461),coverage:o("coverage",60462),githubProject:o("github-project",60463),mapVertical:o("map-vertical",60464),foldVertical:o("fold-vertical",60464),mapVerticalFilled:o("map-vertical-filled",60465),foldVerticalFilled:o("fold-vertical-filled",60465),goToSearch:o("go-to-search",60466),percentage:o("percentage",60467),sortPercentage:o("sort-percentage",60467),attach:o("attach",60468),goToEditingSession:o("go-to-editing-session",60469),editSession:o("edit-session",60470),codeReview:o("code-review",60471),copilotWarning:o("copilot-warning",60472),python:o("python",60473),copilotLarge:o("copilot-large",60474),copilotWarningLarge:o("copilot-warning-large",60475),keyboardTab:o("keyboard-tab",60476),copilotBlocked:o("copilot-blocked",60477),copilotNotConnected:o("copilot-not-connected",60478),flag:o("flag",60479),lightbulbEmpty:o("lightbulb-empty",60480),symbolMethodArrow:o("symbol-method-arrow",60481),copilotUnavailable:o("copilot-unavailable",60482),repoPinned:o("repo-pinned",60483),keyboardTabAbove:o("keyboard-tab-above",60484),keyboardTabBelow:o("keyboard-tab-below",60485),gitPullRequestDone:o("git-pull-request-done",60486),mcp:o("mcp",60487),extensionsLarge:o("extensions-large",60488),layoutPanelDock:o("layout-panel-dock",60489),layoutSidebarLeftDock:o("layout-sidebar-left-dock",60490),layoutSidebarRightDock:o("layout-sidebar-right-dock",60491),copilotInProgress:o("copilot-in-progress",60492),copilotError:o("copilot-error",60493),copilotSuccess:o("copilot-success",60494),chatSparkle:o("chat-sparkle",60495),searchSparkle:o("search-sparkle",60496),editSparkle:o("edit-sparkle",60497),copilotSnooze:o("copilot-snooze",60498),sendToRemoteAgent:o("send-to-remote-agent",60499),commentDiscussionSparkle:o("comment-discussion-sparkle",60500),chatSparkleWarning:o("chat-sparkle-warning",60501),chatSparkleError:o("chat-sparkle-error",60502),collection:o("collection",60503),newCollection:o("new-collection",60504),thinking:o("thinking",60505),build:o("build",60506),commentDiscussionQuote:o("comment-discussion-quote",60507),cursor:o("cursor",60508),eraser:o("eraser",60509),fileText:o("file-text",60510),gitLens:o("git-lens",60511),quotes:o("quotes",60512),rename:o("rename",60513),runWithDeps:o("run-with-deps",60514),debugConnected:o("debug-connected",60515),strikethrough:o("strikethrough",60516),openInProduct:o("open-in-product",60517),indexZero:o("index-zero",60518),agent:o("agent",60519),editCode:o("edit-code",60520),repoSelected:o("repo-selected",60521),skip:o("skip",60522),mergeInto:o("merge-into",60523),gitBranchChanges:o("git-branch-changes",60524),gitBranchStagedChanges:o("git-branch-staged-changes",60525),gitBranchConflicts:o("git-branch-conflicts",60526),gitBranch:o("git-branch",60527),gitBranchCreate:o("git-branch-create",60527),gitBranchDelete:o("git-branch-delete",60527),searchLarge:o("search-large",60528),terminalGitBash:o("terminal-git-bash",60529)};var ao={dialogError:o("dialog-error","error"),dialogWarning:o("dialog-warning","warning"),dialogInfo:o("dialog-info","info"),dialogClose:o("dialog-close","close"),treeItemExpanded:o("tree-item-expanded","chevron-down"),treeFilterOnTypeOn:o("tree-filter-on-type-on","list-filter"),treeFilterOnTypeOff:o("tree-filter-on-type-off","list-selection"),treeFilterClear:o("tree-filter-clear","close"),treeItemLoading:o("tree-item-loading","loading"),menuSelection:o("menu-selection","check"),menuSubmenu:o("menu-submenu","chevron-right"),menuBarMore:o("menubar-more","more"),scrollbarButtonLeft:o("scrollbar-button-left","triangle-left"),scrollbarButtonRight:o("scrollbar-button-right","triangle-right"),scrollbarButtonUp:o("scrollbar-button-up","triangle-up"),scrollbarButtonDown:o("scrollbar-button-down","triangle-down"),toolBarMore:o("toolbar-more","more"),quickInputBack:o("quick-input-back","arrow-left"),dropDownButton:o("drop-down-button",60084),symbolCustomColor:o("symbol-customcolor",60252),exportIcon:o("export",60332),workspaceUnspecified:o("workspace-unspecified",60355),newLine:o("newline",60394),thumbsDownFilled:o("thumbsdown-filled",60435),thumbsUpFilled:o("thumbsup-filled",60436),gitFetch:o("git-fetch",60445),lightbulbSparkleAutofix:o("lightbulb-sparkle-autofix",60447),debugBreakpointPending:o("debug-breakpoint-pending",60377)},k={...Ls,...ao};var Qt=class{constructor(){this._tokenizationSupports=new Map,this._factories=new Map,this._onDidChange=new Z,this.onDidChange=this._onDidChange.event,this._colorMap=null}handleChange(e){this._onDidChange.fire({changedLanguages:e,changedColorMap:!1})}register(e,n){return this._tokenizationSupports.set(e,n),this.handleChange([e]),_e(()=>{this._tokenizationSupports.get(e)===n&&(this._tokenizationSupports.delete(e),this.handleChange([e]))})}get(e){return this._tokenizationSupports.get(e)||null}registerFactory(e,n){this._factories.get(e)?.dispose();let r=new sr(this,e,n);return this._factories.set(e,r),_e(()=>{let s=this._factories.get(e);!s||s!==r||(this._factories.delete(e),s.dispose())})}async getOrCreate(e){let n=this.get(e);if(n)return n;let r=this._factories.get(e);return!r||r.isResolved?null:(await r.resolve(),this.get(e))}isResolved(e){if(this.get(e))return!0;let r=this._factories.get(e);return!!(!r||r.isResolved)}setColorMap(e){this._colorMap=e,this._onDidChange.fire({changedLanguages:Array.from(this._tokenizationSupports.keys()),changedColorMap:!0})}getColorMap(){return this._colorMap}getDefaultBackground(){return this._colorMap&&this._colorMap.length>2?this._colorMap[2]:null}},sr=class extends se{get isResolved(){return this._isResolved}constructor(e,n,r){super(),this._registry=e,this._languageId=n,this._factory=r,this._isDisposed=!1,this._resolvePromise=null,this._isResolved=!1}dispose(){this._isDisposed=!0,super.dispose()}async resolve(){return this._resolvePromise||(this._resolvePromise=this._create()),this._resolvePromise}async _create(){let e=await this._factory.tokenizationSupport;this._isResolved=!0,e&&!this._isDisposed&&this._register(this._registry.register(this._languageId,e))}};var Jt=class{constructor(e,n,r){this.offset=e,this.type=n,this.language=r,this._tokenBrand=void 0}toString(){return"("+this.offset+", "+this.type+")"}};var vs;(function(t){t[t.Increase=0]="Increase",t[t.Decrease=1]="Decrease"})(vs||(vs={}));var Ns;(function(t){let e=new Map;e.set(0,k.symbolMethod),e.set(1,k.symbolFunction),e.set(2,k.symbolConstructor),e.set(3,k.symbolField),e.set(4,k.symbolVariable),e.set(5,k.symbolClass),e.set(6,k.symbolStruct),e.set(7,k.symbolInterface),e.set(8,k.symbolModule),e.set(9,k.symbolProperty),e.set(10,k.symbolEvent),e.set(11,k.symbolOperator),e.set(12,k.symbolUnit),e.set(13,k.symbolValue),e.set(15,k.symbolEnum),e.set(14,k.symbolConstant),e.set(15,k.symbolEnum),e.set(16,k.symbolEnumMember),e.set(17,k.symbolKeyword),e.set(28,k.symbolSnippet),e.set(18,k.symbolText),e.set(19,k.symbolColor),e.set(20,k.symbolFile),e.set(21,k.symbolReference),e.set(22,k.symbolCustomColor),e.set(23,k.symbolFolder),e.set(24,k.symbolTypeParameter),e.set(25,k.account),e.set(26,k.issues),e.set(27,k.tools);function n(a){let l=e.get(a);return l||(console.info("No codicon found for CompletionItemKind "+a),l=k.symbolProperty),l}t.toIcon=n;function r(a){switch(a){case 0:return F(728,"Method");case 1:return F(729,"Function");case 2:return F(730,"Constructor");case 3:return F(731,"Field");case 4:return F(732,"Variable");case 5:return F(733,"Class");case 6:return F(734,"Struct");case 7:return F(735,"Interface");case 8:return F(736,"Module");case 9:return F(737,"Property");case 10:return F(738,"Event");case 11:return F(739,"Operator");case 12:return F(740,"Unit");case 13:return F(741,"Value");case 14:return F(742,"Constant");case 15:return F(743,"Enum");case 16:return F(744,"Enum Member");case 17:return F(745,"Keyword");case 18:return F(746,"Text");case 19:return F(747,"Color");case 20:return F(748,"File");case 21:return F(749,"Reference");case 22:return F(750,"Custom Color");case 23:return F(751,"Folder");case 24:return F(752,"Type Parameter");case 25:return F(753,"User");case 26:return F(754,"Issue");case 27:return F(755,"Tool");case 28:return F(756,"Snippet");default:return""}}t.toLabel=r;let s=new Map;s.set("method",0),s.set("function",1),s.set("constructor",2),s.set("field",3),s.set("variable",4),s.set("class",5),s.set("struct",6),s.set("interface",7),s.set("module",8),s.set("property",9),s.set("event",10),s.set("operator",11),s.set("unit",12),s.set("value",13),s.set("constant",14),s.set("enum",15),s.set("enum-member",16),s.set("enumMember",16),s.set("keyword",17),s.set("snippet",28),s.set("text",18),s.set("color",19),s.set("file",20),s.set("reference",21),s.set("customcolor",22),s.set("folder",23),s.set("type-parameter",24),s.set("typeParameter",24),s.set("account",25),s.set("issue",26),s.set("tool",27);function i(a,l){let u=s.get(a);return typeof u>"u"&&!l&&(u=9),u}t.fromString=i})(Ns||(Ns={}));var Ss;(function(t){t[t.Automatic=0]="Automatic",t[t.Explicit=1]="Explicit"})(Ss||(Ss={}));var Rs;(function(t){t[t.Code=1]="Code",t[t.Label=2]="Label"})(Rs||(Rs={}));var As;(function(t){t[t.Accepted=0]="Accepted",t[t.Rejected=1]="Rejected",t[t.Ignored=2]="Ignored"})(As||(As={}));var Cs;(function(t){t[t.Automatic=0]="Automatic",t[t.PasteAs=1]="PasteAs"})(Cs||(Cs={}));var Es;(function(t){t[t.Invoke=1]="Invoke",t[t.TriggerCharacter=2]="TriggerCharacter",t[t.ContentChange=3]="ContentChange"})(Es||(Es={}));var Ms;(function(t){t[t.Text=0]="Text",t[t.Read=1]="Read",t[t.Write=2]="Write"})(Ms||(Ms={}));var Al={17:F(757,"array"),16:F(758,"boolean"),4:F(759,"class"),13:F(760,"constant"),8:F(761,"constructor"),9:F(762,"enumeration"),21:F(763,"enumeration member"),23:F(764,"event"),7:F(765,"field"),0:F(766,"file"),11:F(767,"function"),10:F(768,"interface"),19:F(769,"key"),5:F(770,"method"),1:F(771,"module"),2:F(772,"namespace"),20:F(773,"null"),15:F(774,"number"),18:F(775,"object"),24:F(776,"operator"),3:F(777,"package"),6:F(778,"property"),14:F(779,"string"),22:F(780,"struct"),25:F(781,"type parameter"),12:F(782,"variable")};var ks;(function(t){let e=new Map;e.set(0,k.symbolFile),e.set(1,k.symbolModule),e.set(2,k.symbolNamespace),e.set(3,k.symbolPackage),e.set(4,k.symbolClass),e.set(5,k.symbolMethod),e.set(6,k.symbolProperty),e.set(7,k.symbolField),e.set(8,k.symbolConstructor),e.set(9,k.symbolEnum),e.set(10,k.symbolInterface),e.set(11,k.symbolFunction),e.set(12,k.symbolVariable),e.set(13,k.symbolConstant),e.set(14,k.symbolString),e.set(15,k.symbolNumber),e.set(16,k.symbolBoolean),e.set(17,k.symbolArray),e.set(18,k.symbolObject),e.set(19,k.symbolKey),e.set(20,k.symbolNull),e.set(21,k.symbolEnumMember),e.set(22,k.symbolStruct),e.set(23,k.symbolEvent),e.set(24,k.symbolOperator),e.set(25,k.symbolTypeParameter);function n(i){let a=e.get(i);return a||(console.info("No codicon found for SymbolKind "+i),a=k.symbolProperty),a}t.toIcon=n;let r=new Map;r.set(0,20),r.set(1,8),r.set(2,8),r.set(3,8),r.set(4,5),r.set(5,0),r.set(6,9),r.set(7,3),r.set(8,2),r.set(9,15),r.set(10,7),r.set(11,1),r.set(12,4),r.set(13,14),r.set(14,18),r.set(15,13),r.set(16,13),r.set(17,13),r.set(18,13),r.set(19,17),r.set(20,13),r.set(21,16),r.set(22,6),r.set(23,10),r.set(24,11),r.set(25,24);function s(i){let a=r.get(i);return a===void 0&&(console.info("No completion kind found for SymbolKind "+i),a=20),a}t.toCompletionKind=s})(ks||(ks={}));var Fs=class t{static{this.Comment=new t("comment")}static{this.Imports=new t("imports")}static{this.Region=new t("region")}static fromValue(e){switch(e){case"comment":return t.Comment;case"imports":return t.Imports;case"region":return t.Region}return new t(e)}constructor(e){this.value=e}},Ps;(function(t){t[t.AIGenerated=1]="AIGenerated"})(Ps||(Ps={}));var Ds;(function(t){t[t.Invoke=0]="Invoke",t[t.Automatic=1]="Automatic"})(Ds||(Ds={}));var Ts;(function(t){function e(n){return!n||typeof n!="object"?!1:typeof n.id=="string"&&typeof n.title=="string"}t.is=e})(Ts||(Ts={}));var Is;(function(t){t[t.Type=1]="Type",t[t.Parameter=2]="Parameter"})(Is||(Is={}));var Cl=new Qt;var Bs;(function(t){t[t.Unknown=0]="Unknown",t[t.Disabled=1]="Disabled",t[t.Enabled=2]="Enabled"})(Bs||(Bs={}));var Vs;(function(t){t[t.Invoke=1]="Invoke",t[t.Auto=2]="Auto"})(Vs||(Vs={}));var qs;(function(t){t[t.None=0]="None",t[t.KeepWhitespace=1]="KeepWhitespace",t[t.InsertAsSnippet=4]="InsertAsSnippet"})(qs||(qs={}));var Us;(function(t){t[t.Method=0]="Method",t[t.Function=1]="Function",t[t.Constructor=2]="Constructor",t[t.Field=3]="Field",t[t.Variable=4]="Variable",t[t.Class=5]="Class",t[t.Struct=6]="Struct",t[t.Interface=7]="Interface",t[t.Module=8]="Module",t[t.Property=9]="Property",t[t.Event=10]="Event",t[t.Operator=11]="Operator",t[t.Unit=12]="Unit",t[t.Value=13]="Value",t[t.Constant=14]="Constant",t[t.Enum=15]="Enum",t[t.EnumMember=16]="EnumMember",t[t.Keyword=17]="Keyword",t[t.Text=18]="Text",t[t.Color=19]="Color",t[t.File=20]="File",t[t.Reference=21]="Reference",t[t.Customcolor=22]="Customcolor",t[t.Folder=23]="Folder",t[t.TypeParameter=24]="TypeParameter",t[t.User=25]="User",t[t.Issue=26]="Issue",t[t.Tool=27]="Tool",t[t.Snippet=28]="Snippet"})(Us||(Us={}));var Ws;(function(t){t[t.Deprecated=1]="Deprecated"})(Ws||(Ws={}));var zs;(function(t){t[t.Invoke=0]="Invoke",t[t.TriggerCharacter=1]="TriggerCharacter",t[t.TriggerForIncompleteCompletions=2]="TriggerForIncompleteCompletions"})(zs||(zs={}));var $s;(function(t){t[t.EXACT=0]="EXACT",t[t.ABOVE=1]="ABOVE",t[t.BELOW=2]="BELOW"})($s||($s={}));var Os;(function(t){t[t.NotSet=0]="NotSet",t[t.ContentFlush=1]="ContentFlush",t[t.RecoverFromMarkers=2]="RecoverFromMarkers",t[t.Explicit=3]="Explicit",t[t.Paste=4]="Paste",t[t.Undo=5]="Undo",t[t.Redo=6]="Redo"})(Os||(Os={}));var Hs;(function(t){t[t.LF=1]="LF",t[t.CRLF=2]="CRLF"})(Hs||(Hs={}));var Gs;(function(t){t[t.Text=0]="Text",t[t.Read=1]="Read",t[t.Write=2]="Write"})(Gs||(Gs={}));var js;(function(t){t[t.None=0]="None",t[t.Keep=1]="Keep",t[t.Brackets=2]="Brackets",t[t.Advanced=3]="Advanced",t[t.Full=4]="Full"})(js||(js={}));var Xs;(function(t){t[t.acceptSuggestionOnCommitCharacter=0]="acceptSuggestionOnCommitCharacter",t[t.acceptSuggestionOnEnter=1]="acceptSuggestionOnEnter",t[t.accessibilitySupport=2]="accessibilitySupport",t[t.accessibilityPageSize=3]="accessibilityPageSize",t[t.allowOverflow=4]="allowOverflow",t[t.allowVariableLineHeights=5]="allowVariableLineHeights",t[t.allowVariableFonts=6]="allowVariableFonts",t[t.allowVariableFontsInAccessibilityMode=7]="allowVariableFontsInAccessibilityMode",t[t.ariaLabel=8]="ariaLabel",t[t.ariaRequired=9]="ariaRequired",t[t.autoClosingBrackets=10]="autoClosingBrackets",t[t.autoClosingComments=11]="autoClosingComments",t[t.screenReaderAnnounceInlineSuggestion=12]="screenReaderAnnounceInlineSuggestion",t[t.autoClosingDelete=13]="autoClosingDelete",t[t.autoClosingOvertype=14]="autoClosingOvertype",t[t.autoClosingQuotes=15]="autoClosingQuotes",t[t.autoIndent=16]="autoIndent",t[t.autoIndentOnPaste=17]="autoIndentOnPaste",t[t.autoIndentOnPasteWithinString=18]="autoIndentOnPasteWithinString",t[t.automaticLayout=19]="automaticLayout",t[t.autoSurround=20]="autoSurround",t[t.bracketPairColorization=21]="bracketPairColorization",t[t.guides=22]="guides",t[t.codeLens=23]="codeLens",t[t.codeLensFontFamily=24]="codeLensFontFamily",t[t.codeLensFontSize=25]="codeLensFontSize",t[t.colorDecorators=26]="colorDecorators",t[t.colorDecoratorsLimit=27]="colorDecoratorsLimit",t[t.columnSelection=28]="columnSelection",t[t.comments=29]="comments",t[t.contextmenu=30]="contextmenu",t[t.copyWithSyntaxHighlighting=31]="copyWithSyntaxHighlighting",t[t.cursorBlinking=32]="cursorBlinking",t[t.cursorSmoothCaretAnimation=33]="cursorSmoothCaretAnimation",t[t.cursorStyle=34]="cursorStyle",t[t.cursorSurroundingLines=35]="cursorSurroundingLines",t[t.cursorSurroundingLinesStyle=36]="cursorSurroundingLinesStyle",t[t.cursorWidth=37]="cursorWidth",t[t.cursorHeight=38]="cursorHeight",t[t.disableLayerHinting=39]="disableLayerHinting",t[t.disableMonospaceOptimizations=40]="disableMonospaceOptimizations",t[t.domReadOnly=41]="domReadOnly",t[t.dragAndDrop=42]="dragAndDrop",t[t.dropIntoEditor=43]="dropIntoEditor",t[t.editContext=44]="editContext",t[t.emptySelectionClipboard=45]="emptySelectionClipboard",t[t.experimentalGpuAcceleration=46]="experimentalGpuAcceleration",t[t.experimentalWhitespaceRendering=47]="experimentalWhitespaceRendering",t[t.extraEditorClassName=48]="extraEditorClassName",t[t.fastScrollSensitivity=49]="fastScrollSensitivity",t[t.find=50]="find",t[t.fixedOverflowWidgets=51]="fixedOverflowWidgets",t[t.folding=52]="folding",t[t.foldingStrategy=53]="foldingStrategy",t[t.foldingHighlight=54]="foldingHighlight",t[t.foldingImportsByDefault=55]="foldingImportsByDefault",t[t.foldingMaximumRegions=56]="foldingMaximumRegions",t[t.unfoldOnClickAfterEndOfLine=57]="unfoldOnClickAfterEndOfLine",t[t.fontFamily=58]="fontFamily",t[t.fontInfo=59]="fontInfo",t[t.fontLigatures=60]="fontLigatures",t[t.fontSize=61]="fontSize",t[t.fontWeight=62]="fontWeight",t[t.fontVariations=63]="fontVariations",t[t.formatOnPaste=64]="formatOnPaste",t[t.formatOnType=65]="formatOnType",t[t.glyphMargin=66]="glyphMargin",t[t.gotoLocation=67]="gotoLocation",t[t.hideCursorInOverviewRuler=68]="hideCursorInOverviewRuler",t[t.hover=69]="hover",t[t.inDiffEditor=70]="inDiffEditor",t[t.inlineSuggest=71]="inlineSuggest",t[t.letterSpacing=72]="letterSpacing",t[t.lightbulb=73]="lightbulb",t[t.lineDecorationsWidth=74]="lineDecorationsWidth",t[t.lineHeight=75]="lineHeight",t[t.lineNumbers=76]="lineNumbers",t[t.lineNumbersMinChars=77]="lineNumbersMinChars",t[t.linkedEditing=78]="linkedEditing",t[t.links=79]="links",t[t.matchBrackets=80]="matchBrackets",t[t.minimap=81]="minimap",t[t.mouseStyle=82]="mouseStyle",t[t.mouseWheelScrollSensitivity=83]="mouseWheelScrollSensitivity",t[t.mouseWheelZoom=84]="mouseWheelZoom",t[t.multiCursorMergeOverlapping=85]="multiCursorMergeOverlapping",t[t.multiCursorModifier=86]="multiCursorModifier",t[t.mouseMiddleClickAction=87]="mouseMiddleClickAction",t[t.multiCursorPaste=88]="multiCursorPaste",t[t.multiCursorLimit=89]="multiCursorLimit",t[t.occurrencesHighlight=90]="occurrencesHighlight",t[t.occurrencesHighlightDelay=91]="occurrencesHighlightDelay",t[t.overtypeCursorStyle=92]="overtypeCursorStyle",t[t.overtypeOnPaste=93]="overtypeOnPaste",t[t.overviewRulerBorder=94]="overviewRulerBorder",t[t.overviewRulerLanes=95]="overviewRulerLanes",t[t.padding=96]="padding",t[t.pasteAs=97]="pasteAs",t[t.parameterHints=98]="parameterHints",t[t.peekWidgetDefaultFocus=99]="peekWidgetDefaultFocus",t[t.placeholder=100]="placeholder",t[t.definitionLinkOpensInPeek=101]="definitionLinkOpensInPeek",t[t.quickSuggestions=102]="quickSuggestions",t[t.quickSuggestionsDelay=103]="quickSuggestionsDelay",t[t.readOnly=104]="readOnly",t[t.readOnlyMessage=105]="readOnlyMessage",t[t.renameOnType=106]="renameOnType",t[t.renderRichScreenReaderContent=107]="renderRichScreenReaderContent",t[t.renderControlCharacters=108]="renderControlCharacters",t[t.renderFinalNewline=109]="renderFinalNewline",t[t.renderLineHighlight=110]="renderLineHighlight",t[t.renderLineHighlightOnlyWhenFocus=111]="renderLineHighlightOnlyWhenFocus",t[t.renderValidationDecorations=112]="renderValidationDecorations",t[t.renderWhitespace=113]="renderWhitespace",t[t.revealHorizontalRightPadding=114]="revealHorizontalRightPadding",t[t.roundedSelection=115]="roundedSelection",t[t.rulers=116]="rulers",t[t.scrollbar=117]="scrollbar",t[t.scrollBeyondLastColumn=118]="scrollBeyondLastColumn",t[t.scrollBeyondLastLine=119]="scrollBeyondLastLine",t[t.scrollPredominantAxis=120]="scrollPredominantAxis",t[t.selectionClipboard=121]="selectionClipboard",t[t.selectionHighlight=122]="selectionHighlight",t[t.selectionHighlightMaxLength=123]="selectionHighlightMaxLength",t[t.selectionHighlightMultiline=124]="selectionHighlightMultiline",t[t.selectOnLineNumbers=125]="selectOnLineNumbers",t[t.showFoldingControls=126]="showFoldingControls",t[t.showUnused=127]="showUnused",t[t.snippetSuggestions=128]="snippetSuggestions",t[t.smartSelect=129]="smartSelect",t[t.smoothScrolling=130]="smoothScrolling",t[t.stickyScroll=131]="stickyScroll",t[t.stickyTabStops=132]="stickyTabStops",t[t.stopRenderingLineAfter=133]="stopRenderingLineAfter",t[t.suggest=134]="suggest",t[t.suggestFontSize=135]="suggestFontSize",t[t.suggestLineHeight=136]="suggestLineHeight",t[t.suggestOnTriggerCharacters=137]="suggestOnTriggerCharacters",t[t.suggestSelection=138]="suggestSelection",t[t.tabCompletion=139]="tabCompletion",t[t.tabIndex=140]="tabIndex",t[t.trimWhitespaceOnDelete=141]="trimWhitespaceOnDelete",t[t.unicodeHighlighting=142]="unicodeHighlighting",t[t.unusualLineTerminators=143]="unusualLineTerminators",t[t.useShadowDOM=144]="useShadowDOM",t[t.useTabStops=145]="useTabStops",t[t.wordBreak=146]="wordBreak",t[t.wordSegmenterLocales=147]="wordSegmenterLocales",t[t.wordSeparators=148]="wordSeparators",t[t.wordWrap=149]="wordWrap",t[t.wordWrapBreakAfterCharacters=150]="wordWrapBreakAfterCharacters",t[t.wordWrapBreakBeforeCharacters=151]="wordWrapBreakBeforeCharacters",t[t.wordWrapColumn=152]="wordWrapColumn",t[t.wordWrapOverride1=153]="wordWrapOverride1",t[t.wordWrapOverride2=154]="wordWrapOverride2",t[t.wrappingIndent=155]="wrappingIndent",t[t.wrappingStrategy=156]="wrappingStrategy",t[t.showDeprecated=157]="showDeprecated",t[t.inertialScroll=158]="inertialScroll",t[t.inlayHints=159]="inlayHints",t[t.wrapOnEscapedLineFeeds=160]="wrapOnEscapedLineFeeds",t[t.effectiveCursorStyle=161]="effectiveCursorStyle",t[t.editorClassName=162]="editorClassName",t[t.pixelRatio=163]="pixelRatio",t[t.tabFocusMode=164]="tabFocusMode",t[t.layoutInfo=165]="layoutInfo",t[t.wrappingInfo=166]="wrappingInfo",t[t.defaultColorDecorators=167]="defaultColorDecorators",t[t.colorDecoratorsActivatedOn=168]="colorDecoratorsActivatedOn",t[t.inlineCompletionsAccessibilityVerbose=169]="inlineCompletionsAccessibilityVerbose",t[t.effectiveEditContext=170]="effectiveEditContext",t[t.scrollOnMiddleClick=171]="scrollOnMiddleClick",t[t.effectiveAllowVariableFonts=172]="effectiveAllowVariableFonts"})(Xs||(Xs={}));var Qs;(function(t){t[t.TextDefined=0]="TextDefined",t[t.LF=1]="LF",t[t.CRLF=2]="CRLF"})(Qs||(Qs={}));var Js;(function(t){t[t.LF=0]="LF",t[t.CRLF=1]="CRLF"})(Js||(Js={}));var Ys;(function(t){t[t.Left=1]="Left",t[t.Center=2]="Center",t[t.Right=3]="Right"})(Ys||(Ys={}));var Zs;(function(t){t[t.Increase=0]="Increase",t[t.Decrease=1]="Decrease"})(Zs||(Zs={}));var Ks;(function(t){t[t.None=0]="None",t[t.Indent=1]="Indent",t[t.IndentOutdent=2]="IndentOutdent",t[t.Outdent=3]="Outdent"})(Ks||(Ks={}));var ei;(function(t){t[t.Both=0]="Both",t[t.Right=1]="Right",t[t.Left=2]="Left",t[t.None=3]="None"})(ei||(ei={}));var ti;(function(t){t[t.Type=1]="Type",t[t.Parameter=2]="Parameter"})(ti||(ti={}));var ni;(function(t){t[t.Accepted=0]="Accepted",t[t.Rejected=1]="Rejected",t[t.Ignored=2]="Ignored"})(ni||(ni={}));var ri;(function(t){t[t.Code=1]="Code",t[t.Label=2]="Label"})(ri||(ri={}));var si;(function(t){t[t.Automatic=0]="Automatic",t[t.Explicit=1]="Explicit"})(si||(si={}));var Yt;(function(t){t[t.DependsOnKbLayout=-1]="DependsOnKbLayout",t[t.Unknown=0]="Unknown",t[t.Backspace=1]="Backspace",t[t.Tab=2]="Tab",t[t.Enter=3]="Enter",t[t.Shift=4]="Shift",t[t.Ctrl=5]="Ctrl",t[t.Alt=6]="Alt",t[t.PauseBreak=7]="PauseBreak",t[t.CapsLock=8]="CapsLock",t[t.Escape=9]="Escape",t[t.Space=10]="Space",t[t.PageUp=11]="PageUp",t[t.PageDown=12]="PageDown",t[t.End=13]="End",t[t.Home=14]="Home",t[t.LeftArrow=15]="LeftArrow",t[t.UpArrow=16]="UpArrow",t[t.RightArrow=17]="RightArrow",t[t.DownArrow=18]="DownArrow",t[t.Insert=19]="Insert",t[t.Delete=20]="Delete",t[t.Digit0=21]="Digit0",t[t.Digit1=22]="Digit1",t[t.Digit2=23]="Digit2",t[t.Digit3=24]="Digit3",t[t.Digit4=25]="Digit4",t[t.Digit5=26]="Digit5",t[t.Digit6=27]="Digit6",t[t.Digit7=28]="Digit7",t[t.Digit8=29]="Digit8",t[t.Digit9=30]="Digit9",t[t.KeyA=31]="KeyA",t[t.KeyB=32]="KeyB",t[t.KeyC=33]="KeyC",t[t.KeyD=34]="KeyD",t[t.KeyE=35]="KeyE",t[t.KeyF=36]="KeyF",t[t.KeyG=37]="KeyG",t[t.KeyH=38]="KeyH",t[t.KeyI=39]="KeyI",t[t.KeyJ=40]="KeyJ",t[t.KeyK=41]="KeyK",t[t.KeyL=42]="KeyL",t[t.KeyM=43]="KeyM",t[t.KeyN=44]="KeyN",t[t.KeyO=45]="KeyO",t[t.KeyP=46]="KeyP",t[t.KeyQ=47]="KeyQ",t[t.KeyR=48]="KeyR",t[t.KeyS=49]="KeyS",t[t.KeyT=50]="KeyT",t[t.KeyU=51]="KeyU",t[t.KeyV=52]="KeyV",t[t.KeyW=53]="KeyW",t[t.KeyX=54]="KeyX",t[t.KeyY=55]="KeyY",t[t.KeyZ=56]="KeyZ",t[t.Meta=57]="Meta",t[t.ContextMenu=58]="ContextMenu",t[t.F1=59]="F1",t[t.F2=60]="F2",t[t.F3=61]="F3",t[t.F4=62]="F4",t[t.F5=63]="F5",t[t.F6=64]="F6",t[t.F7=65]="F7",t[t.F8=66]="F8",t[t.F9=67]="F9",t[t.F10=68]="F10",t[t.F11=69]="F11",t[t.F12=70]="F12",t[t.F13=71]="F13",t[t.F14=72]="F14",t[t.F15=73]="F15",t[t.F16=74]="F16",t[t.F17=75]="F17",t[t.F18=76]="F18",t[t.F19=77]="F19",t[t.F20=78]="F20",t[t.F21=79]="F21",t[t.F22=80]="F22",t[t.F23=81]="F23",t[t.F24=82]="F24",t[t.NumLock=83]="NumLock",t[t.ScrollLock=84]="ScrollLock",t[t.Semicolon=85]="Semicolon",t[t.Equal=86]="Equal",t[t.Comma=87]="Comma",t[t.Minus=88]="Minus",t[t.Period=89]="Period",t[t.Slash=90]="Slash",t[t.Backquote=91]="Backquote",t[t.BracketLeft=92]="BracketLeft",t[t.Backslash=93]="Backslash",t[t.BracketRight=94]="BracketRight",t[t.Quote=95]="Quote",t[t.OEM_8=96]="OEM_8",t[t.IntlBackslash=97]="IntlBackslash",t[t.Numpad0=98]="Numpad0",t[t.Numpad1=99]="Numpad1",t[t.Numpad2=100]="Numpad2",t[t.Numpad3=101]="Numpad3",t[t.Numpad4=102]="Numpad4",t[t.Numpad5=103]="Numpad5",t[t.Numpad6=104]="Numpad6",t[t.Numpad7=105]="Numpad7",t[t.Numpad8=106]="Numpad8",t[t.Numpad9=107]="Numpad9",t[t.NumpadMultiply=108]="NumpadMultiply",t[t.NumpadAdd=109]="NumpadAdd",t[t.NUMPAD_SEPARATOR=110]="NUMPAD_SEPARATOR",t[t.NumpadSubtract=111]="NumpadSubtract",t[t.NumpadDecimal=112]="NumpadDecimal",t[t.NumpadDivide=113]="NumpadDivide",t[t.KEY_IN_COMPOSITION=114]="KEY_IN_COMPOSITION",t[t.ABNT_C1=115]="ABNT_C1",t[t.ABNT_C2=116]="ABNT_C2",t[t.AudioVolumeMute=117]="AudioVolumeMute",t[t.AudioVolumeUp=118]="AudioVolumeUp",t[t.AudioVolumeDown=119]="AudioVolumeDown",t[t.BrowserSearch=120]="BrowserSearch",t[t.BrowserHome=121]="BrowserHome",t[t.BrowserBack=122]="BrowserBack",t[t.BrowserForward=123]="BrowserForward",t[t.MediaTrackNext=124]="MediaTrackNext",t[t.MediaTrackPrevious=125]="MediaTrackPrevious",t[t.MediaStop=126]="MediaStop",t[t.MediaPlayPause=127]="MediaPlayPause",t[t.LaunchMediaPlayer=128]="LaunchMediaPlayer",t[t.LaunchMail=129]="LaunchMail",t[t.LaunchApp2=130]="LaunchApp2",t[t.Clear=131]="Clear",t[t.MAX_VALUE=132]="MAX_VALUE"})(Yt||(Yt={}));var Zt;(function(t){t[t.Hint=1]="Hint",t[t.Info=2]="Info",t[t.Warning=4]="Warning",t[t.Error=8]="Error"})(Zt||(Zt={}));var Kt;(function(t){t[t.Unnecessary=1]="Unnecessary",t[t.Deprecated=2]="Deprecated"})(Kt||(Kt={}));var ii;(function(t){t[t.Inline=1]="Inline",t[t.Gutter=2]="Gutter"})(ii||(ii={}));var oi;(function(t){t[t.Normal=1]="Normal",t[t.Underlined=2]="Underlined"})(oi||(oi={}));var ai;(function(t){t[t.UNKNOWN=0]="UNKNOWN",t[t.TEXTAREA=1]="TEXTAREA",t[t.GUTTER_GLYPH_MARGIN=2]="GUTTER_GLYPH_MARGIN",t[t.GUTTER_LINE_NUMBERS=3]="GUTTER_LINE_NUMBERS",t[t.GUTTER_LINE_DECORATIONS=4]="GUTTER_LINE_DECORATIONS",t[t.GUTTER_VIEW_ZONE=5]="GUTTER_VIEW_ZONE",t[t.CONTENT_TEXT=6]="CONTENT_TEXT",t[t.CONTENT_EMPTY=7]="CONTENT_EMPTY",t[t.CONTENT_VIEW_ZONE=8]="CONTENT_VIEW_ZONE",t[t.CONTENT_WIDGET=9]="CONTENT_WIDGET",t[t.OVERVIEW_RULER=10]="OVERVIEW_RULER",t[t.SCROLLBAR=11]="SCROLLBAR",t[t.OVERLAY_WIDGET=12]="OVERLAY_WIDGET",t[t.OUTSIDE_EDITOR=13]="OUTSIDE_EDITOR"})(ai||(ai={}));var li;(function(t){t[t.AIGenerated=1]="AIGenerated"})(li||(li={}));var ui;(function(t){t[t.Invoke=0]="Invoke",t[t.Automatic=1]="Automatic"})(ui||(ui={}));var ci;(function(t){t[t.TOP_RIGHT_CORNER=0]="TOP_RIGHT_CORNER",t[t.BOTTOM_RIGHT_CORNER=1]="BOTTOM_RIGHT_CORNER",t[t.TOP_CENTER=2]="TOP_CENTER"})(ci||(ci={}));var hi;(function(t){t[t.Left=1]="Left",t[t.Center=2]="Center",t[t.Right=4]="Right",t[t.Full=7]="Full"})(hi||(hi={}));var fi;(function(t){t[t.Word=0]="Word",t[t.Line=1]="Line",t[t.Suggest=2]="Suggest"})(fi||(fi={}));var mi;(function(t){t[t.Left=0]="Left",t[t.Right=1]="Right",t[t.None=2]="None",t[t.LeftOfInjectedText=3]="LeftOfInjectedText",t[t.RightOfInjectedText=4]="RightOfInjectedText"})(mi||(mi={}));var di;(function(t){t[t.Off=0]="Off",t[t.On=1]="On",t[t.Relative=2]="Relative",t[t.Interval=3]="Interval",t[t.Custom=4]="Custom"})(di||(di={}));var gi;(function(t){t[t.None=0]="None",t[t.Text=1]="Text",t[t.Blocks=2]="Blocks"})(gi||(gi={}));var pi;(function(t){t[t.Smooth=0]="Smooth",t[t.Immediate=1]="Immediate"})(pi||(pi={}));var bi;(function(t){t[t.Auto=1]="Auto",t[t.Hidden=2]="Hidden",t[t.Visible=3]="Visible"})(bi||(bi={}));var en;(function(t){t[t.LTR=0]="LTR",t[t.RTL=1]="RTL"})(en||(en={}));var wi;(function(t){t.Off="off",t.OnCode="onCode",t.On="on"})(wi||(wi={}));var xi;(function(t){t[t.Invoke=1]="Invoke",t[t.TriggerCharacter=2]="TriggerCharacter",t[t.ContentChange=3]="ContentChange"})(xi||(xi={}));var _i;(function(t){t[t.File=0]="File",t[t.Module=1]="Module",t[t.Namespace=2]="Namespace",t[t.Package=3]="Package",t[t.Class=4]="Class",t[t.Method=5]="Method",t[t.Property=6]="Property",t[t.Field=7]="Field",t[t.Constructor=8]="Constructor",t[t.Enum=9]="Enum",t[t.Interface=10]="Interface",t[t.Function=11]="Function",t[t.Variable=12]="Variable",t[t.Constant=13]="Constant",t[t.String=14]="String",t[t.Number=15]="Number",t[t.Boolean=16]="Boolean",t[t.Array=17]="Array",t[t.Object=18]="Object",t[t.Key=19]="Key",t[t.Null=20]="Null",t[t.EnumMember=21]="EnumMember",t[t.Struct=22]="Struct",t[t.Event=23]="Event",t[t.Operator=24]="Operator",t[t.TypeParameter=25]="TypeParameter"})(_i||(_i={}));var yi;(function(t){t[t.Deprecated=1]="Deprecated"})(yi||(yi={}));var Li;(function(t){t[t.LTR=0]="LTR",t[t.RTL=1]="RTL"})(Li||(Li={}));var vi;(function(t){t[t.Hidden=0]="Hidden",t[t.Blink=1]="Blink",t[t.Smooth=2]="Smooth",t[t.Phase=3]="Phase",t[t.Expand=4]="Expand",t[t.Solid=5]="Solid"})(vi||(vi={}));var Ni;(function(t){t[t.Line=1]="Line",t[t.Block=2]="Block",t[t.Underline=3]="Underline",t[t.LineThin=4]="LineThin",t[t.BlockOutline=5]="BlockOutline",t[t.UnderlineThin=6]="UnderlineThin"})(Ni||(Ni={}));var Si;(function(t){t[t.AlwaysGrowsWhenTypingAtEdges=0]="AlwaysGrowsWhenTypingAtEdges",t[t.NeverGrowsWhenTypingAtEdges=1]="NeverGrowsWhenTypingAtEdges",t[t.GrowsOnlyWhenTypingBefore=2]="GrowsOnlyWhenTypingBefore",t[t.GrowsOnlyWhenTypingAfter=3]="GrowsOnlyWhenTypingAfter"})(Si||(Si={}));var Ri;(function(t){t[t.None=0]="None",t[t.Same=1]="Same",t[t.Indent=2]="Indent",t[t.DeepIndent=3]="DeepIndent"})(Ri||(Ri={}));var ir=class{static{this.CtrlCmd=2048}static{this.Shift=1024}static{this.Alt=512}static{this.WinCtrl=256}static chord(e,n){return fs(e,n)}};function Ai(){return{editor:void 0,languages:void 0,CancellationTokenSource:gt,Emitter:Z,KeyCode:Yt,KeyMod:ir,Position:B,Range:E,Selection:Xt,SelectionDirection:en,MarkerSeverity:Zt,MarkerTag:Kt,Uri:Re,Token:Jt}}var Ci,Ei,Mi,or=class{constructor(e,n){this.uri=e,this.value=n}};function lo(t){return Array.isArray(t)}var tn=class t{static{this.defaultToKey=e=>e.toString()}constructor(e,n){if(this[Ci]="ResourceMap",e instanceof t)this.map=new Map(e.map),this.toKey=n??t.defaultToKey;else if(lo(e)){this.map=new Map,this.toKey=n??t.defaultToKey;for(let[r,s]of e)this.set(r,s)}else this.map=new Map,this.toKey=e??t.defaultToKey}set(e,n){return this.map.set(this.toKey(e),new or(e,n)),this}get(e){return this.map.get(this.toKey(e))?.value}has(e){return this.map.has(this.toKey(e))}get size(){return this.map.size}clear(){this.map.clear()}delete(e){return this.map.delete(this.toKey(e))}forEach(e,n){typeof n<"u"&&(e=e.bind(n));for(let[r,s]of this.map)e(s.value,s.uri,this)}*values(){for(let e of this.map.values())yield e.value}*keys(){for(let e of this.map.values())yield e.uri}*entries(){for(let e of this.map.values())yield[e.uri,e.value]}*[(Ci=Symbol.toStringTag,Symbol.iterator)](){for(let[,e]of this.map)yield[e.uri,e.value]}},ki=class{constructor(e,n){this[Ei]="ResourceSet",!e||typeof e=="function"?this._map=new tn(e):(this._map=new tn(n),e.forEach(this.add,this))}get size(){return this._map.size}add(e){return this._map.set(e,e),this}clear(){this._map.clear()}delete(e){return this._map.delete(e)}forEach(e,n){this._map.forEach((r,s)=>e.call(n,s,s,this))}has(e){return this._map.has(e)}entries(){return this._map.entries()}keys(){return this._map.keys()}values(){return this._map.keys()}[(Ei=Symbol.toStringTag,Symbol.iterator)](){return this.keys()}},ar=class{constructor(){this[Mi]="LinkedMap",this._map=new Map,this._head=void 0,this._tail=void 0,this._size=0,this._state=0}clear(){this._map.clear(),this._head=void 0,this._tail=void 0,this._size=0,this._state++}isEmpty(){return!this._head&&!this._tail}get size(){return this._size}get first(){return this._head?.value}get last(){return this._tail?.value}has(e){return this._map.has(e)}get(e,n=0){let r=this._map.get(e);if(r)return n!==0&&this.touch(r,n),r.value}set(e,n,r=0){let s=this._map.get(e);if(s)s.value=n,r!==0&&this.touch(s,r);else{switch(s={key:e,value:n,next:void 0,previous:void 0},r){case 0:this.addItemLast(s);break;case 1:this.addItemFirst(s);break;case 2:this.addItemLast(s);break;default:this.addItemLast(s);break}this._map.set(e,s),this._size++}return this}delete(e){return!!this.remove(e)}remove(e){let n=this._map.get(e);if(n)return this._map.delete(e),this.removeItem(n),this._size--,n.value}shift(){if(!this._head&&!this._tail)return;if(!this._head||!this._tail)throw new Error("Invalid list");let e=this._head;return this._map.delete(e.key),this.removeItem(e),this._size--,e.value}forEach(e,n){let r=this._state,s=this._head;for(;s;){if(n?e.bind(n)(s.value,s.key,this):e(s.value,s.key,this),this._state!==r)throw new Error("LinkedMap got modified during iteration.");s=s.next}}keys(){let e=this,n=this._state,r=this._head,s={[Symbol.iterator](){return s},next(){if(e._state!==n)throw new Error("LinkedMap got modified during iteration.");if(r){let i={value:r.key,done:!1};return r=r.next,i}else return{value:void 0,done:!0}}};return s}values(){let e=this,n=this._state,r=this._head,s={[Symbol.iterator](){return s},next(){if(e._state!==n)throw new Error("LinkedMap got modified during iteration.");if(r){let i={value:r.value,done:!1};return r=r.next,i}else return{value:void 0,done:!0}}};return s}entries(){let e=this,n=this._state,r=this._head,s={[Symbol.iterator](){return s},next(){if(e._state!==n)throw new Error("LinkedMap got modified during iteration.");if(r){let i={value:[r.key,r.value],done:!1};return r=r.next,i}else return{value:void 0,done:!0}}};return s}[(Mi=Symbol.toStringTag,Symbol.iterator)](){return this.entries()}trimOld(e){if(e>=this.size)return;if(e===0){this.clear();return}let n=this._head,r=this.size;for(;n&&r>e;)this._map.delete(n.key),n=n.next,r--;this._head=n,this._size=r,n&&(n.previous=void 0),this._state++}trimNew(e){if(e>=this.size)return;if(e===0){this.clear();return}let n=this._tail,r=this.size;for(;n&&r>e;)this._map.delete(n.key),n=n.previous,r--;this._tail=n,this._size=r,n&&(n.next=void 0),this._state++}addItemFirst(e){if(!this._head&&!this._tail)this._tail=e;else if(this._head)e.next=this._head,this._head.previous=e;else throw new Error("Invalid list");this._head=e,this._state++}addItemLast(e){if(!this._head&&!this._tail)this._head=e;else if(this._tail)e.previous=this._tail,this._tail.next=e;else throw new Error("Invalid list");this._tail=e,this._state++}removeItem(e){if(e===this._head&&e===this._tail)this._head=void 0,this._tail=void 0;else if(e===this._head){if(!e.next)throw new Error("Invalid list");e.next.previous=void 0,this._head=e.next}else if(e===this._tail){if(!e.previous)throw new Error("Invalid list");e.previous.next=void 0,this._tail=e.previous}else{let n=e.next,r=e.previous;if(!n||!r)throw new Error("Invalid list");n.previous=r,r.next=n}e.next=void 0,e.previous=void 0,this._state++}touch(e,n){if(!this._head||!this._tail)throw new Error("Invalid list");if(!(n!==1&&n!==2)){if(n===1){if(e===this._head)return;let r=e.next,s=e.previous;e===this._tail?(s.next=void 0,this._tail=s):(r.previous=s,s.next=r),e.previous=void 0,e.next=this._head,this._head.previous=e,this._head=e,this._state++}else if(n===2){if(e===this._tail)return;let r=e.next,s=e.previous;e===this._head?(r.previous=void 0,this._head=r):(r.previous=s,s.next=r),e.next=void 0,e.previous=this._tail,this._tail.next=e,this._tail=e,this._state++}}}toJSON(){let e=[];return this.forEach((n,r)=>{e.push([r,n])}),e}fromJSON(e){this.clear();for(let[n,r]of e)this.set(n,r)}},lr=class extends ar{constructor(e,n=1){super(),this._limit=e,this._ratio=Math.min(Math.max(0,n),1)}get limit(){return this._limit}set limit(e){this._limit=e,this.checkTrim()}get(e,n=2){return super.get(e,n)}peek(e){return super.get(e,0)}set(e,n){return super.set(e,n,2),this}checkTrim(){this.size>this._limit&&this.trim(Math.round(this._limit*this._ratio))}},nn=class extends lr{constructor(e,n=1){super(e,n)}trim(e){this.trimOld(e)}set(e,n){return super.set(e,n),this.checkTrim(),this}};var rn=class{constructor(){this.map=new Map}add(e,n){let r=this.map.get(e);r||(r=new Set,this.map.set(e,r)),r.add(n)}delete(e,n){let r=this.map.get(e);r&&(r.delete(n),r.size===0&&this.map.delete(e))}forEach(e,n){let r=this.map.get(e);r&&r.forEach(n)}};var Ql=new nn(10);var Fi;(function(t){t[t.Left=1]="Left",t[t.Center=2]="Center",t[t.Right=4]="Right",t[t.Full=7]="Full"})(Fi||(Fi={}));var Pi;(function(t){t[t.Left=1]="Left",t[t.Center=2]="Center",t[t.Right=3]="Right"})(Pi||(Pi={}));var Di;(function(t){t[t.LTR=0]="LTR",t[t.RTL=1]="RTL"})(Di||(Di={}));var Ti;(function(t){t[t.Both=0]="Both",t[t.Right=1]="Right",t[t.Left=2]="Left",t[t.None=3]="None"})(Ti||(Ti={}));function Ii(t){if(!t||t.length===0)return!1;for(let e=0,n=t.length;e<n;e++){let r=t.charCodeAt(e);if(r===10)return!0;if(r===92){if(e++,e>=n)break;let s=t.charCodeAt(e);if(s===110||s===114||s===87)return!0}}return!1}function uo(t,e,n,r,s){if(r===0)return!0;let i=e.charCodeAt(r-1);if(t.get(i)!==0||i===13||i===10)return!0;if(s>0){let a=e.charCodeAt(r);if(t.get(a)!==0)return!0}return!1}function co(t,e,n,r,s){if(r+s===n)return!0;let i=e.charCodeAt(r+s);if(t.get(i)!==0||i===13||i===10)return!0;if(s>0){let a=e.charCodeAt(r+s-1);if(t.get(a)!==0)return!0}return!1}function ho(t,e,n,r,s){return uo(t,e,n,r,s)&&co(t,e,n,r,s)}var sn=class{constructor(e,n){this._wordSeparators=e,this._searchRegex=n,this._prevMatchStartIndex=-1,this._prevMatchLength=0}reset(e){this._searchRegex.lastIndex=e,this._prevMatchStartIndex=-1,this._prevMatchLength=0}next(e){let n=e.length,r;do{if(this._prevMatchStartIndex+this._prevMatchLength===n||(r=this._searchRegex.exec(e),!r))return null;let s=r.index,i=r[0].length;if(s===this._prevMatchStartIndex&&i===this._prevMatchLength){if(i===0){Qr(e,n,this._searchRegex.lastIndex)>65535?this._searchRegex.lastIndex+=2:this._searchRegex.lastIndex+=1;continue}return null}if(this._prevMatchStartIndex=s,this._prevMatchLength=i,!this._wordSeparators||ho(this._wordSeparators,e,n,s,i))return r}while(r);return null}};var fo="`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?";function mo(t=""){let e="(-?\\d*\\.\\d\\w*)|([^";for(let n of fo)t.indexOf(n)>=0||(e+="\\"+n);return e+="\\s]+)",new RegExp(e,"g")}var ur=mo();function cr(t){let e=ur;if(t&&t instanceof RegExp)if(t.global)e=t;else{let n="g";t.ignoreCase&&(n+="i"),t.multiline&&(n+="m"),t.unicode&&(n+="u"),e=new RegExp(t.source,n)}return e.lastIndex=0,e}var Bi=new ut;Bi.unshift({maxLen:1e3,windowSize:15,timeBudget:150});function wt(t,e,n,r,s){if(e=cr(e),s||(s=He.first(Bi)),n.length>s.maxLen){let c=t-s.maxLen/2;return c<0?c=0:r+=c,n=n.substring(c,t+s.maxLen/2),wt(t,e,n,r,s)}let i=Date.now(),a=t-1-r,l=-1,u=null;for(let c=1;!(Date.now()-i>=s.timeBudget);c++){let f=a-s.windowSize*c;e.lastIndex=Math.max(0,f);let h=go(e,n,a,l);if(!h&&u||(u=h,f<=0))break;l=f}if(u){let c={word:u[0],startColumn:r+1+u.index,endColumn:r+1+u.index+u[0].length};return e.lastIndex=0,c}return null}function go(t,e,n,r){let s;for(;s=t.exec(e);){let i=s.index||0;if(i<=n&&t.lastIndex>=n)return s;if(r>0&&i>r)return null}return null}var on=class{static computeUnicodeHighlights(e,n,r){let s=r?r.startLineNumber:1,i=r?r.endLineNumber:e.getLineCount(),a=new an(n),l=a.getCandidateCodePoints(),u;l==="allNonBasicAscii"?u=new RegExp("[^\\t\\n\\r\\x20-\\x7E]","g"):u=new RegExp(`${po(Array.from(l))}`,"g");let c=new sn(null,u),f=[],h=!1,m,b=0,p=0,d=0;e:for(let x=s,N=i;x<=N;x++){let v=e.getLineContent(x),L=v.length;c.reset(0);do if(m=c.next(v),m){let C=m.index,D=m.index+m[0].length;if(C>0){let R=v.charCodeAt(C-1);Qe(R)&&C--}if(D+1<L){let R=v.charCodeAt(D-1);Qe(R)&&D++}let q=v.substring(C,D),w=wt(C+1,ur,v,0);w&&w.endColumn<=C+1&&(w=null);let _=a.shouldHighlightNonBasicASCII(q,w?w.word:null);if(_!==0){if(_===3?b++:_===2?p++:_===1?d++:kr(),f.length>=1e3){h=!0;break e}f.push(new E(x,C+1,x,D+1))}}while(m)}return{ranges:f,hasMore:h,ambiguousCharacterCount:b,invisibleCharacterCount:p,nonBasicAsciiCharacterCount:d}}static computeUnicodeHighlightReason(e,n){let r=new an(n);switch(r.shouldHighlightNonBasicASCII(e,null)){case 0:return null;case 2:return{kind:1};case 3:{let i=e.codePointAt(0),a=r.ambiguousCharacters.getPrimaryConfusable(i),l=je.getLocales().filter(u=>!je.getInstance(new Set([...n.allowedLocales,u])).isAmbiguous(i));return{kind:0,confusableWith:String.fromCodePoint(a),notAmbiguousInLocales:l}}case 1:return{kind:2}}}};function po(t,e){return`[${zr(t.map(r=>String.fromCodePoint(r)).join(""))}]`}var an=class{constructor(e){this.options=e,this.allowedCodePoints=new Set(e.allowedCodePoints),this.ambiguousCharacters=je.getInstance(new Set(e.allowedLocales))}getCandidateCodePoints(){if(this.options.nonBasicASCII)return"allNonBasicAscii";let e=new Set;if(this.options.invisibleCharacters)for(let n of Xe.codePoints)Vi(String.fromCodePoint(n))||e.add(n);if(this.options.ambiguousCharacters)for(let n of this.ambiguousCharacters.getConfusableCodePoints())e.add(n);for(let n of this.allowedCodePoints)e.delete(n);return e}shouldHighlightNonBasicASCII(e,n){let r=e.codePointAt(0);if(this.allowedCodePoints.has(r))return 0;if(this.options.nonBasicASCII)return 1;let s=!1,i=!1;if(n)for(let a of n){let l=a.codePointAt(0),u=Jr(a);s=s||u,!u&&!this.ambiguousCharacters.isAmbiguous(l)&&!Xe.isInvisibleCharacter(l)&&(i=!0)}return!s&&i?0:this.options.invisibleCharacters&&!Vi(e)&&Xe.isInvisibleCharacter(r)?2:this.options.ambiguousCharacters&&this.ambiguousCharacters.isAmbiguous(r)?3:0}};function Vi(t){return t===" "||t===`
-`||t==="	"}var Ae=class{constructor(e,n,r){this.changes=e,this.moves=n,this.hitTimeout=r}},ln=class{constructor(e,n){this.lineRangeMapping=e,this.changes=n}};function Ui(t,e,n=(r,s)=>r===s){if(t===e)return!0;if(!t||!e||t.length!==e.length)return!1;for(let r=0,s=t.length;r<s;r++)if(!n(t[r],e[r]))return!1;return!0}function*Wi(t,e){let n,r;for(let s of t)r!==void 0&&e(r,s)?n.push(s):(n&&(yield n),n=[s]),r=s;n&&(yield n)}function zi(t,e){for(let n=0;n<=t.length;n++)e(n===0?void 0:t[n-1],n===t.length?void 0:t[n])}function $i(t,e){for(let n=0;n<t.length;n++)e(n===0?void 0:t[n-1],t[n],n+1===t.length?void 0:t[n+1])}function Oi(t,e){for(let n of e)t.push(n)}var hr;(function(t){function e(i){return i<0}t.isLessThan=e;function n(i){return i<=0}t.isLessThanOrEqual=n;function r(i){return i>0}t.isGreaterThan=r;function s(i){return i===0}t.isNeitherLessOrGreaterThan=s,t.greaterThan=1,t.lessThan=-1,t.neitherLessOrGreaterThan=0})(hr||(hr={}));function Ce(t,e){return(n,r)=>e(t(n),t(r))}var Ue=(t,e)=>t-e;function Hi(t){return(e,n)=>-t(e,n)}var qi=class t{static{this.empty=new t(e=>{})}constructor(e){this.iterate=e}toArray(){let e=[];return this.iterate(n=>(e.push(n),!0)),e}filter(e){return new t(n=>this.iterate(r=>e(r)?n(r):!0))}map(e){return new t(n=>this.iterate(r=>n(e(r))))}findLast(e){let n;return this.iterate(r=>(e(r)&&(n=r),!0)),n}findLastMaxBy(e){let n,r=!0;return this.iterate(s=>((r||hr.isGreaterThan(e(s,n)))&&(r=!1,n=s),!0)),n}};var z=class t{static fromTo(e,n){return new t(e,n)}static addRange(e,n){let r=0;for(;r<n.length&&n[r].endExclusive<e.start;)r++;let s=r;for(;s<n.length&&n[s].start<=e.endExclusive;)s++;if(r===s)n.splice(r,0,e);else{let i=Math.min(e.start,n[r].start),a=Math.max(e.endExclusive,n[s-1].endExclusive);n.splice(r,s-r,new t(i,a))}}static tryCreate(e,n){if(!(e>n))return new t(e,n)}static ofLength(e){return new t(0,e)}static ofStartAndLength(e,n){return new t(e,e+n)}static emptyAt(e){return new t(e,e)}constructor(e,n){if(this.start=e,this.endExclusive=n,e>n)throw new G(`Invalid range: ${this.toString()}`)}get isEmpty(){return this.start===this.endExclusive}delta(e){return new t(this.start+e,this.endExclusive+e)}deltaStart(e){return new t(this.start+e,this.endExclusive)}deltaEnd(e){return new t(this.start,this.endExclusive+e)}get length(){return this.endExclusive-this.start}toString(){return`[${this.start}, ${this.endExclusive})`}equals(e){return this.start===e.start&&this.endExclusive===e.endExclusive}contains(e){return this.start<=e&&e<this.endExclusive}join(e){return new t(Math.min(this.start,e.start),Math.max(this.endExclusive,e.endExclusive))}intersect(e){let n=Math.max(this.start,e.start),r=Math.min(this.endExclusive,e.endExclusive);if(n<=r)return new t(n,r)}intersectionLength(e){let n=Math.max(this.start,e.start),r=Math.min(this.endExclusive,e.endExclusive);return Math.max(0,r-n)}intersects(e){let n=Math.max(this.start,e.start),r=Math.min(this.endExclusive,e.endExclusive);return n<r}intersectsOrTouches(e){let n=Math.max(this.start,e.start),r=Math.min(this.endExclusive,e.endExclusive);return n<=r}isBefore(e){return this.endExclusive<=e.start}isAfter(e){return this.start>=e.endExclusive}slice(e){return e.slice(this.start,this.endExclusive)}substring(e){return e.substring(this.start,this.endExclusive)}clip(e){if(this.isEmpty)throw new G(`Invalid clipping range: ${this.toString()}`);return Math.max(this.start,Math.min(this.endExclusive-1,e))}clipCyclic(e){if(this.isEmpty)throw new G(`Invalid clipping range: ${this.toString()}`);return e<this.start?this.endExclusive-(this.start-e)%this.length:e>=this.endExclusive?this.start+(e-this.start)%this.length:e}forEach(e){for(let n=this.start;n<this.endExclusive;n++)e(n)}joinRightTouching(e){if(this.endExclusive!==e.start)throw new G(`Invalid join: ${this.toString()} and ${e.toString()}`);return new t(this.start,e.endExclusive)}};function pe(t,e){let n=be(t,e);return n===-1?void 0:t[n]}function be(t,e,n=0,r=t.length){let s=n,i=r;for(;s<i;){let a=Math.floor((s+i)/2);e(t[a])?s=a+1:i=a}return s-1}function Gi(t,e){let n=un(t,e);return n===t.length?void 0:t[n]}function un(t,e,n=0,r=t.length){let s=n,i=r;for(;s<i;){let a=Math.floor((s+i)/2);e(t[a])?i=a:s=a+1}return s}var xt=class t{static{this.assertInvariants=!1}constructor(e){this._array=e,this._findLastMonotonousLastIdx=0}findLastMonotonous(e){if(t.assertInvariants){if(this._prevFindLastPredicate){for(let r of this._array)if(this._prevFindLastPredicate(r)&&!e(r))throw new Error("MonotonousArray: current predicate must be weaker than (or equal to) the previous predicate.")}this._prevFindLastPredicate=e}let n=be(this._array,e,this._findLastMonotonousLastIdx);return this._findLastMonotonousLastIdx=n+1,n===-1?void 0:this._array[n]}};var W=class t{static ofLength(e,n){return new t(e,e+n)}static fromRange(e){return new t(e.startLineNumber,e.endLineNumber)}static fromRangeInclusive(e){return new t(e.startLineNumber,e.endLineNumber+1)}static{this.compareByStart=Ce(e=>e.startLineNumber,Ue)}static joinMany(e){if(e.length===0)return[];let n=new We(e[0].slice());for(let r=1;r<e.length;r++)n=n.getUnion(new We(e[r].slice()));return n.ranges}static join(e){if(e.length===0)throw new G("lineRanges cannot be empty");let n=e[0].startLineNumber,r=e[0].endLineNumberExclusive;for(let s=1;s<e.length;s++)n=Math.min(n,e[s].startLineNumber),r=Math.max(r,e[s].endLineNumberExclusive);return new t(n,r)}static deserialize(e){return new t(e[0],e[1])}constructor(e,n){if(e>n)throw new G(`startLineNumber ${e} cannot be after endLineNumberExclusive ${n}`);this.startLineNumber=e,this.endLineNumberExclusive=n}contains(e){return this.startLineNumber<=e&&e<this.endLineNumberExclusive}get isEmpty(){return this.startLineNumber===this.endLineNumberExclusive}delta(e){return new t(this.startLineNumber+e,this.endLineNumberExclusive+e)}deltaLength(e){return new t(this.startLineNumber,this.endLineNumberExclusive+e)}get length(){return this.endLineNumberExclusive-this.startLineNumber}join(e){return new t(Math.min(this.startLineNumber,e.startLineNumber),Math.max(this.endLineNumberExclusive,e.endLineNumberExclusive))}toString(){return`[${this.startLineNumber},${this.endLineNumberExclusive})`}intersect(e){let n=Math.max(this.startLineNumber,e.startLineNumber),r=Math.min(this.endLineNumberExclusive,e.endLineNumberExclusive);if(n<=r)return new t(n,r)}intersectsStrict(e){return this.startLineNumber<e.endLineNumberExclusive&&e.startLineNumber<this.endLineNumberExclusive}intersectsOrTouches(e){return this.startLineNumber<=e.endLineNumberExclusive&&e.startLineNumber<=this.endLineNumberExclusive}equals(e){return this.startLineNumber===e.startLineNumber&&this.endLineNumberExclusive===e.endLineNumberExclusive}toInclusiveRange(){return this.isEmpty?null:new E(this.startLineNumber,1,this.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER)}toExclusiveRange(){return new E(this.startLineNumber,1,this.endLineNumberExclusive,1)}mapToLineArray(e){let n=[];for(let r=this.startLineNumber;r<this.endLineNumberExclusive;r++)n.push(e(r));return n}forEach(e){for(let n=this.startLineNumber;n<this.endLineNumberExclusive;n++)e(n)}serialize(){return[this.startLineNumber,this.endLineNumberExclusive]}toOffsetRange(){return new z(this.startLineNumber-1,this.endLineNumberExclusive-1)}addMargin(e,n){return new t(this.startLineNumber-e,this.endLineNumberExclusive+n)}},We=class t{constructor(e=[]){this._normalizedRanges=e}get ranges(){return this._normalizedRanges}addRange(e){if(e.length===0)return;let n=un(this._normalizedRanges,s=>s.endLineNumberExclusive>=e.startLineNumber),r=be(this._normalizedRanges,s=>s.startLineNumber<=e.endLineNumberExclusive)+1;if(n===r)this._normalizedRanges.splice(n,0,e);else if(n===r-1){let s=this._normalizedRanges[n];this._normalizedRanges[n]=s.join(e)}else{let s=this._normalizedRanges[n].join(this._normalizedRanges[r-1]).join(e);this._normalizedRanges.splice(n,r-n,s)}}contains(e){let n=pe(this._normalizedRanges,r=>r.startLineNumber<=e);return!!n&&n.endLineNumberExclusive>e}intersects(e){let n=pe(this._normalizedRanges,r=>r.startLineNumber<e.endLineNumberExclusive);return!!n&&n.endLineNumberExclusive>e.startLineNumber}getUnion(e){if(this._normalizedRanges.length===0)return e;if(e._normalizedRanges.length===0)return this;let n=[],r=0,s=0,i=null;for(;r<this._normalizedRanges.length||s<e._normalizedRanges.length;){let a=null;if(r<this._normalizedRanges.length&&s<e._normalizedRanges.length){let l=this._normalizedRanges[r],u=e._normalizedRanges[s];l.startLineNumber<u.startLineNumber?(a=l,r++):(a=u,s++)}else r<this._normalizedRanges.length?(a=this._normalizedRanges[r],r++):(a=e._normalizedRanges[s],s++);i===null?i=a:i.endLineNumberExclusive>=a.startLineNumber?i=new W(i.startLineNumber,Math.max(i.endLineNumberExclusive,a.endLineNumberExclusive)):(n.push(i),i=a)}return i!==null&&n.push(i),new t(n)}subtractFrom(e){let n=un(this._normalizedRanges,a=>a.endLineNumberExclusive>=e.startLineNumber),r=be(this._normalizedRanges,a=>a.startLineNumber<=e.endLineNumberExclusive)+1;if(n===r)return new t([e]);let s=[],i=e.startLineNumber;for(let a=n;a<r;a++){let l=this._normalizedRanges[a];l.startLineNumber>i&&s.push(new W(i,l.startLineNumber)),i=l.endLineNumberExclusive}return i<e.endLineNumberExclusive&&s.push(new W(i,e.endLineNumberExclusive)),new t(s)}toString(){return this._normalizedRanges.map(e=>e.toString()).join(", ")}getIntersection(e){let n=[],r=0,s=0;for(;r<this._normalizedRanges.length&&s<e._normalizedRanges.length;){let i=this._normalizedRanges[r],a=e._normalizedRanges[s],l=i.intersect(a);l&&!l.isEmpty&&n.push(l),i.endLineNumberExclusive<a.endLineNumberExclusive?r++:s++}return new t(n)}getWithDelta(e){return new t(this._normalizedRanges.map(n=>n.delta(e)))}};var ze=class t{static{this.zero=new t(0,0)}static betweenPositions(e,n){return e.lineNumber===n.lineNumber?new t(0,n.column-e.column):new t(n.lineNumber-e.lineNumber,n.column-1)}static fromPosition(e){return new t(e.lineNumber-1,e.column-1)}static ofRange(e){return t.betweenPositions(e.getStartPosition(),e.getEndPosition())}static ofText(e){let n=0,r=0;for(let s of e)s===`
-`?(n++,r=0):r++;return new t(n,r)}constructor(e,n){this.lineCount=e,this.columnCount=n}isGreaterThanOrEqualTo(e){return this.lineCount!==e.lineCount?this.lineCount>e.lineCount:this.columnCount>=e.columnCount}add(e){return e.lineCount===0?new t(this.lineCount,this.columnCount+e.columnCount):new t(this.lineCount+e.lineCount,e.columnCount)}createRange(e){return this.lineCount===0?new E(e.lineNumber,e.column,e.lineNumber,e.column+this.columnCount):new E(e.lineNumber,e.column,e.lineNumber+this.lineCount,this.columnCount+1)}toRange(){return new E(1,1,this.lineCount+1,this.columnCount+1)}toLineRange(){return W.ofLength(1,this.lineCount+1)}addToPosition(e){return this.lineCount===0?new B(e.lineNumber,e.column+this.columnCount):new B(e.lineNumber+this.lineCount,this.columnCount+1)}toString(){return`${this.lineCount},${this.columnCount}`}};var fr=class{getOffsetRange(e){return new z(this.getOffset(e.getStartPosition()),this.getOffset(e.getEndPosition()))}getRange(e){return E.fromPositions(this.getPosition(e.start),this.getPosition(e.endExclusive))}getStringReplacement(e){return new Ze.deps.StringReplacement(this.getOffsetRange(e.range),e.text)}getTextReplacement(e){return new Ze.deps.TextReplacement(this.getRange(e.replaceRange),e.newText)}getTextEdit(e){let n=e.replacements.map(r=>this.getTextReplacement(r));return new Ze.deps.TextEdit(n)}},Ze=class{static{this._deps=void 0}static get deps(){if(!this._deps)throw new Error("Dependencies not set. Call _setDependencies first.");return this._deps}};var cn=class extends fr{constructor(e){super(),this.text=e,this.lineStartOffsetByLineIdx=[],this.lineEndOffsetByLineIdx=[],this.lineStartOffsetByLineIdx.push(0);for(let n=0;n<e.length;n++)e.charAt(n)===`
-`&&(this.lineStartOffsetByLineIdx.push(n+1),n>0&&e.charAt(n-1)==="\r"?this.lineEndOffsetByLineIdx.push(n-1):this.lineEndOffsetByLineIdx.push(n));this.lineEndOffsetByLineIdx.push(e.length)}getOffset(e){let n=this._validatePosition(e);return this.lineStartOffsetByLineIdx[n.lineNumber-1]+n.column-1}_validatePosition(e){if(e.lineNumber<1)return new B(1,1);let n=this.textLength.lineCount+1;if(e.lineNumber>n){let s=this.getLineLength(n);return new B(n,s+1)}if(e.column<1)return new B(e.lineNumber,1);let r=this.getLineLength(e.lineNumber);return e.column-1>r?new B(e.lineNumber,r+1):e}getPosition(e){let n=be(this.lineStartOffsetByLineIdx,i=>i<=e),r=n+1,s=e-this.lineStartOffsetByLineIdx[n]+1;return new B(r,s)}get textLength(){let e=this.lineStartOffsetByLineIdx.length-1;return new Ze.deps.TextLength(e,this.text.length-this.lineStartOffsetByLineIdx[e])}getLineLength(e){return this.lineEndOffsetByLineIdx[e-1]-this.lineStartOffsetByLineIdx[e-1]}};var mr=class{constructor(){this._transformer=void 0}get endPositionExclusive(){return this.length.addToPosition(new B(1,1))}get lineRange(){return this.length.toLineRange()}getValue(){return this.getValueOfRange(this.length.toRange())}getValueOfOffsetRange(e){return this.getValueOfRange(this.getTransformer().getRange(e))}getLineLength(e){return this.getValueOfRange(new E(e,1,e,Number.MAX_SAFE_INTEGER)).length}getTransformer(){return this._transformer||(this._transformer=new cn(this.getValue())),this._transformer}getLineAt(e){return this.getValueOfRange(new E(e,1,e,Number.MAX_SAFE_INTEGER))}},dr=class extends mr{constructor(e,n){Rn(n>=1),super(),this._getLineContent=e,this._lineCount=n}getValueOfRange(e){if(e.startLineNumber===e.endLineNumber)return this._getLineContent(e.startLineNumber).substring(e.startColumn-1,e.endColumn-1);let n=this._getLineContent(e.startLineNumber).substring(e.startColumn-1);for(let r=e.startLineNumber+1;r<e.endLineNumber;r++)n+=`
-`+this._getLineContent(r);return n+=`
-`+this._getLineContent(e.endLineNumber).substring(0,e.endColumn-1),n}getLineLength(e){return this._getLineContent(e).length}get length(){let e=this._getLineContent(this._lineCount);return new ze(this._lineCount-1,e.length)}},$e=class extends dr{constructor(e){super(n=>e[n-1],e.length)}};var hn=class t{static joinReplacements(e,n){if(e.length===0)throw new G;if(e.length===1)return e[0];let r=e[0].range.getStartPosition(),s=e[e.length-1].range.getEndPosition(),i="";for(let a=0;a<e.length;a++){let l=e[a];if(i+=l.text,a<e.length-1){let u=e[a+1],c=E.fromPositions(l.range.getEndPosition(),u.range.getStartPosition()),f=n.getValueOfRange(c);i+=f}}return new t(E.fromPositions(r,s),i)}static fromStringReplacement(e,n){return new t(n.getTransformer().getRange(e.replaceRange),e.newText)}static delete(e){return new t(e,"")}constructor(e,n){this.range=e,this.text=n}get isEmpty(){return this.range.isEmpty()&&this.text.length===0}static equals(e,n){return e.range.equalsRange(n.range)&&e.text===n.text}equals(e){return t.equals(this,e)}removeCommonPrefixAndSuffix(e){return this.removeCommonPrefix(e).removeCommonSuffix(e)}removeCommonPrefix(e){let n=e.getValueOfRange(this.range).replaceAll(`\r
-`,`
-`),r=this.text.replaceAll(`\r
-`,`
-`),s=jr(n,r),i=ze.ofText(n.substring(0,s)).addToPosition(this.range.getStartPosition()),a=r.substring(s),l=E.fromPositions(i,this.range.getEndPosition());return new t(l,a)}removeCommonSuffix(e){let n=e.getValueOfRange(this.range).replaceAll(`\r
-`,`
-`),r=this.text.replaceAll(`\r
-`,`
-`),s=Xr(n,r),i=ze.ofText(n.substring(0,n.length-s)).addToPosition(this.range.getStartPosition()),a=r.substring(0,r.length-s),l=E.fromPositions(this.range.getStartPosition(),i);return new t(l,a)}toString(){let e=this.range.getStartPosition(),n=this.range.getEndPosition();return`(${e.lineNumber},${e.column} -> ${n.lineNumber},${n.column}): "${this.text}"`}};var le=class t{static inverse(e,n,r){let s=[],i=1,a=1;for(let u of e){let c=new t(new W(i,u.original.startLineNumber),new W(a,u.modified.startLineNumber));c.modified.isEmpty||s.push(c),i=u.original.endLineNumberExclusive,a=u.modified.endLineNumberExclusive}let l=new t(new W(i,n+1),new W(a,r+1));return l.modified.isEmpty||s.push(l),s}static clip(e,n,r){let s=[];for(let i of e){let a=i.original.intersect(n),l=i.modified.intersect(r);a&&!a.isEmpty&&l&&!l.isEmpty&&s.push(new t(a,l))}return s}constructor(e,n){this.original=e,this.modified=n}toString(){return`{${this.original.toString()}->${this.modified.toString()}}`}flip(){return new t(this.modified,this.original)}join(e){return new t(this.original.join(e.original),this.modified.join(e.modified))}toRangeMapping(){let e=this.original.toInclusiveRange(),n=this.modified.toInclusiveRange();if(e&&n)return new re(e,n);if(this.original.startLineNumber===1||this.modified.startLineNumber===1){if(!(this.modified.startLineNumber===1&&this.original.startLineNumber===1))throw new G("not a valid diff");return new re(new E(this.original.startLineNumber,1,this.original.endLineNumberExclusive,1),new E(this.modified.startLineNumber,1,this.modified.endLineNumberExclusive,1))}else return new re(new E(this.original.startLineNumber-1,Number.MAX_SAFE_INTEGER,this.original.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER),new E(this.modified.startLineNumber-1,Number.MAX_SAFE_INTEGER,this.modified.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER))}toRangeMapping2(e,n){if(ji(this.original.endLineNumberExclusive,e)&&ji(this.modified.endLineNumberExclusive,n))return new re(new E(this.original.startLineNumber,1,this.original.endLineNumberExclusive,1),new E(this.modified.startLineNumber,1,this.modified.endLineNumberExclusive,1));if(!this.original.isEmpty&&!this.modified.isEmpty)return new re(E.fromPositions(new B(this.original.startLineNumber,1),Ke(new B(this.original.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER),e)),E.fromPositions(new B(this.modified.startLineNumber,1),Ke(new B(this.modified.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER),n)));if(this.original.startLineNumber>1&&this.modified.startLineNumber>1)return new re(E.fromPositions(Ke(new B(this.original.startLineNumber-1,Number.MAX_SAFE_INTEGER),e),Ke(new B(this.original.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER),e)),E.fromPositions(Ke(new B(this.modified.startLineNumber-1,Number.MAX_SAFE_INTEGER),n),Ke(new B(this.modified.endLineNumberExclusive-1,Number.MAX_SAFE_INTEGER),n)));throw new G}};function Ke(t,e){if(t.lineNumber<1)return new B(1,1);if(t.lineNumber>e.length)return new B(e.length,e[e.length-1].length+1);let n=e[t.lineNumber-1];return t.column>n.length+1?new B(t.lineNumber,n.length+1):t}function ji(t,e){return t>=1&&t<=e.length}var we=class t extends le{static fromRangeMappings(e){let n=W.join(e.map(s=>W.fromRangeInclusive(s.originalRange))),r=W.join(e.map(s=>W.fromRangeInclusive(s.modifiedRange)));return new t(n,r,e)}constructor(e,n,r){super(e,n),this.innerChanges=r}flip(){return new t(this.modified,this.original,this.innerChanges?.map(e=>e.flip()))}withInnerChangesFromLineRanges(){return new t(this.original,this.modified,[this.toRangeMapping()])}},re=class t{static fromEdit(e){let n=e.getNewRanges();return e.replacements.map((s,i)=>new t(s.range,n[i]))}static assertSorted(e){for(let n=1;n<e.length;n++){let r=e[n-1],s=e[n];if(!(r.originalRange.getEndPosition().isBeforeOrEqual(s.originalRange.getStartPosition())&&r.modifiedRange.getEndPosition().isBeforeOrEqual(s.modifiedRange.getStartPosition())))throw new G("Range mappings must be sorted")}}constructor(e,n){this.originalRange=e,this.modifiedRange=n}toString(){return`{${this.originalRange.toString()}->${this.modifiedRange.toString()}}`}flip(){return new t(this.modifiedRange,this.originalRange)}toTextEdit(e){let n=e.getValueOfRange(this.modifiedRange);return new hn(this.originalRange,n)}};function gr(t,e,n,r=!1){let s=[];for(let i of Wi(t.map(a=>bo(a,e,n)),(a,l)=>a.original.intersectsOrTouches(l.original)||a.modified.intersectsOrTouches(l.modified))){let a=i[0],l=i[i.length-1];s.push(new we(a.original.join(l.original),a.modified.join(l.modified),i.map(u=>u.innerChanges[0])))}return xe(()=>!r&&s.length>0&&(s[0].modified.startLineNumber!==s[0].original.startLineNumber||n.length.lineCount-s[s.length-1].modified.endLineNumberExclusive!==e.length.lineCount-s[s.length-1].original.endLineNumberExclusive)?!1:lt(s,(i,a)=>a.original.startLineNumber-i.original.endLineNumberExclusive===a.modified.startLineNumber-i.modified.endLineNumberExclusive&&i.original.endLineNumberExclusive<a.original.startLineNumber&&i.modified.endLineNumberExclusive<a.modified.startLineNumber)),s}function bo(t,e,n){let r=0,s=0;t.modifiedRange.endColumn===1&&t.originalRange.endColumn===1&&t.originalRange.startLineNumber+r<=t.originalRange.endLineNumber&&t.modifiedRange.startLineNumber+r<=t.modifiedRange.endLineNumber&&(s=-1),t.modifiedRange.startColumn-1>=n.getLineLength(t.modifiedRange.startLineNumber)&&t.originalRange.startColumn-1>=e.getLineLength(t.originalRange.startLineNumber)&&t.originalRange.startLineNumber<=t.originalRange.endLineNumber+s&&t.modifiedRange.startLineNumber<=t.modifiedRange.endLineNumber+s&&(r=1);let i=new W(t.originalRange.startLineNumber+r,t.originalRange.endLineNumber+1+s),a=new W(t.modifiedRange.startLineNumber+r,t.modifiedRange.endLineNumber+1+s);return new we(i,a,[t])}var wo=3,fn=class{computeDiff(e,n,r){let i=new br(e,n,{maxComputationTime:r.maxComputationTimeMs,shouldIgnoreTrimWhitespace:r.ignoreTrimWhitespace,shouldComputeCharChanges:!0,shouldMakePrettyDiff:!0,shouldPostProcessCharChanges:!0}).computeDiff(),a=[],l=null;for(let u of i.changes){let c;u.originalEndLineNumber===0?c=new W(u.originalStartLineNumber+1,u.originalStartLineNumber+1):c=new W(u.originalStartLineNumber,u.originalEndLineNumber+1);let f;u.modifiedEndLineNumber===0?f=new W(u.modifiedStartLineNumber+1,u.modifiedStartLineNumber+1):f=new W(u.modifiedStartLineNumber,u.modifiedEndLineNumber+1);let h=new we(c,f,u.charChanges?.map(m=>new re(new E(m.originalStartLineNumber,m.originalStartColumn,m.originalEndLineNumber,m.originalEndColumn),new E(m.modifiedStartLineNumber,m.modifiedStartColumn,m.modifiedEndLineNumber,m.modifiedEndColumn))));l&&(l.modified.endLineNumberExclusive===h.modified.startLineNumber||l.original.endLineNumberExclusive===h.original.startLineNumber)&&(h=new we(l.original.join(h.original),l.modified.join(h.modified),l.innerChanges&&h.innerChanges?l.innerChanges.concat(h.innerChanges):void 0),a.pop()),a.push(h),l=h}return xe(()=>lt(a,(u,c)=>c.original.startLineNumber-u.original.endLineNumberExclusive===c.modified.startLineNumber-u.modified.endLineNumberExclusive&&u.original.endLineNumberExclusive<c.original.startLineNumber&&u.modified.endLineNumberExclusive<c.modified.startLineNumber)),new Ae(a,[],i.quitEarly)}};function Qi(t,e,n,r){return new ft(t,e,n).ComputeDiff(r)}var mn=class{constructor(e){let n=[],r=[];for(let s=0,i=e.length;s<i;s++)n[s]=wr(e[s],1),r[s]=xr(e[s],1);this.lines=e,this._startColumns=n,this._endColumns=r}getElements(){let e=[];for(let n=0,r=this.lines.length;n<r;n++)e[n]=this.lines[n].substring(this._startColumns[n]-1,this._endColumns[n]-1);return e}getStrictElement(e){return this.lines[e]}getStartLineNumber(e){return e+1}getEndLineNumber(e){return e+1}createCharSequence(e,n,r){let s=[],i=[],a=[],l=0;for(let u=n;u<=r;u++){let c=this.lines[u],f=e?this._startColumns[u]:1,h=e?this._endColumns[u]:c.length+1;for(let m=f;m<h;m++)s[l]=c.charCodeAt(m-1),i[l]=u+1,a[l]=m,l++;!e&&u<r&&(s[l]=10,i[l]=u+1,a[l]=c.length+1,l++)}return new pr(s,i,a)}},pr=class{constructor(e,n,r){this._charCodes=e,this._lineNumbers=n,this._columns=r}toString(){return"["+this._charCodes.map((e,n)=>(e===10?"\\n":String.fromCharCode(e))+`-(${this._lineNumbers[n]},${this._columns[n]})`).join(", ")+"]"}_assertIndex(e,n){if(e<0||e>=n.length)throw new Error("Illegal index")}getElements(){return this._charCodes}getStartLineNumber(e){return e>0&&e===this._lineNumbers.length?this.getEndLineNumber(e-1):(this._assertIndex(e,this._lineNumbers),this._lineNumbers[e])}getEndLineNumber(e){return e===-1?this.getStartLineNumber(e+1):(this._assertIndex(e,this._lineNumbers),this._charCodes[e]===10?this._lineNumbers[e]+1:this._lineNumbers[e])}getStartColumn(e){return e>0&&e===this._columns.length?this.getEndColumn(e-1):(this._assertIndex(e,this._columns),this._columns[e])}getEndColumn(e){return e===-1?this.getStartColumn(e+1):(this._assertIndex(e,this._columns),this._charCodes[e]===10?1:this._columns[e]+1)}},et=class t{constructor(e,n,r,s,i,a,l,u){this.originalStartLineNumber=e,this.originalStartColumn=n,this.originalEndLineNumber=r,this.originalEndColumn=s,this.modifiedStartLineNumber=i,this.modifiedStartColumn=a,this.modifiedEndLineNumber=l,this.modifiedEndColumn=u}static createFromDiffChange(e,n,r){let s=n.getStartLineNumber(e.originalStart),i=n.getStartColumn(e.originalStart),a=n.getEndLineNumber(e.originalStart+e.originalLength-1),l=n.getEndColumn(e.originalStart+e.originalLength-1),u=r.getStartLineNumber(e.modifiedStart),c=r.getStartColumn(e.modifiedStart),f=r.getEndLineNumber(e.modifiedStart+e.modifiedLength-1),h=r.getEndColumn(e.modifiedStart+e.modifiedLength-1);return new t(s,i,a,l,u,c,f,h)}};function xo(t){if(t.length<=1)return t;let e=[t[0]],n=e[0];for(let r=1,s=t.length;r<s;r++){let i=t[r],a=i.originalStart-(n.originalStart+n.originalLength),l=i.modifiedStart-(n.modifiedStart+n.modifiedLength);Math.min(a,l)<wo?(n.originalLength=i.originalStart+i.originalLength-n.originalStart,n.modifiedLength=i.modifiedStart+i.modifiedLength-n.modifiedStart):(e.push(i),n=i)}return e}var _t=class t{constructor(e,n,r,s,i){this.originalStartLineNumber=e,this.originalEndLineNumber=n,this.modifiedStartLineNumber=r,this.modifiedEndLineNumber=s,this.charChanges=i}static createFromDiffResult(e,n,r,s,i,a,l){let u,c,f,h,m;if(n.originalLength===0?(u=r.getStartLineNumber(n.originalStart)-1,c=0):(u=r.getStartLineNumber(n.originalStart),c=r.getEndLineNumber(n.originalStart+n.originalLength-1)),n.modifiedLength===0?(f=s.getStartLineNumber(n.modifiedStart)-1,h=0):(f=s.getStartLineNumber(n.modifiedStart),h=s.getEndLineNumber(n.modifiedStart+n.modifiedLength-1)),a&&n.originalLength>0&&n.originalLength<20&&n.modifiedLength>0&&n.modifiedLength<20&&i()){let b=r.createCharSequence(e,n.originalStart,n.originalStart+n.originalLength-1),p=s.createCharSequence(e,n.modifiedStart,n.modifiedStart+n.modifiedLength-1);if(b.getElements().length>0&&p.getElements().length>0){let d=Qi(b,p,i,!0).changes;l&&(d=xo(d)),m=[];for(let x=0,N=d.length;x<N;x++)m.push(et.createFromDiffChange(d[x],b,p))}}return new t(u,c,f,h,m)}},br=class{constructor(e,n,r){this.shouldComputeCharChanges=r.shouldComputeCharChanges,this.shouldPostProcessCharChanges=r.shouldPostProcessCharChanges,this.shouldIgnoreTrimWhitespace=r.shouldIgnoreTrimWhitespace,this.shouldMakePrettyDiff=r.shouldMakePrettyDiff,this.originalLines=e,this.modifiedLines=n,this.original=new mn(e),this.modified=new mn(n),this.continueLineDiff=Xi(r.maxComputationTime),this.continueCharDiff=Xi(r.maxComputationTime===0?0:Math.min(r.maxComputationTime,5e3))}computeDiff(){if(this.original.lines.length===1&&this.original.lines[0].length===0)return this.modified.lines.length===1&&this.modified.lines[0].length===0?{quitEarly:!1,changes:[]}:{quitEarly:!1,changes:[{originalStartLineNumber:1,originalEndLineNumber:1,modifiedStartLineNumber:1,modifiedEndLineNumber:this.modified.lines.length,charChanges:void 0}]};if(this.modified.lines.length===1&&this.modified.lines[0].length===0)return{quitEarly:!1,changes:[{originalStartLineNumber:1,originalEndLineNumber:this.original.lines.length,modifiedStartLineNumber:1,modifiedEndLineNumber:1,charChanges:void 0}]};let e=Qi(this.original,this.modified,this.continueLineDiff,this.shouldMakePrettyDiff),n=e.changes,r=e.quitEarly;if(this.shouldIgnoreTrimWhitespace){let l=[];for(let u=0,c=n.length;u<c;u++)l.push(_t.createFromDiffResult(this.shouldIgnoreTrimWhitespace,n[u],this.original,this.modified,this.continueCharDiff,this.shouldComputeCharChanges,this.shouldPostProcessCharChanges));return{quitEarly:r,changes:l}}let s=[],i=0,a=0;for(let l=-1,u=n.length;l<u;l++){let c=l+1<u?n[l+1]:null,f=c?c.originalStart:this.originalLines.length,h=c?c.modifiedStart:this.modifiedLines.length;for(;i<f&&a<h;){let m=this.originalLines[i],b=this.modifiedLines[a];if(m!==b){{let p=wr(m,1),d=wr(b,1);for(;p>1&&d>1;){let x=m.charCodeAt(p-2),N=b.charCodeAt(d-2);if(x!==N)break;p--,d--}(p>1||d>1)&&this._pushTrimWhitespaceCharChange(s,i+1,1,p,a+1,1,d)}{let p=xr(m,1),d=xr(b,1),x=m.length+1,N=b.length+1;for(;p<x&&d<N;){let v=m.charCodeAt(p-1),L=m.charCodeAt(d-1);if(v!==L)break;p++,d++}(p<x||d<N)&&this._pushTrimWhitespaceCharChange(s,i+1,p,x,a+1,d,N)}}i++,a++}c&&(s.push(_t.createFromDiffResult(this.shouldIgnoreTrimWhitespace,c,this.original,this.modified,this.continueCharDiff,this.shouldComputeCharChanges,this.shouldPostProcessCharChanges)),i+=c.originalLength,a+=c.modifiedLength)}return{quitEarly:r,changes:s}}_pushTrimWhitespaceCharChange(e,n,r,s,i,a,l){if(this._mergeTrimWhitespaceCharChange(e,n,r,s,i,a,l))return;let u;this.shouldComputeCharChanges&&(u=[new et(n,r,n,s,i,a,i,l)]),e.push(new _t(n,n,i,i,u))}_mergeTrimWhitespaceCharChange(e,n,r,s,i,a,l){let u=e.length;if(u===0)return!1;let c=e[u-1];return c.originalEndLineNumber===0||c.modifiedEndLineNumber===0?!1:c.originalEndLineNumber===n&&c.modifiedEndLineNumber===i?(this.shouldComputeCharChanges&&c.charChanges&&c.charChanges.push(new et(n,r,n,s,i,a,i,l)),!0):c.originalEndLineNumber+1===n&&c.modifiedEndLineNumber+1===i?(c.originalEndLineNumber=n,c.modifiedEndLineNumber=i,this.shouldComputeCharChanges&&c.charChanges&&c.charChanges.push(new et(n,r,n,s,i,a,i,l)),!0):!1}};function wr(t,e){let n=Hr(t);return n===-1?e:n+1}function xr(t,e){let n=Gr(t);return n===-1?e:n+2}function Xi(t){if(t===0)return()=>!0;let e=Date.now();return()=>Date.now()-e<t}var ce=class t{static trivial(e,n){return new t([new X(z.ofLength(e.length),z.ofLength(n.length))],!1)}static trivialTimedOut(e,n){return new t([new X(z.ofLength(e.length),z.ofLength(n.length))],!0)}constructor(e,n){this.diffs=e,this.hitTimeout=n}},X=class t{static invert(e,n){let r=[];return zi(e,(s,i)=>{r.push(t.fromOffsetPairs(s?s.getEndExclusives():ue.zero,i?i.getStarts():new ue(n,(s?s.seq2Range.endExclusive-s.seq1Range.endExclusive:0)+n)))}),r}static fromOffsetPairs(e,n){return new t(new z(e.offset1,n.offset1),new z(e.offset2,n.offset2))}static assertSorted(e){let n;for(let r of e){if(n&&!(n.seq1Range.endExclusive<=r.seq1Range.start&&n.seq2Range.endExclusive<=r.seq2Range.start))throw new G("Sequence diffs must be sorted");n=r}}constructor(e,n){this.seq1Range=e,this.seq2Range=n}swap(){return new t(this.seq2Range,this.seq1Range)}toString(){return`${this.seq1Range} <-> ${this.seq2Range}`}join(e){return new t(this.seq1Range.join(e.seq1Range),this.seq2Range.join(e.seq2Range))}delta(e){return e===0?this:new t(this.seq1Range.delta(e),this.seq2Range.delta(e))}deltaStart(e){return e===0?this:new t(this.seq1Range.deltaStart(e),this.seq2Range.deltaStart(e))}deltaEnd(e){return e===0?this:new t(this.seq1Range.deltaEnd(e),this.seq2Range.deltaEnd(e))}intersect(e){let n=this.seq1Range.intersect(e.seq1Range),r=this.seq2Range.intersect(e.seq2Range);if(!(!n||!r))return new t(n,r)}getStarts(){return new ue(this.seq1Range.start,this.seq2Range.start)}getEndExclusives(){return new ue(this.seq1Range.endExclusive,this.seq2Range.endExclusive)}},ue=class t{static{this.zero=new t(0,0)}static{this.max=new t(Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER)}constructor(e,n){this.offset1=e,this.offset2=n}toString(){return`${this.offset1} <-> ${this.offset2}`}delta(e){return e===0?this:new t(this.offset1+e,this.offset2+e)}equals(e){return this.offset1===e.offset1&&this.offset2===e.offset2}},Ee=class t{static{this.instance=new t}isValid(){return!0}},dn=class{constructor(e){if(this.timeout=e,this.startTime=Date.now(),this.valid=!0,e<=0)throw new G("timeout must be positive")}isValid(){return!(Date.now()-this.startTime<this.timeout)&&this.valid&&(this.valid=!1),this.valid}};var tt=class{constructor(e,n){this.width=e,this.height=n,this.array=[],this.array=new Array(e*n)}get(e,n){return this.array[e+n*this.width]}set(e,n,r){this.array[e+n*this.width]=r}};function Lt(t){return t===32||t===9}var yt=class t{static{this.chrKeys=new Map}static getKey(e){let n=this.chrKeys.get(e);return n===void 0&&(n=this.chrKeys.size,this.chrKeys.set(e,n)),n}constructor(e,n,r){this.range=e,this.lines=n,this.source=r,this.histogram=[];let s=0;for(let i=e.startLineNumber-1;i<e.endLineNumberExclusive-1;i++){let a=n[i];for(let u=0;u<a.length;u++){s++;let c=a[u],f=t.getKey(c);this.histogram[f]=(this.histogram[f]||0)+1}s++;let l=t.getKey(`
-`);this.histogram[l]=(this.histogram[l]||0)+1}this.totalCount=s}computeSimilarity(e){let n=0,r=Math.max(this.histogram.length,e.histogram.length);for(let s=0;s<r;s++)n+=Math.abs((this.histogram[s]??0)-(e.histogram[s]??0));return 1-n/(this.totalCount+e.totalCount)}};var gn=class{compute(e,n,r=Ee.instance,s){if(e.length===0||n.length===0)return ce.trivial(e,n);let i=new tt(e.length,n.length),a=new tt(e.length,n.length),l=new tt(e.length,n.length);for(let p=0;p<e.length;p++)for(let d=0;d<n.length;d++){if(!r.isValid())return ce.trivialTimedOut(e,n);let x=p===0?0:i.get(p-1,d),N=d===0?0:i.get(p,d-1),v;e.getElement(p)===n.getElement(d)?(p===0||d===0?v=0:v=i.get(p-1,d-1),p>0&&d>0&&a.get(p-1,d-1)===3&&(v+=l.get(p-1,d-1)),v+=s?s(p,d):1):v=-1;let L=Math.max(x,N,v);if(L===v){let C=p>0&&d>0?l.get(p-1,d-1):0;l.set(p,d,C+1),a.set(p,d,3)}else L===x?(l.set(p,d,0),a.set(p,d,1)):L===N&&(l.set(p,d,0),a.set(p,d,2));i.set(p,d,L)}let u=[],c=e.length,f=n.length;function h(p,d){(p+1!==c||d+1!==f)&&u.push(new X(new z(p+1,c),new z(d+1,f))),c=p,f=d}let m=e.length-1,b=n.length-1;for(;m>=0&&b>=0;)a.get(m,b)===3?(h(m,b),m--,b--):a.get(m,b)===1?m--:b--;return h(-1,-1),u.reverse(),new ce(u,!1)}};var nt=class{compute(e,n,r=Ee.instance){if(e.length===0||n.length===0)return ce.trivial(e,n);let s=e,i=n;function a(d,x){for(;d<s.length&&x<i.length&&s.getElement(d)===i.getElement(x);)d++,x++;return d}let l=0,u=new _r;u.set(0,a(0,0));let c=new yr;c.set(0,u.get(0)===0?null:new pn(null,0,0,u.get(0)));let f=0;e:for(;;){if(l++,!r.isValid())return ce.trivialTimedOut(s,i);let d=-Math.min(l,i.length+l%2),x=Math.min(l,s.length+l%2);for(f=d;f<=x;f+=2){let N=f===x?-1:u.get(f+1),v=f===d?-1:u.get(f-1)+1,L=Math.min(Math.max(N,v),s.length),C=L-f;if(L>s.length||C>i.length)continue;let D=a(L,C);u.set(f,D);let q=L===N?c.get(f+1):c.get(f-1);if(c.set(f,D!==L?new pn(q,L,C,D-L):q),u.get(f)===s.length&&u.get(f)-f===i.length)break e}}let h=c.get(f),m=[],b=s.length,p=i.length;for(;;){let d=h?h.x+h.length:0,x=h?h.y+h.length:0;if((d!==b||x!==p)&&m.push(new X(new z(d,b),new z(x,p))),!h)break;b=h.x,p=h.y,h=h.prev}return m.reverse(),new ce(m,!1)}},pn=class{constructor(e,n,r,s){this.prev=e,this.x=n,this.y=r,this.length=s}},_r=class{constructor(){this.positiveArr=new Int32Array(10),this.negativeArr=new Int32Array(10)}get(e){return e<0?(e=-e-1,this.negativeArr[e]):this.positiveArr[e]}set(e,n){if(e<0){if(e=-e-1,e>=this.negativeArr.length){let r=this.negativeArr;this.negativeArr=new Int32Array(r.length*2),this.negativeArr.set(r)}this.negativeArr[e]=n}else{if(e>=this.positiveArr.length){let r=this.positiveArr;this.positiveArr=new Int32Array(r.length*2),this.positiveArr.set(r)}this.positiveArr[e]=n}}},yr=class{constructor(){this.positiveArr=[],this.negativeArr=[]}get(e){return e<0?(e=-e-1,this.negativeArr[e]):this.positiveArr[e]}set(e,n){e<0?(e=-e-1,this.negativeArr[e]=n):this.positiveArr[e]=n}};var Me=class{constructor(e,n,r){this.lines=e,this.range=n,this.considerWhitespaceChanges=r,this.elements=[],this.firstElementOffsetByLineIdx=[],this.lineStartOffsets=[],this.trimmedWsLengthsByLineIdx=[],this.firstElementOffsetByLineIdx.push(0);for(let s=this.range.startLineNumber;s<=this.range.endLineNumber;s++){let i=e[s-1],a=0;s===this.range.startLineNumber&&this.range.startColumn>1&&(a=this.range.startColumn-1,i=i.substring(a)),this.lineStartOffsets.push(a);let l=0;if(!r){let c=i.trimStart();l=i.length-c.length,i=c.trimEnd()}this.trimmedWsLengthsByLineIdx.push(l);let u=s===this.range.endLineNumber?Math.min(this.range.endColumn-1-a-l,i.length):i.length;for(let c=0;c<u;c++)this.elements.push(i.charCodeAt(c));s<this.range.endLineNumber&&(this.elements.push(10),this.firstElementOffsetByLineIdx.push(this.elements.length))}}toString(){return`Slice: "${this.text}"`}get text(){return this.getText(new z(0,this.length))}getText(e){return this.elements.slice(e.start,e.endExclusive).map(n=>String.fromCharCode(n)).join("")}getElement(e){return this.elements[e]}get length(){return this.elements.length}getBoundaryScore(e){let n=Zi(e>0?this.elements[e-1]:-1),r=Zi(e<this.elements.length?this.elements[e]:-1);if(n===7&&r===8)return 0;if(n===8)return 150;let s=0;return n!==r&&(s+=10,n===0&&r===1&&(s+=1)),s+=Yi(n),s+=Yi(r),s}translateOffset(e,n="right"){let r=be(this.firstElementOffsetByLineIdx,i=>i<=e),s=e-this.firstElementOffsetByLineIdx[r];return new B(this.range.startLineNumber+r,1+this.lineStartOffsets[r]+s+(s===0&&n==="left"?0:this.trimmedWsLengthsByLineIdx[r]))}translateRange(e){let n=this.translateOffset(e.start,"right"),r=this.translateOffset(e.endExclusive,"left");return r.isBefore(n)?E.fromPositions(r,r):E.fromPositions(n,r)}findWordContaining(e){if(e<0||e>=this.elements.length||!rt(this.elements[e]))return;let n=e;for(;n>0&&rt(this.elements[n-1]);)n--;let r=e;for(;r<this.elements.length&&rt(this.elements[r]);)r++;return new z(n,r)}findSubWordContaining(e){if(e<0||e>=this.elements.length||!rt(this.elements[e]))return;let n=e;for(;n>0&&rt(this.elements[n-1])&&!Ji(this.elements[n]);)n--;let r=e;for(;r<this.elements.length&&rt(this.elements[r])&&!Ji(this.elements[r]);)r++;return new z(n,r)}countLinesIn(e){return this.translateOffset(e.endExclusive).lineNumber-this.translateOffset(e.start).lineNumber}isStronglyEqual(e,n){return this.elements[e]===this.elements[n]}extendToFullLines(e){let n=pe(this.firstElementOffsetByLineIdx,s=>s<=e.start)??0,r=Gi(this.firstElementOffsetByLineIdx,s=>e.endExclusive<=s)??this.elements.length;return new z(n,r)}};function rt(t){return t>=97&&t<=122||t>=65&&t<=90||t>=48&&t<=57}function Ji(t){return t>=65&&t<=90}var _o={0:0,1:0,2:0,3:10,4:2,5:30,6:3,7:10,8:10};function Yi(t){return _o[t]}function Zi(t){return t===10?8:t===13?7:Lt(t)?6:t>=97&&t<=122?0:t>=65&&t<=90?1:t>=48&&t<=57?2:t===-1?3:t===44||t===59?5:4}function e1(t,e,n,r,s,i){let{moves:a,excludedChanges:l}=Lo(t,e,n,i);if(!i.isValid())return[];let u=t.filter(f=>!l.has(f)),c=vo(u,r,s,e,n,i);return Oi(a,c),a=No(a),a=a.filter(f=>{let h=f.original.toOffsetRange().slice(e).map(b=>b.trim());return h.join(`
-`).length>=15&&yo(h,b=>b.length>=2)>=2}),a=So(t,a),a}function yo(t,e){let n=0;for(let r of t)e(r)&&n++;return n}function Lo(t,e,n,r){let s=[],i=t.filter(u=>u.modified.isEmpty&&u.original.length>=3).map(u=>new yt(u.original,e,u)),a=new Set(t.filter(u=>u.original.isEmpty&&u.modified.length>=3).map(u=>new yt(u.modified,n,u))),l=new Set;for(let u of i){let c=-1,f;for(let h of a){let m=u.computeSimilarity(h);m>c&&(c=m,f=h)}if(c>.9&&f&&(a.delete(f),s.push(new le(u.range,f.range)),l.add(u.source),l.add(f.source)),!r.isValid())return{moves:s,excludedChanges:l}}return{moves:s,excludedChanges:l}}function vo(t,e,n,r,s,i){let a=[],l=new rn;for(let m of t)for(let b=m.original.startLineNumber;b<m.original.endLineNumberExclusive-2;b++){let p=`${e[b-1]}:${e[b+1-1]}:${e[b+2-1]}`;l.add(p,{range:new W(b,b+3)})}let u=[];t.sort(Ce(m=>m.modified.startLineNumber,Ue));for(let m of t){let b=[];for(let p=m.modified.startLineNumber;p<m.modified.endLineNumberExclusive-2;p++){let d=`${n[p-1]}:${n[p+1-1]}:${n[p+2-1]}`,x=new W(p,p+3),N=[];l.forEach(d,({range:v})=>{for(let C of b)if(C.originalLineRange.endLineNumberExclusive+1===v.endLineNumberExclusive&&C.modifiedLineRange.endLineNumberExclusive+1===x.endLineNumberExclusive){C.originalLineRange=new W(C.originalLineRange.startLineNumber,v.endLineNumberExclusive),C.modifiedLineRange=new W(C.modifiedLineRange.startLineNumber,x.endLineNumberExclusive),N.push(C);return}let L={modifiedLineRange:x,originalLineRange:v};u.push(L),N.push(L)}),b=N}if(!i.isValid())return[]}u.sort(Hi(Ce(m=>m.modifiedLineRange.length,Ue)));let c=new We,f=new We;for(let m of u){let b=m.modifiedLineRange.startLineNumber-m.originalLineRange.startLineNumber,p=c.subtractFrom(m.modifiedLineRange),d=f.subtractFrom(m.originalLineRange).getWithDelta(b),x=p.getIntersection(d);for(let N of x.ranges){if(N.length<3)continue;let v=N,L=N.delta(-b);a.push(new le(L,v)),c.addRange(v),f.addRange(L)}}a.sort(Ce(m=>m.original.startLineNumber,Ue));let h=new xt(t);for(let m=0;m<a.length;m++){let b=a[m],p=h.findLastMonotonous(q=>q.original.startLineNumber<=b.original.startLineNumber),d=pe(t,q=>q.modified.startLineNumber<=b.modified.startLineNumber),x=Math.max(b.original.startLineNumber-p.original.startLineNumber,b.modified.startLineNumber-d.modified.startLineNumber),N=h.findLastMonotonous(q=>q.original.startLineNumber<b.original.endLineNumberExclusive),v=pe(t,q=>q.modified.startLineNumber<b.modified.endLineNumberExclusive),L=Math.max(N.original.endLineNumberExclusive-b.original.endLineNumberExclusive,v.modified.endLineNumberExclusive-b.modified.endLineNumberExclusive),C;for(C=0;C<x;C++){let q=b.original.startLineNumber-C-1,w=b.modified.startLineNumber-C-1;if(q>r.length||w>s.length||c.contains(w)||f.contains(q)||!Ki(r[q-1],s[w-1],i))break}C>0&&(f.addRange(new W(b.original.startLineNumber-C,b.original.startLineNumber)),c.addRange(new W(b.modified.startLineNumber-C,b.modified.startLineNumber)));let D;for(D=0;D<L;D++){let q=b.original.endLineNumberExclusive+D,w=b.modified.endLineNumberExclusive+D;if(q>r.length||w>s.length||c.contains(w)||f.contains(q)||!Ki(r[q-1],s[w-1],i))break}D>0&&(f.addRange(new W(b.original.endLineNumberExclusive,b.original.endLineNumberExclusive+D)),c.addRange(new W(b.modified.endLineNumberExclusive,b.modified.endLineNumberExclusive+D))),(C>0||D>0)&&(a[m]=new le(new W(b.original.startLineNumber-C,b.original.endLineNumberExclusive+D),new W(b.modified.startLineNumber-C,b.modified.endLineNumberExclusive+D)))}return a}function Ki(t,e,n){if(t.trim()===e.trim())return!0;if(t.length>300&&e.length>300)return!1;let s=new nt().compute(new Me([t],new E(1,1,1,t.length),!1),new Me([e],new E(1,1,1,e.length),!1),n),i=0,a=X.invert(s.diffs,t.length);for(let f of a)f.seq1Range.forEach(h=>{Lt(t.charCodeAt(h))||i++});function l(f){let h=0;for(let m=0;m<t.length;m++)Lt(f.charCodeAt(m))||h++;return h}let u=l(t.length>e.length?t:e);return i/u>.6&&u>10}function No(t){if(t.length===0)return t;t.sort(Ce(n=>n.original.startLineNumber,Ue));let e=[t[0]];for(let n=1;n<t.length;n++){let r=e[e.length-1],s=t[n],i=s.original.startLineNumber-r.original.endLineNumberExclusive,a=s.modified.startLineNumber-r.modified.endLineNumberExclusive;if(i>=0&&a>=0&&i+a<=2){e[e.length-1]=r.join(s);continue}e.push(s)}return e}function So(t,e){let n=new xt(t);return e=e.filter(r=>{let s=n.findLastMonotonous(l=>l.original.startLineNumber<r.original.endLineNumberExclusive)||new le(new W(1,1),new W(1,1)),i=pe(t,l=>l.modified.startLineNumber<r.modified.endLineNumberExclusive);return s!==i}),e}function Lr(t,e,n){let r=n;return r=t1(t,e,r),r=t1(t,e,r),r=Ro(t,e,r),r}function t1(t,e,n){if(n.length===0)return n;let r=[];r.push(n[0]);for(let i=1;i<n.length;i++){let a=r[r.length-1],l=n[i];if(l.seq1Range.isEmpty||l.seq2Range.isEmpty){let u=l.seq1Range.start-a.seq1Range.endExclusive,c;for(c=1;c<=u&&!(t.getElement(l.seq1Range.start-c)!==t.getElement(l.seq1Range.endExclusive-c)||e.getElement(l.seq2Range.start-c)!==e.getElement(l.seq2Range.endExclusive-c));c++);if(c--,c===u){r[r.length-1]=new X(new z(a.seq1Range.start,l.seq1Range.endExclusive-u),new z(a.seq2Range.start,l.seq2Range.endExclusive-u));continue}l=l.delta(-c)}r.push(l)}let s=[];for(let i=0;i<r.length-1;i++){let a=r[i+1],l=r[i];if(l.seq1Range.isEmpty||l.seq2Range.isEmpty){let u=a.seq1Range.start-l.seq1Range.endExclusive,c;for(c=0;c<u&&!(!t.isStronglyEqual(l.seq1Range.start+c,l.seq1Range.endExclusive+c)||!e.isStronglyEqual(l.seq2Range.start+c,l.seq2Range.endExclusive+c));c++);if(c===u){r[i+1]=new X(new z(l.seq1Range.start+u,a.seq1Range.endExclusive),new z(l.seq2Range.start+u,a.seq2Range.endExclusive));continue}c>0&&(l=l.delta(c))}s.push(l)}return r.length>0&&s.push(r[r.length-1]),s}function Ro(t,e,n){if(!t.getBoundaryScore||!e.getBoundaryScore)return n;for(let r=0;r<n.length;r++){let s=r>0?n[r-1]:void 0,i=n[r],a=r+1<n.length?n[r+1]:void 0,l=new z(s?s.seq1Range.endExclusive+1:0,a?a.seq1Range.start-1:t.length),u=new z(s?s.seq2Range.endExclusive+1:0,a?a.seq2Range.start-1:e.length);i.seq1Range.isEmpty?n[r]=n1(i,t,e,l,u):i.seq2Range.isEmpty&&(n[r]=n1(i.swap(),e,t,u,l).swap())}return n}function n1(t,e,n,r,s){let a=1;for(;t.seq1Range.start-a>=r.start&&t.seq2Range.start-a>=s.start&&n.isStronglyEqual(t.seq2Range.start-a,t.seq2Range.endExclusive-a)&&a<100;)a++;a--;let l=0;for(;t.seq1Range.start+l<r.endExclusive&&t.seq2Range.endExclusive+l<s.endExclusive&&n.isStronglyEqual(t.seq2Range.start+l,t.seq2Range.endExclusive+l)&&l<100;)l++;if(a===0&&l===0)return t;let u=0,c=-1;for(let f=-a;f<=l;f++){let h=t.seq2Range.start+f,m=t.seq2Range.endExclusive+f,b=t.seq1Range.start+f,p=e.getBoundaryScore(b)+n.getBoundaryScore(h)+n.getBoundaryScore(m);p>c&&(c=p,u=f)}return t.delta(u)}function r1(t,e,n){let r=[];for(let s of n){let i=r[r.length-1];if(!i){r.push(s);continue}s.seq1Range.start-i.seq1Range.endExclusive<=2||s.seq2Range.start-i.seq2Range.endExclusive<=2?r[r.length-1]=new X(i.seq1Range.join(s.seq1Range),i.seq2Range.join(s.seq2Range)):r.push(s)}return r}function vr(t,e,n,r,s=!1){let i=X.invert(n,t.length),a=[],l=new ue(0,0);function u(f,h){if(f.offset1<l.offset1||f.offset2<l.offset2)return;let m=r(t,f.offset1),b=r(e,f.offset2);if(!m||!b)return;let p=new X(m,b),d=p.intersect(h),x=d.seq1Range.length,N=d.seq2Range.length;for(;i.length>0;){let v=i[0];if(!(v.seq1Range.intersects(p.seq1Range)||v.seq2Range.intersects(p.seq2Range)))break;let C=r(t,v.seq1Range.start),D=r(e,v.seq2Range.start),q=new X(C,D),w=q.intersect(v);if(x+=w.seq1Range.length,N+=w.seq2Range.length,p=p.join(q),p.seq1Range.endExclusive>=v.seq1Range.endExclusive)i.shift();else break}(s&&x+N<p.seq1Range.length+p.seq2Range.length||x+N<(p.seq1Range.length+p.seq2Range.length)*2/3)&&a.push(p),l=p.getEndExclusives()}for(;i.length>0;){let f=i.shift();f.seq1Range.isEmpty||(u(f.getStarts(),f),u(f.getEndExclusives().delta(-1),f))}return Ao(n,a)}function Ao(t,e){let n=[];for(;t.length>0||e.length>0;){let r=t[0],s=e[0],i;r&&(!s||r.seq1Range.start<s.seq1Range.start)?i=t.shift():i=e.shift(),n.length>0&&n[n.length-1].seq1Range.endExclusive>=i.seq1Range.start?n[n.length-1]=n[n.length-1].join(i):n.push(i)}return n}function s1(t,e,n){let r=n;if(r.length===0)return r;let s=0,i;do{i=!1;let a=[r[0]];for(let l=1;l<r.length;l++){let f=function(m,b){let p=new z(c.seq1Range.endExclusive,u.seq1Range.start);return t.getText(p).replace(/\s/g,"").length<=4&&(m.seq1Range.length+m.seq2Range.length>5||b.seq1Range.length+b.seq2Range.length>5)},u=r[l],c=a[a.length-1];f(c,u)?(i=!0,a[a.length-1]=a[a.length-1].join(u)):a.push(u)}r=a}while(s++<10&&i);return r}function i1(t,e,n){let r=n;if(r.length===0)return r;let s=0,i;do{i=!1;let l=[r[0]];for(let u=1;u<r.length;u++){let h=function(b,p){let d=new z(f.seq1Range.endExclusive,c.seq1Range.start);if(t.countLinesIn(d)>5||d.length>500)return!1;let N=t.getText(d).trim();if(N.length>20||N.split(/\r\n|\r|\n/).length>1)return!1;let v=t.countLinesIn(b.seq1Range),L=b.seq1Range.length,C=e.countLinesIn(b.seq2Range),D=b.seq2Range.length,q=t.countLinesIn(p.seq1Range),w=p.seq1Range.length,_=e.countLinesIn(p.seq2Range),R=p.seq2Range.length,T=130;function I(y){return Math.min(y,T)}return Math.pow(Math.pow(I(v*40+L),1.5)+Math.pow(I(C*40+D),1.5),1.5)+Math.pow(Math.pow(I(q*40+w),1.5)+Math.pow(I(_*40+R),1.5),1.5)>(T**1.5)**1.5*1.3},c=r[u],f=l[l.length-1];h(f,c)?(i=!0,l[l.length-1]=l[l.length-1].join(c)):l.push(c)}r=l}while(s++<10&&i);let a=[];return $i(r,(l,u,c)=>{let f=u;function h(N){return N.length>0&&N.trim().length<=3&&u.seq1Range.length+u.seq2Range.length>100}let m=t.extendToFullLines(u.seq1Range),b=t.getText(new z(m.start,u.seq1Range.start));h(b)&&(f=f.deltaStart(-b.length));let p=t.getText(new z(u.seq1Range.endExclusive,m.endExclusive));h(p)&&(f=f.deltaEnd(p.length));let d=X.fromOffsetPairs(l?l.getEndExclusives():ue.zero,c?c.getStarts():ue.max),x=f.intersect(d);a.length>0&&x.getStarts().equals(a[a.length-1].getEndExclusives())?a[a.length-1]=a[a.length-1].join(x):a.push(x)}),a}var vt=class{constructor(e,n){this.trimmedHash=e,this.lines=n}getElement(e){return this.trimmedHash[e]}get length(){return this.trimmedHash.length}getBoundaryScore(e){let n=e===0?0:o1(this.lines[e-1]),r=e===this.lines.length?0:o1(this.lines[e]);return 1e3-(n+r)}getText(e){return this.lines.slice(e.start,e.endExclusive).join(`
-`)}isStronglyEqual(e,n){return this.lines[e]===this.lines[n]}};function o1(t){let e=0;for(;e<t.length&&(t.charCodeAt(e)===32||t.charCodeAt(e)===9);)e++;return e}var bn=class{constructor(){this.dynamicProgrammingDiffing=new gn,this.myersDiffingAlgorithm=new nt}computeDiff(e,n,r){if(e.length<=1&&Ui(e,n,(w,_)=>w===_))return new Ae([],[],!1);if(e.length===1&&e[0].length===0||n.length===1&&n[0].length===0)return new Ae([new we(new W(1,e.length+1),new W(1,n.length+1),[new re(new E(1,1,e.length,e[e.length-1].length+1),new E(1,1,n.length,n[n.length-1].length+1))])],[],!1);let s=r.maxComputationTimeMs===0?Ee.instance:new dn(r.maxComputationTimeMs),i=!r.ignoreTrimWhitespace,a=new Map;function l(w){let _=a.get(w);return _===void 0&&(_=a.size,a.set(w,_)),_}let u=e.map(w=>l(w.trim())),c=n.map(w=>l(w.trim())),f=new vt(u,e),h=new vt(c,n),m=f.length+h.length<1700?this.dynamicProgrammingDiffing.compute(f,h,s,(w,_)=>e[w]===n[_]?n[_].length===0?.1:1+Math.log(1+n[_].length):.99):this.myersDiffingAlgorithm.compute(f,h,s),b=m.diffs,p=m.hitTimeout;b=Lr(f,h,b),b=s1(f,h,b);let d=[],x=w=>{if(i)for(let _=0;_<w;_++){let R=N+_,T=v+_;if(e[R]!==n[T]){let I=this.refineDiff(e,n,new X(new z(R,R+1),new z(T,T+1)),s,i,r);for(let y of I.mappings)d.push(y);I.hitTimeout&&(p=!0)}}},N=0,v=0;for(let w of b){xe(()=>w.seq1Range.start-N===w.seq2Range.start-v);let _=w.seq1Range.start-N;x(_),N=w.seq1Range.endExclusive,v=w.seq2Range.endExclusive;let R=this.refineDiff(e,n,w,s,i,r);R.hitTimeout&&(p=!0);for(let T of R.mappings)d.push(T)}x(e.length-N);let L=new $e(e),C=new $e(n),D=gr(d,L,C),q=[];return r.computeMoves&&(q=this.computeMoves(D,e,n,u,c,s,i,r)),xe(()=>{function w(R,T){if(R.lineNumber<1||R.lineNumber>T.length)return!1;let I=T[R.lineNumber-1];return!(R.column<1||R.column>I.length+1)}function _(R,T){return!(R.startLineNumber<1||R.startLineNumber>T.length+1||R.endLineNumberExclusive<1||R.endLineNumberExclusive>T.length+1)}for(let R of D){if(!R.innerChanges)return!1;for(let T of R.innerChanges)if(!(w(T.modifiedRange.getStartPosition(),n)&&w(T.modifiedRange.getEndPosition(),n)&&w(T.originalRange.getStartPosition(),e)&&w(T.originalRange.getEndPosition(),e)))return!1;if(!_(R.modified,n)||!_(R.original,e))return!1}return!0}),new Ae(D,q,p)}computeMoves(e,n,r,s,i,a,l,u){return e1(e,n,r,s,i,a).map(h=>{let m=this.refineDiff(n,r,new X(h.original.toOffsetRange(),h.modified.toOffsetRange()),a,l,u),b=gr(m.mappings,new $e(n),new $e(r),!0);return new ln(h,b)})}refineDiff(e,n,r,s,i,a){let u=Co(r).toRangeMapping2(e,n),c=new Me(e,u.originalRange,i),f=new Me(n,u.modifiedRange,i),h=c.length+f.length<500?this.dynamicProgrammingDiffing.compute(c,f,s):this.myersDiffingAlgorithm.compute(c,f,s),m=h.diffs;return m=Lr(c,f,m),m=vr(c,f,m,(p,d)=>p.findWordContaining(d)),a.extendToSubwords&&(m=vr(c,f,m,(p,d)=>p.findSubWordContaining(d),!0)),m=r1(c,f,m),m=i1(c,f,m),{mappings:m.map(p=>new re(c.translateRange(p.seq1Range),f.translateRange(p.seq2Range))),hitTimeout:h.hitTimeout}}};function Co(t){return new le(new W(t.seq1Range.start+1,t.seq1Range.endExclusive+1),new W(t.seq2Range.start+1,t.seq2Range.endExclusive+1))}var Nr={getLegacy:()=>new fn,getDefault:()=>new bn};function ke(t,e){let n=Math.pow(10,e);return Math.round(t*n)/n}var g=class{constructor(e,n,r,s=1){this._rgbaBrand=void 0,this.r=Math.min(255,Math.max(0,e))|0,this.g=Math.min(255,Math.max(0,n))|0,this.b=Math.min(255,Math.max(0,r))|0,this.a=ke(Math.max(Math.min(1,s),0),3)}static equals(e,n){return e.r===n.r&&e.g===n.g&&e.b===n.b&&e.a===n.a}},he=class t{constructor(e,n,r,s){this._hslaBrand=void 0,this.h=Math.max(Math.min(360,e),0)|0,this.s=ke(Math.max(Math.min(1,n),0),3),this.l=ke(Math.max(Math.min(1,r),0),3),this.a=ke(Math.max(Math.min(1,s),0),3)}static equals(e,n){return e.h===n.h&&e.s===n.s&&e.l===n.l&&e.a===n.a}static fromRGBA(e){let n=e.r/255,r=e.g/255,s=e.b/255,i=e.a,a=Math.max(n,r,s),l=Math.min(n,r,s),u=0,c=0,f=(l+a)/2,h=a-l;if(h>0){switch(c=Math.min(f<=.5?h/(2*f):h/(2-2*f),1),a){case n:u=(r-s)/h+(r<s?6:0);break;case r:u=(s-n)/h+2;break;case s:u=(n-r)/h+4;break}u*=60,u=Math.round(u)}return new t(u,c,f,i)}static _hue2rgb(e,n,r){return r<0&&(r+=1),r>1&&(r-=1),r<1/6?e+(n-e)*6*r:r<1/2?n:r<2/3?e+(n-e)*(2/3-r)*6:e}static toRGBA(e){let n=e.h/360,{s:r,l:s,a:i}=e,a,l,u;if(r===0)a=l=u=s;else{let c=s<.5?s*(1+r):s+r-s*r,f=2*s-c;a=t._hue2rgb(f,c,n+1/3),l=t._hue2rgb(f,c,n),u=t._hue2rgb(f,c,n-1/3)}return new g(Math.round(a*255),Math.round(l*255),Math.round(u*255),i)}},st=class t{constructor(e,n,r,s){this._hsvaBrand=void 0,this.h=Math.max(Math.min(360,e),0)|0,this.s=ke(Math.max(Math.min(1,n),0),3),this.v=ke(Math.max(Math.min(1,r),0),3),this.a=ke(Math.max(Math.min(1,s),0),3)}static equals(e,n){return e.h===n.h&&e.s===n.s&&e.v===n.v&&e.a===n.a}static fromRGBA(e){let n=e.r/255,r=e.g/255,s=e.b/255,i=Math.max(n,r,s),a=Math.min(n,r,s),l=i-a,u=i===0?0:l/i,c;return l===0?c=0:i===n?c=((r-s)/l%6+6)%6:i===r?c=(s-n)/l+2:c=(n-r)/l+4,new t(Math.round(c*60),u,i,e.a)}static toRGBA(e){let{h:n,s:r,v:s,a:i}=e,a=s*r,l=a*(1-Math.abs(n/60%2-1)),u=s-a,[c,f,h]=[0,0,0];return n<60?(c=a,f=l):n<120?(c=l,f=a):n<180?(f=a,h=l):n<240?(f=l,h=a):n<300?(c=l,h=a):n<=360&&(c=a,h=l),c=Math.round((c+u)*255),f=Math.round((f+u)*255),h=Math.round((h+u)*255),new g(c,f,h,i)}},Oe=class t{static fromHex(e){return t.Format.CSS.parseHex(e)||t.red}static equals(e,n){return!e&&!n?!0:!e||!n?!1:e.equals(n)}get hsla(){return this._hsla?this._hsla:he.fromRGBA(this.rgba)}get hsva(){return this._hsva?this._hsva:st.fromRGBA(this.rgba)}constructor(e){if(e)if(e instanceof g)this.rgba=e;else if(e instanceof he)this._hsla=e,this.rgba=he.toRGBA(e);else if(e instanceof st)this._hsva=e,this.rgba=st.toRGBA(e);else throw new Error("Invalid color ctor argument");else throw new Error("Color needs a value")}equals(e){return!!e&&g.equals(this.rgba,e.rgba)&&he.equals(this.hsla,e.hsla)&&st.equals(this.hsva,e.hsva)}getRelativeLuminance(){let e=t._relativeLuminanceForComponent(this.rgba.r),n=t._relativeLuminanceForComponent(this.rgba.g),r=t._relativeLuminanceForComponent(this.rgba.b),s=.2126*e+.7152*n+.0722*r;return ke(s,4)}static _relativeLuminanceForComponent(e){let n=e/255;return n<=.03928?n/12.92:Math.pow((n+.055)/1.055,2.4)}isLighter(){return(this.rgba.r*299+this.rgba.g*587+this.rgba.b*114)/1e3>=128}isLighterThan(e){let n=this.getRelativeLuminance(),r=e.getRelativeLuminance();return n>r}isDarkerThan(e){let n=this.getRelativeLuminance(),r=e.getRelativeLuminance();return n<r}lighten(e){return new t(new he(this.hsla.h,this.hsla.s,this.hsla.l+this.hsla.l*e,this.hsla.a))}darken(e){return new t(new he(this.hsla.h,this.hsla.s,this.hsla.l-this.hsla.l*e,this.hsla.a))}transparent(e){let{r:n,g:r,b:s,a:i}=this.rgba;return new t(new g(n,r,s,i*e))}isTransparent(){return this.rgba.a===0}isOpaque(){return this.rgba.a===1}opposite(){return new t(new g(255-this.rgba.r,255-this.rgba.g,255-this.rgba.b,this.rgba.a))}mix(e,n=.5){let r=Math.min(Math.max(n,0),1),s=this.rgba,i=e.rgba,a=s.r+(i.r-s.r)*r,l=s.g+(i.g-s.g)*r,u=s.b+(i.b-s.b)*r,c=s.a+(i.a-s.a)*r;return new t(new g(a,l,u,c))}makeOpaque(e){if(this.isOpaque()||e.rgba.a!==1)return this;let{r:n,g:r,b:s,a:i}=this.rgba;return new t(new g(e.rgba.r-i*(e.rgba.r-n),e.rgba.g-i*(e.rgba.g-r),e.rgba.b-i*(e.rgba.b-s),1))}toString(){return this._toString||(this._toString=t.Format.CSS.format(this)),this._toString}toNumber32Bit(){return this._toNumber32Bit||(this._toNumber32Bit=(this.rgba.r<<24|this.rgba.g<<16|this.rgba.b<<8|this.rgba.a*255<<0)>>>0),this._toNumber32Bit}static getLighterColor(e,n,r){if(e.isLighterThan(n))return e;r=r||.5;let s=e.getRelativeLuminance(),i=n.getRelativeLuminance();return r=r*(i-s)/i,e.lighten(r)}static getDarkerColor(e,n,r){if(e.isDarkerThan(n))return e;r=r||.5;let s=e.getRelativeLuminance(),i=n.getRelativeLuminance();return r=r*(s-i)/s,e.darken(r)}static{this.white=new t(new g(255,255,255,1))}static{this.black=new t(new g(0,0,0,1))}static{this.red=new t(new g(255,0,0,1))}static{this.blue=new t(new g(0,0,255,1))}static{this.green=new t(new g(0,255,0,1))}static{this.cyan=new t(new g(0,255,255,1))}static{this.lightgrey=new t(new g(211,211,211,1))}static{this.transparent=new t(new g(0,0,0,0))}};(function(t){(function(e){(function(n){function r(d){return d.rgba.a===1?`rgb(${d.rgba.r}, ${d.rgba.g}, ${d.rgba.b})`:t.Format.CSS.formatRGBA(d)}n.formatRGB=r;function s(d){return`rgba(${d.rgba.r}, ${d.rgba.g}, ${d.rgba.b}, ${+d.rgba.a.toFixed(2)})`}n.formatRGBA=s;function i(d){return d.hsla.a===1?`hsl(${d.hsla.h}, ${Math.round(d.hsla.s*100)}%, ${Math.round(d.hsla.l*100)}%)`:t.Format.CSS.formatHSLA(d)}n.formatHSL=i;function a(d){return`hsla(${d.hsla.h}, ${Math.round(d.hsla.s*100)}%, ${Math.round(d.hsla.l*100)}%, ${d.hsla.a.toFixed(2)})`}n.formatHSLA=a;function l(d){let x=d.toString(16);return x.length!==2?"0"+x:x}function u(d){return`#${l(d.rgba.r)}${l(d.rgba.g)}${l(d.rgba.b)}`}n.formatHex=u;function c(d,x=!1){return x&&d.rgba.a===1?t.Format.CSS.formatHex(d):`#${l(d.rgba.r)}${l(d.rgba.g)}${l(d.rgba.b)}${l(Math.round(d.rgba.a*255))}`}n.formatHexA=c;function f(d){return d.isOpaque()?t.Format.CSS.formatHex(d):t.Format.CSS.formatRGBA(d)}n.format=f;function h(d){if(d==="transparent")return t.transparent;if(d.startsWith("#"))return b(d);if(d.startsWith("rgba(")){let x=d.match(/rgba\((?<r>(?:\+|-)?\d+), *(?<g>(?:\+|-)?\d+), *(?<b>(?:\+|-)?\d+), *(?<a>(?:\+|-)?\d+(\.\d+)?)\)/);if(!x)throw new Error("Invalid color format "+d);let N=parseInt(x.groups?.r??"0"),v=parseInt(x.groups?.g??"0"),L=parseInt(x.groups?.b??"0"),C=parseFloat(x.groups?.a??"0");return new t(new g(N,v,L,C))}if(d.startsWith("rgb(")){let x=d.match(/rgb\((?<r>(?:\+|-)?\d+), *(?<g>(?:\+|-)?\d+), *(?<b>(?:\+|-)?\d+)\)/);if(!x)throw new Error("Invalid color format "+d);let N=parseInt(x.groups?.r??"0"),v=parseInt(x.groups?.g??"0"),L=parseInt(x.groups?.b??"0");return new t(new g(N,v,L))}return m(d)}n.parse=h;function m(d){switch(d){case"aliceblue":return new t(new g(240,248,255,1));case"antiquewhite":return new t(new g(250,235,215,1));case"aqua":return new t(new g(0,255,255,1));case"aquamarine":return new t(new g(127,255,212,1));case"azure":return new t(new g(240,255,255,1));case"beige":return new t(new g(245,245,220,1));case"bisque":return new t(new g(255,228,196,1));case"black":return new t(new g(0,0,0,1));case"blanchedalmond":return new t(new g(255,235,205,1));case"blue":return new t(new g(0,0,255,1));case"blueviolet":return new t(new g(138,43,226,1));case"brown":return new t(new g(165,42,42,1));case"burlywood":return new t(new g(222,184,135,1));case"cadetblue":return new t(new g(95,158,160,1));case"chartreuse":return new t(new g(127,255,0,1));case"chocolate":return new t(new g(210,105,30,1));case"coral":return new t(new g(255,127,80,1));case"cornflowerblue":return new t(new g(100,149,237,1));case"cornsilk":return new t(new g(255,248,220,1));case"crimson":return new t(new g(220,20,60,1));case"cyan":return new t(new g(0,255,255,1));case"darkblue":return new t(new g(0,0,139,1));case"darkcyan":return new t(new g(0,139,139,1));case"darkgoldenrod":return new t(new g(184,134,11,1));case"darkgray":return new t(new g(169,169,169,1));case"darkgreen":return new t(new g(0,100,0,1));case"darkgrey":return new t(new g(169,169,169,1));case"darkkhaki":return new t(new g(189,183,107,1));case"darkmagenta":return new t(new g(139,0,139,1));case"darkolivegreen":return new t(new g(85,107,47,1));case"darkorange":return new t(new g(255,140,0,1));case"darkorchid":return new t(new g(153,50,204,1));case"darkred":return new t(new g(139,0,0,1));case"darksalmon":return new t(new g(233,150,122,1));case"darkseagreen":return new t(new g(143,188,143,1));case"darkslateblue":return new t(new g(72,61,139,1));case"darkslategray":return new t(new g(47,79,79,1));case"darkslategrey":return new t(new g(47,79,79,1));case"darkturquoise":return new t(new g(0,206,209,1));case"darkviolet":return new t(new g(148,0,211,1));case"deeppink":return new t(new g(255,20,147,1));case"deepskyblue":return new t(new g(0,191,255,1));case"dimgray":return new t(new g(105,105,105,1));case"dimgrey":return new t(new g(105,105,105,1));case"dodgerblue":return new t(new g(30,144,255,1));case"firebrick":return new t(new g(178,34,34,1));case"floralwhite":return new t(new g(255,250,240,1));case"forestgreen":return new t(new g(34,139,34,1));case"fuchsia":return new t(new g(255,0,255,1));case"gainsboro":return new t(new g(220,220,220,1));case"ghostwhite":return new t(new g(248,248,255,1));case"gold":return new t(new g(255,215,0,1));case"goldenrod":return new t(new g(218,165,32,1));case"gray":return new t(new g(128,128,128,1));case"green":return new t(new g(0,128,0,1));case"greenyellow":return new t(new g(173,255,47,1));case"grey":return new t(new g(128,128,128,1));case"honeydew":return new t(new g(240,255,240,1));case"hotpink":return new t(new g(255,105,180,1));case"indianred":return new t(new g(205,92,92,1));case"indigo":return new t(new g(75,0,130,1));case"ivory":return new t(new g(255,255,240,1));case"khaki":return new t(new g(240,230,140,1));case"lavender":return new t(new g(230,230,250,1));case"lavenderblush":return new t(new g(255,240,245,1));case"lawngreen":return new t(new g(124,252,0,1));case"lemonchiffon":return new t(new g(255,250,205,1));case"lightblue":return new t(new g(173,216,230,1));case"lightcoral":return new t(new g(240,128,128,1));case"lightcyan":return new t(new g(224,255,255,1));case"lightgoldenrodyellow":return new t(new g(250,250,210,1));case"lightgray":return new t(new g(211,211,211,1));case"lightgreen":return new t(new g(144,238,144,1));case"lightgrey":return new t(new g(211,211,211,1));case"lightpink":return new t(new g(255,182,193,1));case"lightsalmon":return new t(new g(255,160,122,1));case"lightseagreen":return new t(new g(32,178,170,1));case"lightskyblue":return new t(new g(135,206,250,1));case"lightslategray":return new t(new g(119,136,153,1));case"lightslategrey":return new t(new g(119,136,153,1));case"lightsteelblue":return new t(new g(176,196,222,1));case"lightyellow":return new t(new g(255,255,224,1));case"lime":return new t(new g(0,255,0,1));case"limegreen":return new t(new g(50,205,50,1));case"linen":return new t(new g(250,240,230,1));case"magenta":return new t(new g(255,0,255,1));case"maroon":return new t(new g(128,0,0,1));case"mediumaquamarine":return new t(new g(102,205,170,1));case"mediumblue":return new t(new g(0,0,205,1));case"mediumorchid":return new t(new g(186,85,211,1));case"mediumpurple":return new t(new g(147,112,219,1));case"mediumseagreen":return new t(new g(60,179,113,1));case"mediumslateblue":return new t(new g(123,104,238,1));case"mediumspringgreen":return new t(new g(0,250,154,1));case"mediumturquoise":return new t(new g(72,209,204,1));case"mediumvioletred":return new t(new g(199,21,133,1));case"midnightblue":return new t(new g(25,25,112,1));case"mintcream":return new t(new g(245,255,250,1));case"mistyrose":return new t(new g(255,228,225,1));case"moccasin":return new t(new g(255,228,181,1));case"navajowhite":return new t(new g(255,222,173,1));case"navy":return new t(new g(0,0,128,1));case"oldlace":return new t(new g(253,245,230,1));case"olive":return new t(new g(128,128,0,1));case"olivedrab":return new t(new g(107,142,35,1));case"orange":return new t(new g(255,165,0,1));case"orangered":return new t(new g(255,69,0,1));case"orchid":return new t(new g(218,112,214,1));case"palegoldenrod":return new t(new g(238,232,170,1));case"palegreen":return new t(new g(152,251,152,1));case"paleturquoise":return new t(new g(175,238,238,1));case"palevioletred":return new t(new g(219,112,147,1));case"papayawhip":return new t(new g(255,239,213,1));case"peachpuff":return new t(new g(255,218,185,1));case"peru":return new t(new g(205,133,63,1));case"pink":return new t(new g(255,192,203,1));case"plum":return new t(new g(221,160,221,1));case"powderblue":return new t(new g(176,224,230,1));case"purple":return new t(new g(128,0,128,1));case"rebeccapurple":return new t(new g(102,51,153,1));case"red":return new t(new g(255,0,0,1));case"rosybrown":return new t(new g(188,143,143,1));case"royalblue":return new t(new g(65,105,225,1));case"saddlebrown":return new t(new g(139,69,19,1));case"salmon":return new t(new g(250,128,114,1));case"sandybrown":return new t(new g(244,164,96,1));case"seagreen":return new t(new g(46,139,87,1));case"seashell":return new t(new g(255,245,238,1));case"sienna":return new t(new g(160,82,45,1));case"silver":return new t(new g(192,192,192,1));case"skyblue":return new t(new g(135,206,235,1));case"slateblue":return new t(new g(106,90,205,1));case"slategray":return new t(new g(112,128,144,1));case"slategrey":return new t(new g(112,128,144,1));case"snow":return new t(new g(255,250,250,1));case"springgreen":return new t(new g(0,255,127,1));case"steelblue":return new t(new g(70,130,180,1));case"tan":return new t(new g(210,180,140,1));case"teal":return new t(new g(0,128,128,1));case"thistle":return new t(new g(216,191,216,1));case"tomato":return new t(new g(255,99,71,1));case"turquoise":return new t(new g(64,224,208,1));case"violet":return new t(new g(238,130,238,1));case"wheat":return new t(new g(245,222,179,1));case"white":return new t(new g(255,255,255,1));case"whitesmoke":return new t(new g(245,245,245,1));case"yellow":return new t(new g(255,255,0,1));case"yellowgreen":return new t(new g(154,205,50,1));default:return null}}function b(d){let x=d.length;if(x===0||d.charCodeAt(0)!==35)return null;if(x===7){let N=16*p(d.charCodeAt(1))+p(d.charCodeAt(2)),v=16*p(d.charCodeAt(3))+p(d.charCodeAt(4)),L=16*p(d.charCodeAt(5))+p(d.charCodeAt(6));return new t(new g(N,v,L,1))}if(x===9){let N=16*p(d.charCodeAt(1))+p(d.charCodeAt(2)),v=16*p(d.charCodeAt(3))+p(d.charCodeAt(4)),L=16*p(d.charCodeAt(5))+p(d.charCodeAt(6)),C=16*p(d.charCodeAt(7))+p(d.charCodeAt(8));return new t(new g(N,v,L,C/255))}if(x===4){let N=p(d.charCodeAt(1)),v=p(d.charCodeAt(2)),L=p(d.charCodeAt(3));return new t(new g(16*N+N,16*v+v,16*L+L))}if(x===5){let N=p(d.charCodeAt(1)),v=p(d.charCodeAt(2)),L=p(d.charCodeAt(3)),C=p(d.charCodeAt(4));return new t(new g(16*N+N,16*v+v,16*L+L,(16*C+C)/255))}return null}n.parseHex=b;function p(d){switch(d){case 48:return 0;case 49:return 1;case 50:return 2;case 51:return 3;case 52:return 4;case 53:return 5;case 54:return 6;case 55:return 7;case 56:return 8;case 57:return 9;case 97:return 10;case 65:return 10;case 98:return 11;case 66:return 11;case 99:return 12;case 67:return 12;case 100:return 13;case 68:return 13;case 101:return 14;case 69:return 14;case 102:return 15;case 70:return 15}return 0}})(e.CSS||(e.CSS={}))})(t.Format||(t.Format={}))})(Oe||(Oe={}));function u1(t){let e=[];for(let n of t){let r=Number(n);(r||r===0&&n.replace(/\s/g,"")!=="")&&e.push(r)}return e}function Sr(t,e,n,r){return{red:t/255,blue:n/255,green:e/255,alpha:r}}function Nt(t,e){let n=e.index,r=e[0].length;if(n===void 0)return;let s=t.positionAt(n);return{startLineNumber:s.lineNumber,startColumn:s.column,endLineNumber:s.lineNumber,endColumn:s.column+r}}function Eo(t,e){if(!t)return;let n=Oe.Format.CSS.parseHex(e);if(n)return{range:t,color:Sr(n.rgba.r,n.rgba.g,n.rgba.b,n.rgba.a)}}function a1(t,e,n){if(!t||e.length!==1)return;let s=e[0].values(),i=u1(s);return{range:t,color:Sr(i[0],i[1],i[2],n?i[3]:1)}}function l1(t,e,n){if(!t||e.length!==1)return;let s=e[0].values(),i=u1(s),a=new Oe(new he(i[0],i[1]/100,i[2]/100,n?i[3]:1));return{range:t,color:Sr(a.rgba.r,a.rgba.g,a.rgba.b,a.rgba.a)}}function St(t,e){return typeof t=="string"?[...t.matchAll(e)]:t.findMatches(e)}function Mo(t){let e=[],r=St(t,/\b(rgb|rgba|hsl|hsla)(\([0-9\s,.\%]*\))|^(#)([A-Fa-f0-9]{3})\b|^(#)([A-Fa-f0-9]{4})\b|^(#)([A-Fa-f0-9]{6})\b|^(#)([A-Fa-f0-9]{8})\b|(?<=['"\s])(#)([A-Fa-f0-9]{3})\b|(?<=['"\s])(#)([A-Fa-f0-9]{4})\b|(?<=['"\s])(#)([A-Fa-f0-9]{6})\b|(?<=['"\s])(#)([A-Fa-f0-9]{8})\b/gm);if(r.length>0)for(let s of r){let i=s.filter(c=>c!==void 0),a=i[1],l=i[2];if(!l)continue;let u;if(a==="rgb"){let c=/^\(\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*\)$/gm;u=a1(Nt(t,s),St(l,c),!1)}else if(a==="rgba"){let c=/^\(\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(0[.][0-9]+|[.][0-9]+|[01][.]|[01])\s*\)$/gm;u=a1(Nt(t,s),St(l,c),!0)}else if(a==="hsl"){let c=/^\(\s*((?:360(?:\.0+)?|(?:36[0]|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])(?:\.\d+)?))\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*\)$/gm;u=l1(Nt(t,s),St(l,c),!1)}else if(a==="hsla"){let c=/^\(\s*((?:360(?:\.0+)?|(?:36[0]|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])(?:\.\d+)?))\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*[\s,]\s*(0[.][0-9]+|[.][0-9]+|[01][.]0*|[01])\s*\)$/gm;u=l1(Nt(t,s),St(l,c),!0)}else a==="#"&&(u=Eo(Nt(t,s),a+l));u&&e.push(u)}return e}function c1(t){return!t||typeof t.getValue!="function"||typeof t.positionAt!="function"?[]:Mo(t)}var ko=/^-+|-+$/g,h1=100,Fo=5;function f1(t,e){let n=[];if(e.findRegionSectionHeaders&&e.foldingRules?.markers){let r=Po(t,e);n=n.concat(r)}if(e.findMarkSectionHeaders){let r=Do(t,e);n=n.concat(r)}return n}function Po(t,e){let n=[],r=t.getLineCount();for(let s=1;s<=r;s++){let i=t.getLineContent(s),a=i.match(e.foldingRules.markers.start);if(a){let l={startLineNumber:s,startColumn:a[0].length+1,endLineNumber:s,endColumn:i.length+1};if(l.endColumn>l.startColumn){let u={range:l,...To(i.substring(a[0].length)),shouldBeInComments:!1};(u.text||u.hasSeparatorLine)&&n.push(u)}}}return n}function Do(t,e){let n=[],r=t.getLineCount();if(!e.markSectionHeaderRegex||e.markSectionHeaderRegex.trim()==="")return n;let s=Ii(e.markSectionHeaderRegex),i=new RegExp(e.markSectionHeaderRegex,`gdm${s?"s":""}`);if($r(i))return n;for(let a=1;a<=r;a+=h1-Fo){let l=Math.min(a+h1-1,r),u=[];for(let h=a;h<=l;h++)u.push(t.getLineContent(h));let c=u.join(`
-`);i.lastIndex=0;let f;for(;(f=i.exec(c))!==null;){let h=c.substring(0,f.index),m=(h.match(/\n/g)||[]).length,b=a+m,p=f[0].split(`
-`),d=p.length,x=b+d-1,N=h.lastIndexOf(`
-`)+1,v=f.index-N+1,L=p[p.length-1],C=d===1?v+f[0].length:L.length+1,D={startLineNumber:b,startColumn:v,endLineNumber:x,endColumn:C},q=(f.groups??{}).label??"",w=((f.groups??{}).separator??"")!=="",_={range:D,text:q,hasSeparatorLine:w,shouldBeInComments:!0};(_.text||_.hasSeparatorLine)&&(n.length===0||n[n.length-1].range.endLineNumber<_.range.startLineNumber)&&n.push(_),i.lastIndex=f.index+f[0].length}}return n}function To(t){t=t.trim();let e=t.startsWith("-");return t=t.replace(ko,""),{text:t,hasSeparatorLine:e}}var Io,Rr;(function(){let t=globalThis;typeof t.requestIdleCallback!="function"||typeof t.cancelIdleCallback!="function"?Rr=(e,n,r)=>{Ur(()=>{if(s)return;let i=Date.now()+15;n(Object.freeze({didTimeout:!0,timeRemaining(){return Math.max(0,i-Date.now())}}))});let s=!1;return{dispose(){s||(s=!0)}}}:Rr=(e,n,r)=>{let s=e.requestIdleCallback(n,typeof r=="number"?{timeout:r}:void 0),i=!1;return{dispose(){i||(i=!0,e.cancelIdleCallback(s))}}},Io=(e,n)=>Rr(globalThis,e,n)})();var Ar=class{get isRejected(){return this.outcome?.outcome===1}get isSettled(){return!!this.outcome}constructor(){this.p=new Promise((e,n)=>{this.completeCallback=e,this.errorCallback=n})}complete(e){return this.isSettled?Promise.resolve():new Promise(n=>{this.completeCallback(e),this.outcome={outcome:0,value:e},n()})}error(e){return this.isSettled?Promise.resolve():new Promise(n=>{this.errorCallback(e),this.outcome={outcome:1,value:e},n()})}cancel(){return this.error(new ot)}},m1;(function(t){async function e(r){let s,i=await Promise.all(r.map(a=>a.then(l=>l,l=>{s||(s=l)})));if(typeof s<"u")throw s;return i}t.settled=e;function n(r){return new Promise(async(s,i)=>{try{await r(s,i)}catch(a){i(a)}})}t.withAsyncBody=n})(m1||(m1={}));var Cr=class{constructor(){this._unsatisfiedConsumers=[],this._unconsumedValues=[]}get hasFinalValue(){return!!this._finalValue}produce(e){if(this._ensureNoFinalValue(),this._unsatisfiedConsumers.length>0){let n=this._unsatisfiedConsumers.shift();this._resolveOrRejectDeferred(n,e)}else this._unconsumedValues.push(e)}produceFinal(e){this._ensureNoFinalValue(),this._finalValue=e;for(let n of this._unsatisfiedConsumers)this._resolveOrRejectDeferred(n,e);this._unsatisfiedConsumers.length=0}_ensureNoFinalValue(){if(this._finalValue)throw new G("ProducerConsumer: cannot produce after final value has been set")}_resolveOrRejectDeferred(e,n){n.ok?e.complete(n.value):e.error(n.error)}consume(){if(this._unconsumedValues.length>0||this._finalValue){let e=this._unconsumedValues.length>0?this._unconsumedValues.shift():this._finalValue;return e.ok?Promise.resolve(e.value):Promise.reject(e.error)}else{let e=new Ar;return this._unsatisfiedConsumers.push(e),e.p}}},d1=class t{constructor(e,n){this._onReturn=n,this._producerConsumer=new Cr,this._iterator={next:()=>this._producerConsumer.consume(),return:()=>(this._onReturn?.(),Promise.resolve({done:!0,value:void 0})),throw:async r=>(this._finishError(r),{done:!0,value:void 0})},queueMicrotask(async()=>{let r=e({emitOne:s=>this._producerConsumer.produce({ok:!0,value:{done:!1,value:s}}),emitMany:s=>{for(let i of s)this._producerConsumer.produce({ok:!0,value:{done:!1,value:i}})},reject:s=>this._finishError(s)});if(!this._producerConsumer.hasFinalValue)try{await r,this._finishOk()}catch(s){this._finishError(s)}})}static fromArray(e){return new t(n=>{n.emitMany(e)})}static fromPromise(e){return new t(async n=>{n.emitMany(await e)})}static fromPromisesResolveOrder(e){return new t(async n=>{await Promise.all(e.map(async r=>n.emitOne(await r)))})}static merge(e){return new t(async n=>{await Promise.all(e.map(async r=>{for await(let s of r)n.emitOne(s)}))})}static{this.EMPTY=t.fromArray([])}static map(e,n){return new t(async r=>{for await(let s of e)r.emitOne(n(s))})}map(e){return t.map(this,e)}static coalesce(e){return t.filter(e,n=>!!n)}coalesce(){return t.coalesce(this)}static filter(e,n){return new t(async r=>{for await(let s of e)n(s)&&r.emitOne(s)})}filter(e){return t.filter(this,e)}_finishOk(){this._producerConsumer.hasFinalValue||this._producerConsumer.produceFinal({ok:!0,value:{done:!0,value:void 0}})}_finishError(e){this._producerConsumer.hasFinalValue||this._producerConsumer.produceFinal({ok:!1,error:e})}[Symbol.asyncIterator](){return this._iterator}};var wn=class{constructor(e){this.values=e,this.prefixSum=new Uint32Array(e.length),this.prefixSumValidIndex=new Int32Array(1),this.prefixSumValidIndex[0]=-1}insertValues(e,n){e=Ve(e);let r=this.values,s=this.prefixSum,i=n.length;return i===0?!1:(this.values=new Uint32Array(r.length+i),this.values.set(r.subarray(0,e),0),this.values.set(r.subarray(e),e+i),this.values.set(n,e),e-1<this.prefixSumValidIndex[0]&&(this.prefixSumValidIndex[0]=e-1),this.prefixSum=new Uint32Array(this.values.length),this.prefixSumValidIndex[0]>=0&&this.prefixSum.set(s.subarray(0,this.prefixSumValidIndex[0]+1)),!0)}setValue(e,n){return e=Ve(e),n=Ve(n),this.values[e]===n?!1:(this.values[e]=n,e-1<this.prefixSumValidIndex[0]&&(this.prefixSumValidIndex[0]=e-1),!0)}removeValues(e,n){e=Ve(e),n=Ve(n);let r=this.values,s=this.prefixSum;if(e>=r.length)return!1;let i=r.length-e;return n>=i&&(n=i),n===0?!1:(this.values=new Uint32Array(r.length-n),this.values.set(r.subarray(0,e),0),this.values.set(r.subarray(e+n),e),this.prefixSum=new Uint32Array(this.values.length),e-1<this.prefixSumValidIndex[0]&&(this.prefixSumValidIndex[0]=e-1),this.prefixSumValidIndex[0]>=0&&this.prefixSum.set(s.subarray(0,this.prefixSumValidIndex[0]+1)),!0)}getTotalSum(){return this.values.length===0?0:this._getPrefixSum(this.values.length-1)}getPrefixSum(e){return e<0?0:(e=Ve(e),this._getPrefixSum(e))}_getPrefixSum(e){if(e<=this.prefixSumValidIndex[0])return this.prefixSum[e];let n=this.prefixSumValidIndex[0]+1;n===0&&(this.prefixSum[0]=this.values[0],n++),e>=this.values.length&&(e=this.values.length-1);for(let r=n;r<=e;r++)this.prefixSum[r]=this.prefixSum[r-1]+this.values[r];return this.prefixSumValidIndex[0]=Math.max(this.prefixSumValidIndex[0],e),this.prefixSum[e]}getIndexOf(e){e=Math.floor(e),this.getTotalSum();let n=0,r=this.values.length-1,s=0,i=0,a=0;for(;n<=r;)if(s=n+(r-n)/2|0,i=this.prefixSum[s],a=i-this.values[s],e<a)r=s-1;else if(e>=i)n=s+1;else break;return new Er(s,e-a)}};var Er=class{constructor(e,n){this.index=e,this.remainder=n,this._prefixSumIndexOfResultBrand=void 0,this.index=e,this.remainder=n}};var xn=class{constructor(e,n,r,s){this._uri=e,this._lines=n,this._eol=r,this._versionId=s,this._lineStarts=null,this._cachedTextValue=null}dispose(){this._lines.length=0}get version(){return this._versionId}getText(){return this._cachedTextValue===null&&(this._cachedTextValue=this._lines.join(this._eol)),this._cachedTextValue}onEvents(e){e.eol&&e.eol!==this._eol&&(this._eol=e.eol,this._lineStarts=null);let n=e.changes;for(let r of n)this._acceptDeleteRange(r.range),this._acceptInsertText(new B(r.range.startLineNumber,r.range.startColumn),r.text);this._versionId=e.versionId,this._cachedTextValue=null}_ensureLineStarts(){if(!this._lineStarts){let e=this._eol.length,n=this._lines.length,r=new Uint32Array(n);for(let s=0;s<n;s++)r[s]=this._lines[s].length+e;this._lineStarts=new wn(r)}}_setLineText(e,n){this._lines[e]=n,this._lineStarts&&this._lineStarts.setValue(e,this._lines[e].length+this._eol.length)}_acceptDeleteRange(e){if(e.startLineNumber===e.endLineNumber){if(e.startColumn===e.endColumn)return;this._setLineText(e.startLineNumber-1,this._lines[e.startLineNumber-1].substring(0,e.startColumn-1)+this._lines[e.startLineNumber-1].substring(e.endColumn-1));return}this._setLineText(e.startLineNumber-1,this._lines[e.startLineNumber-1].substring(0,e.startColumn-1)+this._lines[e.endLineNumber-1].substring(e.endColumn-1)),this._lines.splice(e.startLineNumber,e.endLineNumber-e.startLineNumber),this._lineStarts&&this._lineStarts.removeValues(e.startLineNumber,e.endLineNumber-e.startLineNumber)}_acceptInsertText(e,n){if(n.length===0)return;let r=Or(n);if(r.length===1){this._setLineText(e.lineNumber-1,this._lines[e.lineNumber-1].substring(0,e.column-1)+r[0]+this._lines[e.lineNumber-1].substring(e.column-1));return}r[r.length-1]+=this._lines[e.lineNumber-1].substring(e.column-1),this._setLineText(e.lineNumber-1,this._lines[e.lineNumber-1].substring(0,e.column-1)+r[0]);let s=new Uint32Array(r.length-1);for(let i=1;i<r.length;i++)this._lines.splice(e.lineNumber+i-1,0,r[i]),s[i-1]=r[i].length+this._eol.length;this._lineStarts&&this._lineStarts.insertValues(e.lineNumber,s)}};var Zc=60*1e3;var _n=class{constructor(){this._models=Object.create(null)}getModel(e){return this._models[e]}getModels(){let e=[];return Object.keys(this._models).forEach(n=>e.push(this._models[n])),e}$acceptNewModel(e){this._models[e.url]=new Mr(Re.parse(e.url),e.lines,e.EOL,e.versionId)}$acceptModelChanged(e,n){if(!this._models[e])return;this._models[e].onEvents(n)}$acceptRemovedModel(e){this._models[e]&&delete this._models[e]}},Mr=class extends xn{get uri(){return this._uri}get eol(){return this._eol}getValue(){return this.getText()}findMatches(e){let n=[];for(let r=0;r<this._lines.length;r++){let s=this._lines[r],i=this.offsetAt(new B(r+1,1)),a=s.matchAll(e);for(let l of a)(l.index||l.index===0)&&(l.index=l.index+i),n.push(l)}return n}getLinesContent(){return this._lines.slice(0)}getLineCount(){return this._lines.length}getLineContent(e){return this._lines[e-1]}getWordAtPosition(e,n){let r=wt(e.column,cr(n),this._lines[e.lineNumber-1],0);return r?new E(e.lineNumber,r.startColumn,e.lineNumber,r.endColumn):null}words(e){let n=this._lines,r=this._wordenize.bind(this),s=0,i="",a=0,l=[];return{*[Symbol.iterator](){for(;;)if(a<l.length){let u=i.substring(l[a].start,l[a].end);a+=1,yield u}else if(s<n.length)i=n[s],l=r(i,e),a=0,s+=1;else break}}}getLineWords(e,n){let r=this._lines[e-1],s=this._wordenize(r,n),i=[];for(let a of s)i.push({word:r.substring(a.start,a.end),startColumn:a.start+1,endColumn:a.end+1});return i}_wordenize(e,n){let r=[],s;for(n.lastIndex=0;(s=n.exec(e))&&s[0].length!==0;)r.push({start:s.index,end:s.index+s[0].length});return r}getValueInRange(e){if(e=this._validateRange(e),e.startLineNumber===e.endLineNumber)return this._lines[e.startLineNumber-1].substring(e.startColumn-1,e.endColumn-1);let n=this._eol,r=e.startLineNumber-1,s=e.endLineNumber-1,i=[];i.push(this._lines[r].substring(e.startColumn-1));for(let a=r+1;a<s;a++)i.push(this._lines[a]);return i.push(this._lines[s].substring(0,e.endColumn-1)),i.join(n)}offsetAt(e){return e=this._validatePosition(e),this._ensureLineStarts(),this._lineStarts.getPrefixSum(e.lineNumber-2)+(e.column-1)}positionAt(e){e=Math.floor(e),e=Math.max(0,e),this._ensureLineStarts();let n=this._lineStarts.getIndexOf(e),r=this._lines[n.index].length;return{lineNumber:1+n.index,column:1+Math.min(n.remainder,r)}}_validateRange(e){let n=this._validatePosition({lineNumber:e.startLineNumber,column:e.startColumn}),r=this._validatePosition({lineNumber:e.endLineNumber,column:e.endColumn});return n.lineNumber!==e.startLineNumber||n.column!==e.startColumn||r.lineNumber!==e.endLineNumber||r.column!==e.endColumn?{startLineNumber:n.lineNumber,startColumn:n.column,endLineNumber:r.lineNumber,endColumn:r.column}:e}_validatePosition(e){if(!B.isIPosition(e))throw new Error("bad position");let{lineNumber:n,column:r}=e,s=!1;if(n<1)n=1,r=1,s=!0;else if(n>this._lines.length)n=this._lines.length,r=this._lines[n-1].length+1,s=!0;else{let i=this._lines[n-1].length+1;r<1?(r=1,s=!0):r>i&&(r=i,s=!0)}return s?{lineNumber:n,column:r}:e}};var yn=class t{constructor(e=null){this._foreignModule=e,this._requestHandlerBrand=void 0,this._workerTextModelSyncServer=new _n}dispose(){}async $ping(){return"pong"}_getModel(e){return this._workerTextModelSyncServer.getModel(e)}getModels(){return this._workerTextModelSyncServer.getModels()}$acceptNewModel(e){this._workerTextModelSyncServer.$acceptNewModel(e)}$acceptModelChanged(e,n){this._workerTextModelSyncServer.$acceptModelChanged(e,n)}$acceptRemovedModel(e){this._workerTextModelSyncServer.$acceptRemovedModel(e)}async $computeUnicodeHighlights(e,n,r){let s=this._getModel(e);return s?on.computeUnicodeHighlights(s,n,r):{ranges:[],hasMore:!1,ambiguousCharacterCount:0,invisibleCharacterCount:0,nonBasicAsciiCharacterCount:0}}async $findSectionHeaders(e,n){let r=this._getModel(e);return r?f1(r,n):[]}async $computeDiff(e,n,r,s){let i=this._getModel(e),a=this._getModel(n);return!i||!a?null:t.computeDiff(i,a,r,s)}static computeDiff(e,n,r,s){let i=s==="advanced"?Nr.getDefault():Nr.getLegacy(),a=e.getLinesContent(),l=n.getLinesContent(),u=i.computeDiff(a,l,r),c=u.changes.length>0?!1:this._modelsAreIdentical(e,n);function f(h){return h.map(m=>[m.original.startLineNumber,m.original.endLineNumberExclusive,m.modified.startLineNumber,m.modified.endLineNumberExclusive,m.innerChanges?.map(b=>[b.originalRange.startLineNumber,b.originalRange.startColumn,b.originalRange.endLineNumber,b.originalRange.endColumn,b.modifiedRange.startLineNumber,b.modifiedRange.startColumn,b.modifiedRange.endLineNumber,b.modifiedRange.endColumn])])}return{identical:c,quitEarly:u.hitTimeout,changes:f(u.changes),moves:u.moves.map(h=>[h.lineRangeMapping.original.startLineNumber,h.lineRangeMapping.original.endLineNumberExclusive,h.lineRangeMapping.modified.startLineNumber,h.lineRangeMapping.modified.endLineNumberExclusive,f(h.changes)])}}static _modelsAreIdentical(e,n){let r=e.getLineCount(),s=n.getLineCount();if(r!==s)return!1;for(let i=1;i<=r;i++){let a=e.getLineContent(i),l=n.getLineContent(i);if(a!==l)return!1}return!0}static{this._diffLimit=1e5}async $computeMoreMinimalEdits(e,n,r){let s=this._getModel(e);if(!s)return n;let i=[],a;n=n.slice(0).sort((u,c)=>{if(u.range&&c.range)return E.compareRangesUsingStarts(u.range,c.range);let f=u.range?0:1,h=c.range?0:1;return f-h});let l=0;for(let u=1;u<n.length;u++)E.getEndPosition(n[l].range).equals(E.getStartPosition(n[u].range))?(n[l].range=E.fromPositions(E.getStartPosition(n[l].range),E.getEndPosition(n[u].range)),n[l].text+=n[u].text):(l++,n[l]=n[u]);n.length=l+1;for(let{range:u,text:c,eol:f}of n){if(typeof f=="number"&&(a=f),E.isEmpty(u)&&!c)continue;let h=s.getValueInRange(u);if(c=c.replace(/\r\n|\n|\r/g,s.eol),h===c)continue;if(Math.max(c.length,h.length)>t._diffLimit){i.push({range:u,text:c});continue}let m=as(h,c,r),b=s.offsetAt(E.lift(u).getStartPosition());for(let p of m){let d=s.positionAt(b+p.originalStart),x=s.positionAt(b+p.originalStart+p.originalLength),N={text:c.substr(p.modifiedStart,p.modifiedLength),range:{startLineNumber:d.lineNumber,startColumn:d.column,endLineNumber:x.lineNumber,endColumn:x.column}};s.getValueInRange(N.range)!==N.text&&i.push(N)}}return typeof a=="number"&&i.push({eol:a,text:"",range:{startLineNumber:0,startColumn:0,endLineNumber:0,endColumn:0}}),i}async $computeLinks(e){let n=this._getModel(e);return n?ls(n):null}async $computeDefaultDocumentColors(e){let n=this._getModel(e);return n?c1(n):null}static{this._suggestionsLimit=1e4}async $textualSuggest(e,n,r,s){let i=new Ge,a=new RegExp(r,s),l=new Set;e:for(let u of e){let c=this._getModel(u);if(c){for(let f of c.words(a))if(!(f===n||!isNaN(Number(f)))&&(l.add(f),l.size>t._suggestionsLimit))break e}}return{words:Array.from(l),duration:i.elapsed()}}async $computeWordRanges(e,n,r,s){let i=this._getModel(e);if(!i)return Object.create(null);let a=new RegExp(r,s),l=Object.create(null);for(let u=n.startLineNumber;u<n.endLineNumber;u++){let c=i.getLineWords(u,a);for(let f of c){if(!isNaN(Number(f.word)))continue;let h=l[f.word];h||(h=[],l[f.word]=h),h.push({startLineNumber:u,startColumn:f.startColumn,endLineNumber:u,endColumn:f.endColumn})}}return l}async $navigateValueSet(e,n,r,s,i){let a=this._getModel(e);if(!a)return null;let l=new RegExp(s,i);n.startColumn===n.endColumn&&(n={startLineNumber:n.startLineNumber,startColumn:n.startColumn,endLineNumber:n.endLineNumber,endColumn:n.endColumn+1});let u=a.getValueInRange(n),c=a.getWordAtPosition({lineNumber:n.startLineNumber,column:n.startColumn},l);if(!c)return null;let f=a.getValueInRange(c);return zt.INSTANCE.navigateValueSet(n,u,c,f,r)}$fmr(e,n){if(!this._foreignModule||typeof this._foreignModule[e]!="function")return Promise.reject(new Error("Missing requestHandler or method: "+e));try{return Promise.resolve(this._foreignModule[e].apply(this._foreignModule,n))}catch(r){return Promise.reject(r)}}};typeof importScripts=="function"&&(globalThis.monaco=Ai());var Ln=class t{static{this.CHANNEL_NAME="editorWorkerHost"}static getChannel(e){return e.getChannel(t.CHANNEL_NAME)}static setChannel(e,n){e.setChannel(t.CHANNEL_NAME,n)}};function vn(t){let e,n=es(r=>{let s=Ln.getChannel(r),a={host:new Proxy({},{get(l,u,c){if(u!=="then"){if(typeof u!="string")throw new Error("Not supported");return(...f)=>s.$fhr(u,f)}}}),getMirrorModels:()=>n.requestHandler.getModels()};return e=t(a),new yn(e)});return e}var g1=!1;function p1(){return g1}function Bo(t){g1=!0,self.onmessage=e=>{vn(n=>t(n,e.data))}}self.onmessage=()=>{p1()||vn(()=>({}))};})();
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/types.js
+  function isString(str) {
+    return typeof str === "string";
+  }
+  function isIterable(obj) {
+    return !!obj && typeof obj[Symbol.iterator] === "function";
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/iterator.js
+  var Iterable;
+  (function(Iterable2) {
+    function is(thing) {
+      return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
+    }
+    Iterable2.is = is;
+    const _empty2 = Object.freeze([]);
+    function empty() {
+      return _empty2;
+    }
+    Iterable2.empty = empty;
+    function* single(element) {
+      yield element;
+    }
+    Iterable2.single = single;
+    function wrap(iterableOrElement) {
+      if (is(iterableOrElement)) {
+        return iterableOrElement;
+      } else {
+        return single(iterableOrElement);
+      }
+    }
+    Iterable2.wrap = wrap;
+    function from(iterable) {
+      return iterable || _empty2;
+    }
+    Iterable2.from = from;
+    function* reverse(array) {
+      for (let i = array.length - 1; i >= 0; i--) {
+        yield array[i];
+      }
+    }
+    Iterable2.reverse = reverse;
+    function isEmpty(iterable) {
+      return !iterable || iterable[Symbol.iterator]().next().done === true;
+    }
+    Iterable2.isEmpty = isEmpty;
+    function first(iterable) {
+      return iterable[Symbol.iterator]().next().value;
+    }
+    Iterable2.first = first;
+    function some(iterable, predicate) {
+      let i = 0;
+      for (const element of iterable) {
+        if (predicate(element, i++)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    Iterable2.some = some;
+    function every(iterable, predicate) {
+      let i = 0;
+      for (const element of iterable) {
+        if (!predicate(element, i++)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    Iterable2.every = every;
+    function find(iterable, predicate) {
+      for (const element of iterable) {
+        if (predicate(element)) {
+          return element;
+        }
+      }
+      return void 0;
+    }
+    Iterable2.find = find;
+    function* filter(iterable, predicate) {
+      for (const element of iterable) {
+        if (predicate(element)) {
+          yield element;
+        }
+      }
+    }
+    Iterable2.filter = filter;
+    function* map(iterable, fn) {
+      let index = 0;
+      for (const element of iterable) {
+        yield fn(element, index++);
+      }
+    }
+    Iterable2.map = map;
+    function* flatMap(iterable, fn) {
+      let index = 0;
+      for (const element of iterable) {
+        yield* fn(element, index++);
+      }
+    }
+    Iterable2.flatMap = flatMap;
+    function* concat(...iterables) {
+      for (const item of iterables) {
+        if (isIterable(item)) {
+          yield* item;
+        } else {
+          yield item;
+        }
+      }
+    }
+    Iterable2.concat = concat;
+    function reduce(iterable, reducer, initialValue) {
+      let value = initialValue;
+      for (const element of iterable) {
+        value = reducer(value, element);
+      }
+      return value;
+    }
+    Iterable2.reduce = reduce;
+    function length(iterable) {
+      let count = 0;
+      for (const _ of iterable) {
+        count++;
+      }
+      return count;
+    }
+    Iterable2.length = length;
+    function* slice(arr, from2, to = arr.length) {
+      if (from2 < -arr.length) {
+        from2 = 0;
+      }
+      if (from2 < 0) {
+        from2 += arr.length;
+      }
+      if (to < 0) {
+        to += arr.length;
+      } else if (to > arr.length) {
+        to = arr.length;
+      }
+      for (; from2 < to; from2++) {
+        yield arr[from2];
+      }
+    }
+    Iterable2.slice = slice;
+    function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
+      const consumed = [];
+      if (atMost === 0) {
+        return [consumed, iterable];
+      }
+      const iterator = iterable[Symbol.iterator]();
+      for (let i = 0; i < atMost; i++) {
+        const next = iterator.next();
+        if (next.done) {
+          return [consumed, Iterable2.empty()];
+        }
+        consumed.push(next.value);
+      }
+      return [consumed, { [Symbol.iterator]() {
+        return iterator;
+      } }];
+    }
+    Iterable2.consume = consume;
+    async function asyncToArray(iterable) {
+      const result = [];
+      for await (const item of iterable) {
+        result.push(item);
+      }
+      return result;
+    }
+    Iterable2.asyncToArray = asyncToArray;
+    async function asyncToArrayFlat(iterable) {
+      let result = [];
+      for await (const item of iterable) {
+        result = result.concat(item);
+      }
+      return result;
+    }
+    Iterable2.asyncToArrayFlat = asyncToArrayFlat;
+  })(Iterable || (Iterable = {}));
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/lifecycle.js
+  function setParentOfDisposable(child, parent) {
+  }
+  function dispose(arg) {
+    if (Iterable.is(arg)) {
+      const errors = [];
+      for (const d of arg) {
+        if (d) {
+          try {
+            d.dispose();
+          } catch (e) {
+            errors.push(e);
+          }
+        }
+      }
+      if (errors.length === 1) {
+        throw errors[0];
+      } else if (errors.length > 1) {
+        throw new AggregateError(errors, "Encountered errors while disposing of store");
+      }
+      return Array.isArray(arg) ? [] : arg;
+    } else if (arg) {
+      arg.dispose();
+      return arg;
+    }
+  }
+  function combinedDisposable(...disposables) {
+    const parent = toDisposable(() => dispose(disposables));
+    return parent;
+  }
+  var FunctionDisposable = class {
+    constructor(fn) {
+      this._isDisposed = false;
+      this._fn = fn;
+    }
+    dispose() {
+      if (this._isDisposed) {
+        return;
+      }
+      if (!this._fn) {
+        throw new Error(`Unbound disposable context: Need to use an arrow function to preserve the value of this`);
+      }
+      this._isDisposed = true;
+      this._fn();
+    }
+  };
+  function toDisposable(fn) {
+    return new FunctionDisposable(fn);
+  }
+  var DisposableStore = class _DisposableStore {
+    static {
+      this.DISABLE_DISPOSED_WARNING = false;
+    }
+    constructor() {
+      this._toDispose = /* @__PURE__ */ new Set();
+      this._isDisposed = false;
+    }
+    /**
+     * Dispose of all registered disposables and mark this object as disposed.
+     *
+     * Any future disposables added to this object will be disposed of on `add`.
+     */
+    dispose() {
+      if (this._isDisposed) {
+        return;
+      }
+      this._isDisposed = true;
+      this.clear();
+    }
+    /**
+     * @return `true` if this object has been disposed of.
+     */
+    get isDisposed() {
+      return this._isDisposed;
+    }
+    /**
+     * Dispose of all registered disposables but do not mark this object as disposed.
+     */
+    clear() {
+      if (this._toDispose.size === 0) {
+        return;
+      }
+      try {
+        dispose(this._toDispose);
+      } finally {
+        this._toDispose.clear();
+      }
+    }
+    /**
+     * Add a new {@link IDisposable disposable} to the collection.
+     */
+    add(o) {
+      if (!o || o === Disposable.None) {
+        return o;
+      }
+      if (o === this) {
+        throw new Error("Cannot register a disposable on itself!");
+      }
+      if (this._isDisposed) {
+        if (!_DisposableStore.DISABLE_DISPOSED_WARNING) {
+          console.warn(new Error("Trying to add a disposable to a DisposableStore that has already been disposed of. The added object will be leaked!").stack);
+        }
+      } else {
+        this._toDispose.add(o);
+      }
+      return o;
+    }
+    /**
+     * Deletes a disposable from store and disposes of it. This will not throw or warn and proceed to dispose the
+     * disposable even when the disposable is not part in the store.
+     */
+    delete(o) {
+      if (!o) {
+        return;
+      }
+      if (o === this) {
+        throw new Error("Cannot dispose a disposable on itself!");
+      }
+      this._toDispose.delete(o);
+      o.dispose();
+    }
+  };
+  var Disposable = class {
+    static {
+      this.None = Object.freeze({ dispose() {
+      } });
+    }
+    constructor() {
+      this._store = new DisposableStore();
+      setParentOfDisposable(this._store);
+    }
+    dispose() {
+      this._store.dispose();
+    }
+    /**
+     * Adds `o` to the collection of disposables managed by this object.
+     */
+    _register(o) {
+      if (o === this) {
+        throw new Error("Cannot register a disposable on itself!");
+      }
+      return this._store.add(o);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/linkedList.js
+  var Node = class _Node {
+    static {
+      this.Undefined = new _Node(void 0);
+    }
+    constructor(element) {
+      this.element = element;
+      this.next = _Node.Undefined;
+      this.prev = _Node.Undefined;
+    }
+  };
+  var LinkedList = class {
+    constructor() {
+      this._first = Node.Undefined;
+      this._last = Node.Undefined;
+      this._size = 0;
+    }
+    get size() {
+      return this._size;
+    }
+    isEmpty() {
+      return this._first === Node.Undefined;
+    }
+    clear() {
+      let node = this._first;
+      while (node !== Node.Undefined) {
+        const next = node.next;
+        node.prev = Node.Undefined;
+        node.next = Node.Undefined;
+        node = next;
+      }
+      this._first = Node.Undefined;
+      this._last = Node.Undefined;
+      this._size = 0;
+    }
+    unshift(element) {
+      return this._insert(element, false);
+    }
+    push(element) {
+      return this._insert(element, true);
+    }
+    _insert(element, atTheEnd) {
+      const newNode = new Node(element);
+      if (this._first === Node.Undefined) {
+        this._first = newNode;
+        this._last = newNode;
+      } else if (atTheEnd) {
+        const oldLast = this._last;
+        this._last = newNode;
+        newNode.prev = oldLast;
+        oldLast.next = newNode;
+      } else {
+        const oldFirst = this._first;
+        this._first = newNode;
+        newNode.next = oldFirst;
+        oldFirst.prev = newNode;
+      }
+      this._size += 1;
+      let didRemove = false;
+      return () => {
+        if (!didRemove) {
+          didRemove = true;
+          this._remove(newNode);
+        }
+      };
+    }
+    shift() {
+      if (this._first === Node.Undefined) {
+        return void 0;
+      } else {
+        const res = this._first.element;
+        this._remove(this._first);
+        return res;
+      }
+    }
+    pop() {
+      if (this._last === Node.Undefined) {
+        return void 0;
+      } else {
+        const res = this._last.element;
+        this._remove(this._last);
+        return res;
+      }
+    }
+    _remove(node) {
+      if (node.prev !== Node.Undefined && node.next !== Node.Undefined) {
+        const anchor = node.prev;
+        anchor.next = node.next;
+        node.next.prev = anchor;
+      } else if (node.prev === Node.Undefined && node.next === Node.Undefined) {
+        this._first = Node.Undefined;
+        this._last = Node.Undefined;
+      } else if (node.next === Node.Undefined) {
+        this._last = this._last.prev;
+        this._last.next = Node.Undefined;
+      } else if (node.prev === Node.Undefined) {
+        this._first = this._first.next;
+        this._first.prev = Node.Undefined;
+      }
+      this._size -= 1;
+    }
+    *[Symbol.iterator]() {
+      let node = this._first;
+      while (node !== Node.Undefined) {
+        yield node.element;
+        node = node.next;
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/stopwatch.js
+  var performanceNow = globalThis.performance.now.bind(globalThis.performance);
+  var StopWatch = class _StopWatch {
+    static create(highResolution) {
+      return new _StopWatch(highResolution);
+    }
+    constructor(highResolution) {
+      this._now = highResolution === false ? Date.now : performanceNow;
+      this._startTime = this._now();
+      this._stopTime = -1;
+    }
+    stop() {
+      this._stopTime = this._now();
+    }
+    reset() {
+      this._startTime = this._now();
+      this._stopTime = -1;
+    }
+    elapsed() {
+      if (this._stopTime !== -1) {
+        return this._stopTime - this._startTime;
+      }
+      return this._now() - this._startTime;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/event.js
+  var Event;
+  (function(Event2) {
+    Event2.None = () => Disposable.None;
+    function defer(event, disposable) {
+      return debounce(event, () => void 0, 0, void 0, true, void 0, disposable);
+    }
+    Event2.defer = defer;
+    function once(event) {
+      return (listener, thisArgs = null, disposables) => {
+        let didFire = false;
+        let result = void 0;
+        result = event((e) => {
+          if (didFire) {
+            return;
+          } else if (result) {
+            result.dispose();
+          } else {
+            didFire = true;
+          }
+          return listener.call(thisArgs, e);
+        }, null, disposables);
+        if (didFire) {
+          result.dispose();
+        }
+        return result;
+      };
+    }
+    Event2.once = once;
+    function onceIf(event, condition) {
+      return Event2.once(Event2.filter(event, condition));
+    }
+    Event2.onceIf = onceIf;
+    function map(event, map2, disposable) {
+      return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
+    }
+    Event2.map = map;
+    function forEach(event, each, disposable) {
+      return snapshot((listener, thisArgs = null, disposables) => event((i) => {
+        each(i);
+        listener.call(thisArgs, i);
+      }, null, disposables), disposable);
+    }
+    Event2.forEach = forEach;
+    function filter(event, filter2, disposable) {
+      return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
+    }
+    Event2.filter = filter;
+    function signal(event) {
+      return event;
+    }
+    Event2.signal = signal;
+    function any(...events) {
+      return (listener, thisArgs = null, disposables) => {
+        const disposable = combinedDisposable(...events.map((event) => event((e) => listener.call(thisArgs, e))));
+        return addAndReturnDisposable(disposable, disposables);
+      };
+    }
+    Event2.any = any;
+    function reduce(event, merge, initial, disposable) {
+      let output = initial;
+      return map(event, (e) => {
+        output = merge(output, e);
+        return output;
+      }, disposable);
+    }
+    Event2.reduce = reduce;
+    function snapshot(event, disposable) {
+      let listener;
+      const options = {
+        onWillAddFirstListener() {
+          listener = event(emitter.fire, emitter);
+        },
+        onDidRemoveLastListener() {
+          listener?.dispose();
+        }
+      };
+      const emitter = new Emitter(options);
+      disposable?.add(emitter);
+      return emitter.event;
+    }
+    function addAndReturnDisposable(d, store) {
+      if (store instanceof Array) {
+        store.push(d);
+      } else if (store) {
+        store.add(d);
+      }
+      return d;
+    }
+    function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
+      let subscription;
+      let output = void 0;
+      let handle = void 0;
+      let numDebouncedCalls = 0;
+      let doFire;
+      const options = {
+        leakWarningThreshold,
+        onWillAddFirstListener() {
+          subscription = event((cur) => {
+            numDebouncedCalls++;
+            output = merge(output, cur);
+            if (leading && !handle) {
+              emitter.fire(output);
+              output = void 0;
+            }
+            doFire = () => {
+              const _output = output;
+              output = void 0;
+              handle = void 0;
+              if (!leading || numDebouncedCalls > 1) {
+                emitter.fire(_output);
+              }
+              numDebouncedCalls = 0;
+            };
+            if (typeof delay === "number") {
+              if (handle) {
+                clearTimeout(handle);
+              }
+              handle = setTimeout(doFire, delay);
+            } else {
+              if (handle === void 0) {
+                handle = null;
+                queueMicrotask(doFire);
+              }
+            }
+          });
+        },
+        onWillRemoveListener() {
+          if (flushOnListenerRemove && numDebouncedCalls > 0) {
+            doFire?.();
+          }
+        },
+        onDidRemoveLastListener() {
+          doFire = void 0;
+          subscription.dispose();
+        }
+      };
+      const emitter = new Emitter(options);
+      disposable?.add(emitter);
+      return emitter.event;
+    }
+    Event2.debounce = debounce;
+    function accumulate(event, delay = 0, disposable) {
+      return Event2.debounce(event, (last, e) => {
+        if (!last) {
+          return [e];
+        }
+        last.push(e);
+        return last;
+      }, delay, void 0, true, void 0, disposable);
+    }
+    Event2.accumulate = accumulate;
+    function latch(event, equals3 = (a, b) => a === b, disposable) {
+      let firstCall = true;
+      let cache;
+      return filter(event, (value) => {
+        const shouldEmit = firstCall || !equals3(value, cache);
+        firstCall = false;
+        cache = value;
+        return shouldEmit;
+      }, disposable);
+    }
+    Event2.latch = latch;
+    function split(event, isT, disposable) {
+      return [
+        Event2.filter(event, isT, disposable),
+        Event2.filter(event, (e) => !isT(e), disposable)
+      ];
+    }
+    Event2.split = split;
+    function buffer(event, flushAfterTimeout = false, _buffer = [], disposable) {
+      let buffer2 = _buffer.slice();
+      let listener = event((e) => {
+        if (buffer2) {
+          buffer2.push(e);
+        } else {
+          emitter.fire(e);
+        }
+      });
+      if (disposable) {
+        disposable.add(listener);
+      }
+      const flush = () => {
+        buffer2?.forEach((e) => emitter.fire(e));
+        buffer2 = null;
+      };
+      const emitter = new Emitter({
+        onWillAddFirstListener() {
+          if (!listener) {
+            listener = event((e) => emitter.fire(e));
+            if (disposable) {
+              disposable.add(listener);
+            }
+          }
+        },
+        onDidAddFirstListener() {
+          if (buffer2) {
+            if (flushAfterTimeout) {
+              setTimeout(flush);
+            } else {
+              flush();
+            }
+          }
+        },
+        onDidRemoveLastListener() {
+          if (listener) {
+            listener.dispose();
+          }
+          listener = null;
+        }
+      });
+      if (disposable) {
+        disposable.add(emitter);
+      }
+      return emitter.event;
+    }
+    Event2.buffer = buffer;
+    function chain(event, sythensize) {
+      const fn = (listener, thisArgs, disposables) => {
+        const cs = sythensize(new ChainableSynthesis());
+        return event(function(value) {
+          const result = cs.evaluate(value);
+          if (result !== HaltChainable) {
+            listener.call(thisArgs, result);
+          }
+        }, void 0, disposables);
+      };
+      return fn;
+    }
+    Event2.chain = chain;
+    const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
+    class ChainableSynthesis {
+      constructor() {
+        this.steps = [];
+      }
+      map(fn) {
+        this.steps.push(fn);
+        return this;
+      }
+      forEach(fn) {
+        this.steps.push((v) => {
+          fn(v);
+          return v;
+        });
+        return this;
+      }
+      filter(fn) {
+        this.steps.push((v) => fn(v) ? v : HaltChainable);
+        return this;
+      }
+      reduce(merge, initial) {
+        let last = initial;
+        this.steps.push((v) => {
+          last = merge(last, v);
+          return last;
+        });
+        return this;
+      }
+      latch(equals3 = (a, b) => a === b) {
+        let firstCall = true;
+        let cache;
+        this.steps.push((value) => {
+          const shouldEmit = firstCall || !equals3(value, cache);
+          firstCall = false;
+          cache = value;
+          return shouldEmit ? value : HaltChainable;
+        });
+        return this;
+      }
+      evaluate(value) {
+        for (const step of this.steps) {
+          value = step(value);
+          if (value === HaltChainable) {
+            break;
+          }
+        }
+        return value;
+      }
+    }
+    function fromNodeEventEmitter(emitter, eventName, map2 = (id) => id) {
+      const fn = (...args) => result.fire(map2(...args));
+      const onFirstListenerAdd = () => emitter.on(eventName, fn);
+      const onLastListenerRemove = () => emitter.removeListener(eventName, fn);
+      const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
+      return result.event;
+    }
+    Event2.fromNodeEventEmitter = fromNodeEventEmitter;
+    function fromDOMEventEmitter(emitter, eventName, map2 = (id) => id) {
+      const fn = (...args) => result.fire(map2(...args));
+      const onFirstListenerAdd = () => emitter.addEventListener(eventName, fn);
+      const onLastListenerRemove = () => emitter.removeEventListener(eventName, fn);
+      const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
+      return result.event;
+    }
+    Event2.fromDOMEventEmitter = fromDOMEventEmitter;
+    function toPromise(event, disposables) {
+      let cancelRef;
+      const promise = new Promise((resolve2, reject) => {
+        const listener = once(event)(resolve2, null, disposables);
+        cancelRef = () => listener.dispose();
+      });
+      promise.cancel = cancelRef;
+      return promise;
+    }
+    Event2.toPromise = toPromise;
+    function forward(from, to) {
+      return from((e) => to.fire(e));
+    }
+    Event2.forward = forward;
+    function runAndSubscribe(event, handler, initial) {
+      handler(initial);
+      return event((e) => handler(e));
+    }
+    Event2.runAndSubscribe = runAndSubscribe;
+    class EmitterObserver {
+      constructor(_observable, store) {
+        this._observable = _observable;
+        this._counter = 0;
+        this._hasChanged = false;
+        const options = {
+          onWillAddFirstListener: () => {
+            _observable.addObserver(this);
+            this._observable.reportChanges();
+          },
+          onDidRemoveLastListener: () => {
+            _observable.removeObserver(this);
+          }
+        };
+        this.emitter = new Emitter(options);
+        if (store) {
+          store.add(this.emitter);
+        }
+      }
+      beginUpdate(_observable) {
+        this._counter++;
+      }
+      handlePossibleChange(_observable) {
+      }
+      handleChange(_observable, _change) {
+        this._hasChanged = true;
+      }
+      endUpdate(_observable) {
+        this._counter--;
+        if (this._counter === 0) {
+          this._observable.reportChanges();
+          if (this._hasChanged) {
+            this._hasChanged = false;
+            this.emitter.fire(this._observable.get());
+          }
+        }
+      }
+    }
+    function fromObservable(obs, store) {
+      const observer = new EmitterObserver(obs, store);
+      return observer.emitter.event;
+    }
+    Event2.fromObservable = fromObservable;
+    function fromObservableLight(observable) {
+      return (listener, thisArgs, disposables) => {
+        let count = 0;
+        let didChange = false;
+        const observer = {
+          beginUpdate() {
+            count++;
+          },
+          endUpdate() {
+            count--;
+            if (count === 0) {
+              observable.reportChanges();
+              if (didChange) {
+                didChange = false;
+                listener.call(thisArgs);
+              }
+            }
+          },
+          handlePossibleChange() {
+          },
+          handleChange() {
+            didChange = true;
+          }
+        };
+        observable.addObserver(observer);
+        observable.reportChanges();
+        const disposable = {
+          dispose() {
+            observable.removeObserver(observer);
+          }
+        };
+        if (disposables instanceof DisposableStore) {
+          disposables.add(disposable);
+        } else if (Array.isArray(disposables)) {
+          disposables.push(disposable);
+        }
+        return disposable;
+      };
+    }
+    Event2.fromObservableLight = fromObservableLight;
+  })(Event || (Event = {}));
+  var EventProfiling = class _EventProfiling {
+    static {
+      this.all = /* @__PURE__ */ new Set();
+    }
+    static {
+      this._idPool = 0;
+    }
+    constructor(name) {
+      this.listenerCount = 0;
+      this.invocationCount = 0;
+      this.elapsedOverall = 0;
+      this.durations = [];
+      this.name = `${name}_${_EventProfiling._idPool++}`;
+      _EventProfiling.all.add(this);
+    }
+    start(listenerCount) {
+      this._stopWatch = new StopWatch();
+      this.listenerCount = listenerCount;
+    }
+    stop() {
+      if (this._stopWatch) {
+        const elapsed = this._stopWatch.elapsed();
+        this.durations.push(elapsed);
+        this.elapsedOverall += elapsed;
+        this.invocationCount += 1;
+        this._stopWatch = void 0;
+      }
+    }
+  };
+  var _globalLeakWarningThreshold = -1;
+  var LeakageMonitor = class _LeakageMonitor {
+    static {
+      this._idPool = 1;
+    }
+    constructor(_errorHandler, threshold, name = (_LeakageMonitor._idPool++).toString(16).padStart(3, "0")) {
+      this._errorHandler = _errorHandler;
+      this.threshold = threshold;
+      this.name = name;
+      this._warnCountdown = 0;
+    }
+    dispose() {
+      this._stacks?.clear();
+    }
+    check(stack, listenerCount) {
+      const threshold = this.threshold;
+      if (threshold <= 0 || listenerCount < threshold) {
+        return void 0;
+      }
+      if (!this._stacks) {
+        this._stacks = /* @__PURE__ */ new Map();
+      }
+      const count = this._stacks.get(stack.value) || 0;
+      this._stacks.set(stack.value, count + 1);
+      this._warnCountdown -= 1;
+      if (this._warnCountdown <= 0) {
+        this._warnCountdown = threshold * 0.5;
+        const [topStack, topCount] = this.getMostFrequentStack();
+        const message = `[${this.name}] potential listener LEAK detected, having ${listenerCount} listeners already. MOST frequent listener (${topCount}):`;
+        console.warn(message);
+        console.warn(topStack);
+        const error = new ListenerLeakError(message, topStack);
+        this._errorHandler(error);
+      }
+      return () => {
+        const count2 = this._stacks.get(stack.value) || 0;
+        this._stacks.set(stack.value, count2 - 1);
+      };
+    }
+    getMostFrequentStack() {
+      if (!this._stacks) {
+        return void 0;
+      }
+      let topStack;
+      let topCount = 0;
+      for (const [stack, count] of this._stacks) {
+        if (!topStack || topCount < count) {
+          topStack = [stack, count];
+          topCount = count;
+        }
+      }
+      return topStack;
+    }
+  };
+  var Stacktrace = class _Stacktrace {
+    static create() {
+      const err = new Error();
+      return new _Stacktrace(err.stack ?? "");
+    }
+    constructor(value) {
+      this.value = value;
+    }
+    print() {
+      console.warn(this.value.split("\n").slice(2).join("\n"));
+    }
+  };
+  var ListenerLeakError = class extends Error {
+    constructor(message, stack) {
+      super(message);
+      this.name = "ListenerLeakError";
+      this.stack = stack;
+    }
+  };
+  var ListenerRefusalError = class extends Error {
+    constructor(message, stack) {
+      super(message);
+      this.name = "ListenerRefusalError";
+      this.stack = stack;
+    }
+  };
+  var UniqueContainer = class {
+    constructor(value) {
+      this.value = value;
+    }
+  };
+  var compactionThreshold = 2;
+  var Emitter = class {
+    constructor(options) {
+      this._size = 0;
+      this._options = options;
+      this._leakageMon = this._options?.leakWarningThreshold ? new LeakageMonitor(options?.onListenerError ?? onUnexpectedError, this._options?.leakWarningThreshold ?? _globalLeakWarningThreshold) : void 0;
+      this._perfMon = this._options?._profName ? new EventProfiling(this._options._profName) : void 0;
+      this._deliveryQueue = this._options?.deliveryQueue;
+    }
+    dispose() {
+      if (!this._disposed) {
+        this._disposed = true;
+        if (this._deliveryQueue?.current === this) {
+          this._deliveryQueue.reset();
+        }
+        if (this._listeners) {
+          this._listeners = void 0;
+          this._size = 0;
+        }
+        this._options?.onDidRemoveLastListener?.();
+        this._leakageMon?.dispose();
+      }
+    }
+    /**
+     * For the public to allow to subscribe
+     * to events from this Emitter
+     */
+    get event() {
+      this._event ??= (callback, thisArgs, disposables) => {
+        if (this._leakageMon && this._size > this._leakageMon.threshold ** 2) {
+          const message = `[${this._leakageMon.name}] REFUSES to accept new listeners because it exceeded its threshold by far (${this._size} vs ${this._leakageMon.threshold})`;
+          console.warn(message);
+          const tuple = this._leakageMon.getMostFrequentStack() ?? ["UNKNOWN stack", -1];
+          const error = new ListenerRefusalError(`${message}. HINT: Stack shows most frequent listener (${tuple[1]}-times)`, tuple[0]);
+          const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
+          errorHandler2(error);
+          return Disposable.None;
+        }
+        if (this._disposed) {
+          return Disposable.None;
+        }
+        if (thisArgs) {
+          callback = callback.bind(thisArgs);
+        }
+        const contained = new UniqueContainer(callback);
+        let removeMonitor;
+        if (this._leakageMon && this._size >= Math.ceil(this._leakageMon.threshold * 0.2)) {
+          contained.stack = Stacktrace.create();
+          removeMonitor = this._leakageMon.check(contained.stack, this._size + 1);
+        }
+        if (!this._listeners) {
+          this._options?.onWillAddFirstListener?.(this);
+          this._listeners = contained;
+          this._options?.onDidAddFirstListener?.(this);
+        } else if (this._listeners instanceof UniqueContainer) {
+          this._deliveryQueue ??= new EventDeliveryQueuePrivate();
+          this._listeners = [this._listeners, contained];
+        } else {
+          this._listeners.push(contained);
+        }
+        this._options?.onDidAddListener?.(this);
+        this._size++;
+        const result = toDisposable(() => {
+          removeMonitor?.();
+          this._removeListener(contained);
+        });
+        if (disposables instanceof DisposableStore) {
+          disposables.add(result);
+        } else if (Array.isArray(disposables)) {
+          disposables.push(result);
+        }
+        return result;
+      };
+      return this._event;
+    }
+    _removeListener(listener) {
+      this._options?.onWillRemoveListener?.(this);
+      if (!this._listeners) {
+        return;
+      }
+      if (this._size === 1) {
+        this._listeners = void 0;
+        this._options?.onDidRemoveLastListener?.(this);
+        this._size = 0;
+        return;
+      }
+      const listeners = this._listeners;
+      const index = listeners.indexOf(listener);
+      if (index === -1) {
+        console.log("disposed?", this._disposed);
+        console.log("size?", this._size);
+        console.log("arr?", JSON.stringify(this._listeners));
+        throw new Error("Attempted to dispose unknown listener");
+      }
+      this._size--;
+      listeners[index] = void 0;
+      const adjustDeliveryQueue = this._deliveryQueue.current === this;
+      if (this._size * compactionThreshold <= listeners.length) {
+        let n = 0;
+        for (let i = 0; i < listeners.length; i++) {
+          if (listeners[i]) {
+            listeners[n++] = listeners[i];
+          } else if (adjustDeliveryQueue && n < this._deliveryQueue.end) {
+            this._deliveryQueue.end--;
+            if (n < this._deliveryQueue.i) {
+              this._deliveryQueue.i--;
+            }
+          }
+        }
+        listeners.length = n;
+      }
+    }
+    _deliver(listener, value) {
+      if (!listener) {
+        return;
+      }
+      const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
+      if (!errorHandler2) {
+        listener.value(value);
+        return;
+      }
+      try {
+        listener.value(value);
+      } catch (e) {
+        errorHandler2(e);
+      }
+    }
+    /** Delivers items in the queue. Assumes the queue is ready to go. */
+    _deliverQueue(dq) {
+      const listeners = dq.current._listeners;
+      while (dq.i < dq.end) {
+        this._deliver(listeners[dq.i++], dq.value);
+      }
+      dq.reset();
+    }
+    /**
+     * To be kept private to fire an event to
+     * subscribers
+     */
+    fire(event) {
+      if (this._deliveryQueue?.current) {
+        this._deliverQueue(this._deliveryQueue);
+        this._perfMon?.stop();
+      }
+      this._perfMon?.start(this._size);
+      if (!this._listeners) ;
+      else if (this._listeners instanceof UniqueContainer) {
+        this._deliver(this._listeners, event);
+      } else {
+        const dq = this._deliveryQueue;
+        dq.enqueue(this, event, this._listeners.length);
+        this._deliverQueue(dq);
+      }
+      this._perfMon?.stop();
+    }
+    hasListeners() {
+      return this._size > 0;
+    }
+  };
+  var EventDeliveryQueuePrivate = class {
+    constructor() {
+      this.i = -1;
+      this.end = 0;
+    }
+    enqueue(emitter, value, end) {
+      this.i = 0;
+      this.end = end;
+      this.current = emitter;
+      this.value = value;
+    }
+    reset() {
+      this.i = this.end;
+      this.current = void 0;
+      this.value = void 0;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/nls.messages.js
+  function getNLSMessages() {
+    return globalThis._VSCODE_NLS_MESSAGES;
+  }
+  function getNLSLanguage() {
+    return globalThis._VSCODE_NLS_LANGUAGE;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/nls.js
+  var isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
+  function _format(message, args) {
+    let result;
+    if (args.length === 0) {
+      result = message;
+    } else {
+      result = message.replace(/\{(\d+)\}/g, (match, rest) => {
+        const index = rest[0];
+        const arg = args[index];
+        let result2 = match;
+        if (typeof arg === "string") {
+          result2 = arg;
+        } else if (typeof arg === "number" || typeof arg === "boolean" || arg === void 0 || arg === null) {
+          result2 = String(arg);
+        }
+        return result2;
+      });
+    }
+    if (isPseudo) {
+      result = "\uFF3B" + result.replace(/[aouei]/g, "$&$&") + "\uFF3D";
+    }
+    return result;
+  }
+  function localize(data, message, ...args) {
+    if (typeof data === "number") {
+      return _format(lookupMessage(data, message), args);
+    }
+    return _format(message, args);
+  }
+  function lookupMessage(index, fallback) {
+    const message = getNLSMessages()?.[index];
+    if (typeof message !== "string") {
+      if (typeof fallback === "string") {
+        return fallback;
+      }
+      throw new Error(`!!! NLS MISSING: ${index} !!!`);
+    }
+    return message;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/platform.js
+  var LANGUAGE_DEFAULT = "en";
+  var _isWindows = false;
+  var _isMacintosh = false;
+  var _isLinux = false;
+  var _isNative = false;
+  var _isWeb = false;
+  var _isIOS = false;
+  var _isMobile = false;
+  var _locale = void 0;
+  var _language = LANGUAGE_DEFAULT;
+  var _platformLocale = LANGUAGE_DEFAULT;
+  var _translationsConfigFile = void 0;
+  var _userAgent = void 0;
+  var $globalThis = globalThis;
+  var nodeProcess = void 0;
+  if (typeof $globalThis.vscode !== "undefined" && typeof $globalThis.vscode.process !== "undefined") {
+    nodeProcess = $globalThis.vscode.process;
+  } else if (typeof process !== "undefined" && typeof process?.versions?.node === "string") {
+    nodeProcess = process;
+  }
+  var isElectronProcess = typeof nodeProcess?.versions?.electron === "string";
+  var isElectronRenderer = isElectronProcess && nodeProcess?.type === "renderer";
+  if (typeof nodeProcess === "object") {
+    _isWindows = nodeProcess.platform === "win32";
+    _isMacintosh = nodeProcess.platform === "darwin";
+    _isLinux = nodeProcess.platform === "linux";
+    _isLinux && !!nodeProcess.env["SNAP"] && !!nodeProcess.env["SNAP_REVISION"];
+    !!nodeProcess.env["CI"] || !!nodeProcess.env["BUILD_ARTIFACTSTAGINGDIRECTORY"] || !!nodeProcess.env["GITHUB_WORKSPACE"];
+    _locale = LANGUAGE_DEFAULT;
+    _language = LANGUAGE_DEFAULT;
+    const rawNlsConfig = nodeProcess.env["VSCODE_NLS_CONFIG"];
+    if (rawNlsConfig) {
+      try {
+        const nlsConfig = JSON.parse(rawNlsConfig);
+        _locale = nlsConfig.userLocale;
+        _platformLocale = nlsConfig.osLocale;
+        _language = nlsConfig.resolvedLanguage || LANGUAGE_DEFAULT;
+        _translationsConfigFile = nlsConfig.languagePack?.translationsConfigFile;
+      } catch (e) {
+      }
+    }
+    _isNative = true;
+  } else if (typeof navigator === "object" && !isElectronRenderer) {
+    _userAgent = navigator.userAgent;
+    _isWindows = _userAgent.indexOf("Windows") >= 0;
+    _isMacintosh = _userAgent.indexOf("Macintosh") >= 0;
+    _isIOS = (_userAgent.indexOf("Macintosh") >= 0 || _userAgent.indexOf("iPad") >= 0 || _userAgent.indexOf("iPhone") >= 0) && !!navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+    _isLinux = _userAgent.indexOf("Linux") >= 0;
+    _isMobile = _userAgent?.indexOf("Mobi") >= 0;
+    _isWeb = true;
+    _language = getNLSLanguage() || LANGUAGE_DEFAULT;
+    _locale = navigator.language.toLowerCase();
+    _platformLocale = _locale;
+  } else {
+    console.error("Unable to resolve platform.");
+  }
+  var _platform = 0;
+  if (_isMacintosh) {
+    _platform = 1;
+  } else if (_isWindows) {
+    _platform = 3;
+  } else if (_isLinux) {
+    _platform = 2;
+  }
+  var isWindows = _isWindows;
+  var isMacintosh = _isMacintosh;
+  var isWebWorker = _isWeb && typeof $globalThis.importScripts === "function";
+  var webWorkerOrigin = isWebWorker ? $globalThis.origin : void 0;
+  var userAgent = _userAgent;
+  var setTimeout0IsFaster = typeof $globalThis.postMessage === "function" && !$globalThis.importScripts;
+  var setTimeout0 = (() => {
+    if (setTimeout0IsFaster) {
+      const pending = [];
+      $globalThis.addEventListener("message", (e) => {
+        if (e.data && e.data.vscodeScheduleAsyncWork) {
+          for (let i = 0, len = pending.length; i < len; i++) {
+            const candidate = pending[i];
+            if (candidate.id === e.data.vscodeScheduleAsyncWork) {
+              pending.splice(i, 1);
+              candidate.callback();
+              return;
+            }
+          }
+        }
+      });
+      let lastId = 0;
+      return (callback) => {
+        const myId = ++lastId;
+        pending.push({
+          id: myId,
+          callback
+        });
+        $globalThis.postMessage({ vscodeScheduleAsyncWork: myId }, "*");
+      };
+    }
+    return (callback) => setTimeout(callback);
+  })();
+  var isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
+  var isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
+  var isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
+  var isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
+  var isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/cache.js
+  function identity(t) {
+    return t;
+  }
+  var LRUCachedFunction = class {
+    constructor(arg1, arg2) {
+      this.lastCache = void 0;
+      this.lastArgKey = void 0;
+      if (typeof arg1 === "function") {
+        this._fn = arg1;
+        this._computeKey = identity;
+      } else {
+        this._fn = arg2;
+        this._computeKey = arg1.getCacheKey;
+      }
+    }
+    get(arg) {
+      const key = this._computeKey(arg);
+      if (this.lastArgKey !== key) {
+        this.lastArgKey = key;
+        this.lastCache = this._fn(arg);
+      }
+      return this.lastCache;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/lazy.js
+  var LazyValueState;
+  (function(LazyValueState2) {
+    LazyValueState2[LazyValueState2["Uninitialized"] = 0] = "Uninitialized";
+    LazyValueState2[LazyValueState2["Running"] = 1] = "Running";
+    LazyValueState2[LazyValueState2["Completed"] = 2] = "Completed";
+  })(LazyValueState || (LazyValueState = {}));
+  var Lazy = class {
+    constructor(executor) {
+      this.executor = executor;
+      this._state = LazyValueState.Uninitialized;
+    }
+    /**
+     * Get the wrapped value.
+     *
+     * This will force evaluation of the lazy value if it has not been resolved yet. Lazy values are only
+     * resolved once. `getValue` will re-throw exceptions that are hit while resolving the value
+     */
+    get value() {
+      if (this._state === LazyValueState.Uninitialized) {
+        this._state = LazyValueState.Running;
+        try {
+          this._value = this.executor();
+        } catch (err) {
+          this._error = err;
+        } finally {
+          this._state = LazyValueState.Completed;
+        }
+      } else if (this._state === LazyValueState.Running) {
+        throw new Error("Cannot read the value of a lazy that is being initialized");
+      }
+      if (this._error) {
+        throw this._error;
+      }
+      return this._value;
+    }
+    /**
+     * Get the wrapped value without forcing evaluation.
+     */
+    get rawValue() {
+      return this._value;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/strings.js
+  function escapeRegExpCharacters(value) {
+    return value.replace(/[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]/g, "\\$&");
+  }
+  function regExpLeadsToEndlessLoop(regexp) {
+    if (regexp.source === "^" || regexp.source === "^$" || regexp.source === "$" || regexp.source === "^\\s*$") {
+      return false;
+    }
+    const match = regexp.exec("");
+    return !!(match && regexp.lastIndex === 0);
+  }
+  function splitLines(str) {
+    return str.split(/\r\n|\r|\n/);
+  }
+  function firstNonWhitespaceIndex(str) {
+    for (let i = 0, len = str.length; i < len; i++) {
+      const chCode = str.charCodeAt(i);
+      if (chCode !== 32 && chCode !== 9) {
+        return i;
+      }
+    }
+    return -1;
+  }
+  function lastNonWhitespaceIndex(str, startIndex = str.length - 1) {
+    for (let i = startIndex; i >= 0; i--) {
+      const chCode = str.charCodeAt(i);
+      if (chCode !== 32 && chCode !== 9) {
+        return i;
+      }
+    }
+    return -1;
+  }
+  function isUpperAsciiLetter(code) {
+    return code >= 65 && code <= 90;
+  }
+  function commonPrefixLength(a, b) {
+    const len = Math.min(a.length, b.length);
+    let i;
+    for (i = 0; i < len; i++) {
+      if (a.charCodeAt(i) !== b.charCodeAt(i)) {
+        return i;
+      }
+    }
+    return len;
+  }
+  function commonSuffixLength(a, b) {
+    const len = Math.min(a.length, b.length);
+    let i;
+    const aLastIndex = a.length - 1;
+    const bLastIndex = b.length - 1;
+    for (i = 0; i < len; i++) {
+      if (a.charCodeAt(aLastIndex - i) !== b.charCodeAt(bLastIndex - i)) {
+        return i;
+      }
+    }
+    return len;
+  }
+  function isHighSurrogate(charCode) {
+    return 55296 <= charCode && charCode <= 56319;
+  }
+  function isLowSurrogate(charCode) {
+    return 56320 <= charCode && charCode <= 57343;
+  }
+  function computeCodePoint(highSurrogate, lowSurrogate) {
+    return (highSurrogate - 55296 << 10) + (lowSurrogate - 56320) + 65536;
+  }
+  function getNextCodePoint(str, len, offset) {
+    const charCode = str.charCodeAt(offset);
+    if (isHighSurrogate(charCode) && offset + 1 < len) {
+      const nextCharCode = str.charCodeAt(offset + 1);
+      if (isLowSurrogate(nextCharCode)) {
+        return computeCodePoint(charCode, nextCharCode);
+      }
+    }
+    return charCode;
+  }
+  var IS_BASIC_ASCII = /^[\t\n\r\x20-\x7E]*$/;
+  function isBasicASCII(str) {
+    return IS_BASIC_ASCII.test(str);
+  }
+  var UTF8_BOM_CHARACTER = String.fromCharCode(
+    65279
+    /* CharCode.UTF8_BOM */
+  );
+  var GraphemeBreakTree = class _GraphemeBreakTree {
+    static {
+      this._INSTANCE = null;
+    }
+    static getInstance() {
+      if (!_GraphemeBreakTree._INSTANCE) {
+        _GraphemeBreakTree._INSTANCE = new _GraphemeBreakTree();
+      }
+      return _GraphemeBreakTree._INSTANCE;
+    }
+    constructor() {
+      this._data = getGraphemeBreakRawData();
+    }
+    getGraphemeBreakType(codePoint) {
+      if (codePoint < 32) {
+        if (codePoint === 10) {
+          return 3;
+        }
+        if (codePoint === 13) {
+          return 2;
+        }
+        return 4;
+      }
+      if (codePoint < 127) {
+        return 0;
+      }
+      const data = this._data;
+      const nodeCount = data.length / 3;
+      let nodeIndex = 1;
+      while (nodeIndex <= nodeCount) {
+        if (codePoint < data[3 * nodeIndex]) {
+          nodeIndex = 2 * nodeIndex;
+        } else if (codePoint > data[3 * nodeIndex + 1]) {
+          nodeIndex = 2 * nodeIndex + 1;
+        } else {
+          return data[3 * nodeIndex + 2];
+        }
+      }
+      return 0;
+    }
+  };
+  function getGraphemeBreakRawData() {
+    return JSON.parse("[0,0,0,51229,51255,12,44061,44087,12,127462,127487,6,7083,7085,5,47645,47671,12,54813,54839,12,128678,128678,14,3270,3270,5,9919,9923,14,45853,45879,12,49437,49463,12,53021,53047,12,71216,71218,7,128398,128399,14,129360,129374,14,2519,2519,5,4448,4519,9,9742,9742,14,12336,12336,14,44957,44983,12,46749,46775,12,48541,48567,12,50333,50359,12,52125,52151,12,53917,53943,12,69888,69890,5,73018,73018,5,127990,127990,14,128558,128559,14,128759,128760,14,129653,129655,14,2027,2035,5,2891,2892,7,3761,3761,5,6683,6683,5,8293,8293,4,9825,9826,14,9999,9999,14,43452,43453,5,44509,44535,12,45405,45431,12,46301,46327,12,47197,47223,12,48093,48119,12,48989,49015,12,49885,49911,12,50781,50807,12,51677,51703,12,52573,52599,12,53469,53495,12,54365,54391,12,65279,65279,4,70471,70472,7,72145,72147,7,119173,119179,5,127799,127818,14,128240,128244,14,128512,128512,14,128652,128652,14,128721,128722,14,129292,129292,14,129445,129450,14,129734,129743,14,1476,1477,5,2366,2368,7,2750,2752,7,3076,3076,5,3415,3415,5,4141,4144,5,6109,6109,5,6964,6964,5,7394,7400,5,9197,9198,14,9770,9770,14,9877,9877,14,9968,9969,14,10084,10084,14,43052,43052,5,43713,43713,5,44285,44311,12,44733,44759,12,45181,45207,12,45629,45655,12,46077,46103,12,46525,46551,12,46973,46999,12,47421,47447,12,47869,47895,12,48317,48343,12,48765,48791,12,49213,49239,12,49661,49687,12,50109,50135,12,50557,50583,12,51005,51031,12,51453,51479,12,51901,51927,12,52349,52375,12,52797,52823,12,53245,53271,12,53693,53719,12,54141,54167,12,54589,54615,12,55037,55063,12,69506,69509,5,70191,70193,5,70841,70841,7,71463,71467,5,72330,72342,5,94031,94031,5,123628,123631,5,127763,127765,14,127941,127941,14,128043,128062,14,128302,128317,14,128465,128467,14,128539,128539,14,128640,128640,14,128662,128662,14,128703,128703,14,128745,128745,14,129004,129007,14,129329,129330,14,129402,129402,14,129483,129483,14,129686,129704,14,130048,131069,14,173,173,4,1757,1757,1,2200,2207,5,2434,2435,7,2631,2632,5,2817,2817,5,3008,3008,5,3201,3201,5,3387,3388,5,3542,3542,5,3902,3903,7,4190,4192,5,6002,6003,5,6439,6440,5,6765,6770,7,7019,7027,5,7154,7155,7,8205,8205,13,8505,8505,14,9654,9654,14,9757,9757,14,9792,9792,14,9852,9853,14,9890,9894,14,9937,9937,14,9981,9981,14,10035,10036,14,11035,11036,14,42654,42655,5,43346,43347,7,43587,43587,5,44006,44007,7,44173,44199,12,44397,44423,12,44621,44647,12,44845,44871,12,45069,45095,12,45293,45319,12,45517,45543,12,45741,45767,12,45965,45991,12,46189,46215,12,46413,46439,12,46637,46663,12,46861,46887,12,47085,47111,12,47309,47335,12,47533,47559,12,47757,47783,12,47981,48007,12,48205,48231,12,48429,48455,12,48653,48679,12,48877,48903,12,49101,49127,12,49325,49351,12,49549,49575,12,49773,49799,12,49997,50023,12,50221,50247,12,50445,50471,12,50669,50695,12,50893,50919,12,51117,51143,12,51341,51367,12,51565,51591,12,51789,51815,12,52013,52039,12,52237,52263,12,52461,52487,12,52685,52711,12,52909,52935,12,53133,53159,12,53357,53383,12,53581,53607,12,53805,53831,12,54029,54055,12,54253,54279,12,54477,54503,12,54701,54727,12,54925,54951,12,55149,55175,12,68101,68102,5,69762,69762,7,70067,70069,7,70371,70378,5,70720,70721,7,71087,71087,5,71341,71341,5,71995,71996,5,72249,72249,7,72850,72871,5,73109,73109,5,118576,118598,5,121505,121519,5,127245,127247,14,127568,127569,14,127777,127777,14,127872,127891,14,127956,127967,14,128015,128016,14,128110,128172,14,128259,128259,14,128367,128368,14,128424,128424,14,128488,128488,14,128530,128532,14,128550,128551,14,128566,128566,14,128647,128647,14,128656,128656,14,128667,128673,14,128691,128693,14,128715,128715,14,128728,128732,14,128752,128752,14,128765,128767,14,129096,129103,14,129311,129311,14,129344,129349,14,129394,129394,14,129413,129425,14,129466,129471,14,129511,129535,14,129664,129666,14,129719,129722,14,129760,129767,14,917536,917631,5,13,13,2,1160,1161,5,1564,1564,4,1807,1807,1,2085,2087,5,2307,2307,7,2382,2383,7,2497,2500,5,2563,2563,7,2677,2677,5,2763,2764,7,2879,2879,5,2914,2915,5,3021,3021,5,3142,3144,5,3263,3263,5,3285,3286,5,3398,3400,7,3530,3530,5,3633,3633,5,3864,3865,5,3974,3975,5,4155,4156,7,4229,4230,5,5909,5909,7,6078,6085,7,6277,6278,5,6451,6456,7,6744,6750,5,6846,6846,5,6972,6972,5,7074,7077,5,7146,7148,7,7222,7223,5,7416,7417,5,8234,8238,4,8417,8417,5,9000,9000,14,9203,9203,14,9730,9731,14,9748,9749,14,9762,9763,14,9776,9783,14,9800,9811,14,9831,9831,14,9872,9873,14,9882,9882,14,9900,9903,14,9929,9933,14,9941,9960,14,9974,9974,14,9989,9989,14,10006,10006,14,10062,10062,14,10160,10160,14,11647,11647,5,12953,12953,14,43019,43019,5,43232,43249,5,43443,43443,5,43567,43568,7,43696,43696,5,43765,43765,7,44013,44013,5,44117,44143,12,44229,44255,12,44341,44367,12,44453,44479,12,44565,44591,12,44677,44703,12,44789,44815,12,44901,44927,12,45013,45039,12,45125,45151,12,45237,45263,12,45349,45375,12,45461,45487,12,45573,45599,12,45685,45711,12,45797,45823,12,45909,45935,12,46021,46047,12,46133,46159,12,46245,46271,12,46357,46383,12,46469,46495,12,46581,46607,12,46693,46719,12,46805,46831,12,46917,46943,12,47029,47055,12,47141,47167,12,47253,47279,12,47365,47391,12,47477,47503,12,47589,47615,12,47701,47727,12,47813,47839,12,47925,47951,12,48037,48063,12,48149,48175,12,48261,48287,12,48373,48399,12,48485,48511,12,48597,48623,12,48709,48735,12,48821,48847,12,48933,48959,12,49045,49071,12,49157,49183,12,49269,49295,12,49381,49407,12,49493,49519,12,49605,49631,12,49717,49743,12,49829,49855,12,49941,49967,12,50053,50079,12,50165,50191,12,50277,50303,12,50389,50415,12,50501,50527,12,50613,50639,12,50725,50751,12,50837,50863,12,50949,50975,12,51061,51087,12,51173,51199,12,51285,51311,12,51397,51423,12,51509,51535,12,51621,51647,12,51733,51759,12,51845,51871,12,51957,51983,12,52069,52095,12,52181,52207,12,52293,52319,12,52405,52431,12,52517,52543,12,52629,52655,12,52741,52767,12,52853,52879,12,52965,52991,12,53077,53103,12,53189,53215,12,53301,53327,12,53413,53439,12,53525,53551,12,53637,53663,12,53749,53775,12,53861,53887,12,53973,53999,12,54085,54111,12,54197,54223,12,54309,54335,12,54421,54447,12,54533,54559,12,54645,54671,12,54757,54783,12,54869,54895,12,54981,55007,12,55093,55119,12,55243,55291,10,66045,66045,5,68325,68326,5,69688,69702,5,69817,69818,5,69957,69958,7,70089,70092,5,70198,70199,5,70462,70462,5,70502,70508,5,70750,70750,5,70846,70846,7,71100,71101,5,71230,71230,7,71351,71351,5,71737,71738,5,72000,72000,7,72160,72160,5,72273,72278,5,72752,72758,5,72882,72883,5,73031,73031,5,73461,73462,7,94192,94193,7,119149,119149,7,121403,121452,5,122915,122916,5,126980,126980,14,127358,127359,14,127535,127535,14,127759,127759,14,127771,127771,14,127792,127793,14,127825,127867,14,127897,127899,14,127945,127945,14,127985,127986,14,128000,128007,14,128021,128021,14,128066,128100,14,128184,128235,14,128249,128252,14,128266,128276,14,128335,128335,14,128379,128390,14,128407,128419,14,128444,128444,14,128481,128481,14,128499,128499,14,128526,128526,14,128536,128536,14,128543,128543,14,128556,128556,14,128564,128564,14,128577,128580,14,128643,128645,14,128649,128649,14,128654,128654,14,128660,128660,14,128664,128664,14,128675,128675,14,128686,128689,14,128695,128696,14,128705,128709,14,128717,128719,14,128725,128725,14,128736,128741,14,128747,128748,14,128755,128755,14,128762,128762,14,128981,128991,14,129009,129023,14,129160,129167,14,129296,129304,14,129320,129327,14,129340,129342,14,129356,129356,14,129388,129392,14,129399,129400,14,129404,129407,14,129432,129442,14,129454,129455,14,129473,129474,14,129485,129487,14,129648,129651,14,129659,129660,14,129671,129679,14,129709,129711,14,129728,129730,14,129751,129753,14,129776,129782,14,917505,917505,4,917760,917999,5,10,10,3,127,159,4,768,879,5,1471,1471,5,1536,1541,1,1648,1648,5,1767,1768,5,1840,1866,5,2070,2073,5,2137,2139,5,2274,2274,1,2363,2363,7,2377,2380,7,2402,2403,5,2494,2494,5,2507,2508,7,2558,2558,5,2622,2624,7,2641,2641,5,2691,2691,7,2759,2760,5,2786,2787,5,2876,2876,5,2881,2884,5,2901,2902,5,3006,3006,5,3014,3016,7,3072,3072,5,3134,3136,5,3157,3158,5,3260,3260,5,3266,3266,5,3274,3275,7,3328,3329,5,3391,3392,7,3405,3405,5,3457,3457,5,3536,3537,7,3551,3551,5,3636,3642,5,3764,3772,5,3895,3895,5,3967,3967,7,3993,4028,5,4146,4151,5,4182,4183,7,4226,4226,5,4253,4253,5,4957,4959,5,5940,5940,7,6070,6070,7,6087,6088,7,6158,6158,4,6432,6434,5,6448,6449,7,6679,6680,5,6742,6742,5,6754,6754,5,6783,6783,5,6912,6915,5,6966,6970,5,6978,6978,5,7042,7042,7,7080,7081,5,7143,7143,7,7150,7150,7,7212,7219,5,7380,7392,5,7412,7412,5,8203,8203,4,8232,8232,4,8265,8265,14,8400,8412,5,8421,8432,5,8617,8618,14,9167,9167,14,9200,9200,14,9410,9410,14,9723,9726,14,9733,9733,14,9745,9745,14,9752,9752,14,9760,9760,14,9766,9766,14,9774,9774,14,9786,9786,14,9794,9794,14,9823,9823,14,9828,9828,14,9833,9850,14,9855,9855,14,9875,9875,14,9880,9880,14,9885,9887,14,9896,9897,14,9906,9916,14,9926,9927,14,9935,9935,14,9939,9939,14,9962,9962,14,9972,9972,14,9978,9978,14,9986,9986,14,9997,9997,14,10002,10002,14,10017,10017,14,10055,10055,14,10071,10071,14,10133,10135,14,10548,10549,14,11093,11093,14,12330,12333,5,12441,12442,5,42608,42610,5,43010,43010,5,43045,43046,5,43188,43203,7,43302,43309,5,43392,43394,5,43446,43449,5,43493,43493,5,43571,43572,7,43597,43597,7,43703,43704,5,43756,43757,5,44003,44004,7,44009,44010,7,44033,44059,12,44089,44115,12,44145,44171,12,44201,44227,12,44257,44283,12,44313,44339,12,44369,44395,12,44425,44451,12,44481,44507,12,44537,44563,12,44593,44619,12,44649,44675,12,44705,44731,12,44761,44787,12,44817,44843,12,44873,44899,12,44929,44955,12,44985,45011,12,45041,45067,12,45097,45123,12,45153,45179,12,45209,45235,12,45265,45291,12,45321,45347,12,45377,45403,12,45433,45459,12,45489,45515,12,45545,45571,12,45601,45627,12,45657,45683,12,45713,45739,12,45769,45795,12,45825,45851,12,45881,45907,12,45937,45963,12,45993,46019,12,46049,46075,12,46105,46131,12,46161,46187,12,46217,46243,12,46273,46299,12,46329,46355,12,46385,46411,12,46441,46467,12,46497,46523,12,46553,46579,12,46609,46635,12,46665,46691,12,46721,46747,12,46777,46803,12,46833,46859,12,46889,46915,12,46945,46971,12,47001,47027,12,47057,47083,12,47113,47139,12,47169,47195,12,47225,47251,12,47281,47307,12,47337,47363,12,47393,47419,12,47449,47475,12,47505,47531,12,47561,47587,12,47617,47643,12,47673,47699,12,47729,47755,12,47785,47811,12,47841,47867,12,47897,47923,12,47953,47979,12,48009,48035,12,48065,48091,12,48121,48147,12,48177,48203,12,48233,48259,12,48289,48315,12,48345,48371,12,48401,48427,12,48457,48483,12,48513,48539,12,48569,48595,12,48625,48651,12,48681,48707,12,48737,48763,12,48793,48819,12,48849,48875,12,48905,48931,12,48961,48987,12,49017,49043,12,49073,49099,12,49129,49155,12,49185,49211,12,49241,49267,12,49297,49323,12,49353,49379,12,49409,49435,12,49465,49491,12,49521,49547,12,49577,49603,12,49633,49659,12,49689,49715,12,49745,49771,12,49801,49827,12,49857,49883,12,49913,49939,12,49969,49995,12,50025,50051,12,50081,50107,12,50137,50163,12,50193,50219,12,50249,50275,12,50305,50331,12,50361,50387,12,50417,50443,12,50473,50499,12,50529,50555,12,50585,50611,12,50641,50667,12,50697,50723,12,50753,50779,12,50809,50835,12,50865,50891,12,50921,50947,12,50977,51003,12,51033,51059,12,51089,51115,12,51145,51171,12,51201,51227,12,51257,51283,12,51313,51339,12,51369,51395,12,51425,51451,12,51481,51507,12,51537,51563,12,51593,51619,12,51649,51675,12,51705,51731,12,51761,51787,12,51817,51843,12,51873,51899,12,51929,51955,12,51985,52011,12,52041,52067,12,52097,52123,12,52153,52179,12,52209,52235,12,52265,52291,12,52321,52347,12,52377,52403,12,52433,52459,12,52489,52515,12,52545,52571,12,52601,52627,12,52657,52683,12,52713,52739,12,52769,52795,12,52825,52851,12,52881,52907,12,52937,52963,12,52993,53019,12,53049,53075,12,53105,53131,12,53161,53187,12,53217,53243,12,53273,53299,12,53329,53355,12,53385,53411,12,53441,53467,12,53497,53523,12,53553,53579,12,53609,53635,12,53665,53691,12,53721,53747,12,53777,53803,12,53833,53859,12,53889,53915,12,53945,53971,12,54001,54027,12,54057,54083,12,54113,54139,12,54169,54195,12,54225,54251,12,54281,54307,12,54337,54363,12,54393,54419,12,54449,54475,12,54505,54531,12,54561,54587,12,54617,54643,12,54673,54699,12,54729,54755,12,54785,54811,12,54841,54867,12,54897,54923,12,54953,54979,12,55009,55035,12,55065,55091,12,55121,55147,12,55177,55203,12,65024,65039,5,65520,65528,4,66422,66426,5,68152,68154,5,69291,69292,5,69633,69633,5,69747,69748,5,69811,69814,5,69826,69826,5,69932,69932,7,70016,70017,5,70079,70080,7,70095,70095,5,70196,70196,5,70367,70367,5,70402,70403,7,70464,70464,5,70487,70487,5,70709,70711,7,70725,70725,7,70833,70834,7,70843,70844,7,70849,70849,7,71090,71093,5,71103,71104,5,71227,71228,7,71339,71339,5,71344,71349,5,71458,71461,5,71727,71735,5,71985,71989,7,71998,71998,5,72002,72002,7,72154,72155,5,72193,72202,5,72251,72254,5,72281,72283,5,72344,72345,5,72766,72766,7,72874,72880,5,72885,72886,5,73023,73029,5,73104,73105,5,73111,73111,5,92912,92916,5,94095,94098,5,113824,113827,4,119142,119142,7,119155,119162,4,119362,119364,5,121476,121476,5,122888,122904,5,123184,123190,5,125252,125258,5,127183,127183,14,127340,127343,14,127377,127386,14,127491,127503,14,127548,127551,14,127744,127756,14,127761,127761,14,127769,127769,14,127773,127774,14,127780,127788,14,127796,127797,14,127820,127823,14,127869,127869,14,127894,127895,14,127902,127903,14,127943,127943,14,127947,127950,14,127972,127972,14,127988,127988,14,127992,127994,14,128009,128011,14,128019,128019,14,128023,128041,14,128064,128064,14,128102,128107,14,128174,128181,14,128238,128238,14,128246,128247,14,128254,128254,14,128264,128264,14,128278,128299,14,128329,128330,14,128348,128359,14,128371,128377,14,128392,128393,14,128401,128404,14,128421,128421,14,128433,128434,14,128450,128452,14,128476,128478,14,128483,128483,14,128495,128495,14,128506,128506,14,128519,128520,14,128528,128528,14,128534,128534,14,128538,128538,14,128540,128542,14,128544,128549,14,128552,128555,14,128557,128557,14,128560,128563,14,128565,128565,14,128567,128576,14,128581,128591,14,128641,128642,14,128646,128646,14,128648,128648,14,128650,128651,14,128653,128653,14,128655,128655,14,128657,128659,14,128661,128661,14,128663,128663,14,128665,128666,14,128674,128674,14,128676,128677,14,128679,128685,14,128690,128690,14,128694,128694,14,128697,128702,14,128704,128704,14,128710,128714,14,128716,128716,14,128720,128720,14,128723,128724,14,128726,128727,14,128733,128735,14,128742,128744,14,128746,128746,14,128749,128751,14,128753,128754,14,128756,128758,14,128761,128761,14,128763,128764,14,128884,128895,14,128992,129003,14,129008,129008,14,129036,129039,14,129114,129119,14,129198,129279,14,129293,129295,14,129305,129310,14,129312,129319,14,129328,129328,14,129331,129338,14,129343,129343,14,129351,129355,14,129357,129359,14,129375,129387,14,129393,129393,14,129395,129398,14,129401,129401,14,129403,129403,14,129408,129412,14,129426,129431,14,129443,129444,14,129451,129453,14,129456,129465,14,129472,129472,14,129475,129482,14,129484,129484,14,129488,129510,14,129536,129647,14,129652,129652,14,129656,129658,14,129661,129663,14,129667,129670,14,129680,129685,14,129705,129708,14,129712,129718,14,129723,129727,14,129731,129733,14,129744,129750,14,129754,129759,14,129768,129775,14,129783,129791,14,917504,917504,4,917506,917535,4,917632,917759,4,918000,921599,4,0,9,4,11,12,4,14,31,4,169,169,14,174,174,14,1155,1159,5,1425,1469,5,1473,1474,5,1479,1479,5,1552,1562,5,1611,1631,5,1750,1756,5,1759,1764,5,1770,1773,5,1809,1809,5,1958,1968,5,2045,2045,5,2075,2083,5,2089,2093,5,2192,2193,1,2250,2273,5,2275,2306,5,2362,2362,5,2364,2364,5,2369,2376,5,2381,2381,5,2385,2391,5,2433,2433,5,2492,2492,5,2495,2496,7,2503,2504,7,2509,2509,5,2530,2531,5,2561,2562,5,2620,2620,5,2625,2626,5,2635,2637,5,2672,2673,5,2689,2690,5,2748,2748,5,2753,2757,5,2761,2761,7,2765,2765,5,2810,2815,5,2818,2819,7,2878,2878,5,2880,2880,7,2887,2888,7,2893,2893,5,2903,2903,5,2946,2946,5,3007,3007,7,3009,3010,7,3018,3020,7,3031,3031,5,3073,3075,7,3132,3132,5,3137,3140,7,3146,3149,5,3170,3171,5,3202,3203,7,3262,3262,7,3264,3265,7,3267,3268,7,3271,3272,7,3276,3277,5,3298,3299,5,3330,3331,7,3390,3390,5,3393,3396,5,3402,3404,7,3406,3406,1,3426,3427,5,3458,3459,7,3535,3535,5,3538,3540,5,3544,3550,7,3570,3571,7,3635,3635,7,3655,3662,5,3763,3763,7,3784,3789,5,3893,3893,5,3897,3897,5,3953,3966,5,3968,3972,5,3981,3991,5,4038,4038,5,4145,4145,7,4153,4154,5,4157,4158,5,4184,4185,5,4209,4212,5,4228,4228,7,4237,4237,5,4352,4447,8,4520,4607,10,5906,5908,5,5938,5939,5,5970,5971,5,6068,6069,5,6071,6077,5,6086,6086,5,6089,6099,5,6155,6157,5,6159,6159,5,6313,6313,5,6435,6438,7,6441,6443,7,6450,6450,5,6457,6459,5,6681,6682,7,6741,6741,7,6743,6743,7,6752,6752,5,6757,6764,5,6771,6780,5,6832,6845,5,6847,6862,5,6916,6916,7,6965,6965,5,6971,6971,7,6973,6977,7,6979,6980,7,7040,7041,5,7073,7073,7,7078,7079,7,7082,7082,7,7142,7142,5,7144,7145,5,7149,7149,5,7151,7153,5,7204,7211,7,7220,7221,7,7376,7378,5,7393,7393,7,7405,7405,5,7415,7415,7,7616,7679,5,8204,8204,5,8206,8207,4,8233,8233,4,8252,8252,14,8288,8292,4,8294,8303,4,8413,8416,5,8418,8420,5,8482,8482,14,8596,8601,14,8986,8987,14,9096,9096,14,9193,9196,14,9199,9199,14,9201,9202,14,9208,9210,14,9642,9643,14,9664,9664,14,9728,9729,14,9732,9732,14,9735,9741,14,9743,9744,14,9746,9746,14,9750,9751,14,9753,9756,14,9758,9759,14,9761,9761,14,9764,9765,14,9767,9769,14,9771,9773,14,9775,9775,14,9784,9785,14,9787,9791,14,9793,9793,14,9795,9799,14,9812,9822,14,9824,9824,14,9827,9827,14,9829,9830,14,9832,9832,14,9851,9851,14,9854,9854,14,9856,9861,14,9874,9874,14,9876,9876,14,9878,9879,14,9881,9881,14,9883,9884,14,9888,9889,14,9895,9895,14,9898,9899,14,9904,9905,14,9917,9918,14,9924,9925,14,9928,9928,14,9934,9934,14,9936,9936,14,9938,9938,14,9940,9940,14,9961,9961,14,9963,9967,14,9970,9971,14,9973,9973,14,9975,9977,14,9979,9980,14,9982,9985,14,9987,9988,14,9992,9996,14,9998,9998,14,10000,10001,14,10004,10004,14,10013,10013,14,10024,10024,14,10052,10052,14,10060,10060,14,10067,10069,14,10083,10083,14,10085,10087,14,10145,10145,14,10175,10175,14,11013,11015,14,11088,11088,14,11503,11505,5,11744,11775,5,12334,12335,5,12349,12349,14,12951,12951,14,42607,42607,5,42612,42621,5,42736,42737,5,43014,43014,5,43043,43044,7,43047,43047,7,43136,43137,7,43204,43205,5,43263,43263,5,43335,43345,5,43360,43388,8,43395,43395,7,43444,43445,7,43450,43451,7,43454,43456,7,43561,43566,5,43569,43570,5,43573,43574,5,43596,43596,5,43644,43644,5,43698,43700,5,43710,43711,5,43755,43755,7,43758,43759,7,43766,43766,5,44005,44005,5,44008,44008,5,44012,44012,7,44032,44032,11,44060,44060,11,44088,44088,11,44116,44116,11,44144,44144,11,44172,44172,11,44200,44200,11,44228,44228,11,44256,44256,11,44284,44284,11,44312,44312,11,44340,44340,11,44368,44368,11,44396,44396,11,44424,44424,11,44452,44452,11,44480,44480,11,44508,44508,11,44536,44536,11,44564,44564,11,44592,44592,11,44620,44620,11,44648,44648,11,44676,44676,11,44704,44704,11,44732,44732,11,44760,44760,11,44788,44788,11,44816,44816,11,44844,44844,11,44872,44872,11,44900,44900,11,44928,44928,11,44956,44956,11,44984,44984,11,45012,45012,11,45040,45040,11,45068,45068,11,45096,45096,11,45124,45124,11,45152,45152,11,45180,45180,11,45208,45208,11,45236,45236,11,45264,45264,11,45292,45292,11,45320,45320,11,45348,45348,11,45376,45376,11,45404,45404,11,45432,45432,11,45460,45460,11,45488,45488,11,45516,45516,11,45544,45544,11,45572,45572,11,45600,45600,11,45628,45628,11,45656,45656,11,45684,45684,11,45712,45712,11,45740,45740,11,45768,45768,11,45796,45796,11,45824,45824,11,45852,45852,11,45880,45880,11,45908,45908,11,45936,45936,11,45964,45964,11,45992,45992,11,46020,46020,11,46048,46048,11,46076,46076,11,46104,46104,11,46132,46132,11,46160,46160,11,46188,46188,11,46216,46216,11,46244,46244,11,46272,46272,11,46300,46300,11,46328,46328,11,46356,46356,11,46384,46384,11,46412,46412,11,46440,46440,11,46468,46468,11,46496,46496,11,46524,46524,11,46552,46552,11,46580,46580,11,46608,46608,11,46636,46636,11,46664,46664,11,46692,46692,11,46720,46720,11,46748,46748,11,46776,46776,11,46804,46804,11,46832,46832,11,46860,46860,11,46888,46888,11,46916,46916,11,46944,46944,11,46972,46972,11,47000,47000,11,47028,47028,11,47056,47056,11,47084,47084,11,47112,47112,11,47140,47140,11,47168,47168,11,47196,47196,11,47224,47224,11,47252,47252,11,47280,47280,11,47308,47308,11,47336,47336,11,47364,47364,11,47392,47392,11,47420,47420,11,47448,47448,11,47476,47476,11,47504,47504,11,47532,47532,11,47560,47560,11,47588,47588,11,47616,47616,11,47644,47644,11,47672,47672,11,47700,47700,11,47728,47728,11,47756,47756,11,47784,47784,11,47812,47812,11,47840,47840,11,47868,47868,11,47896,47896,11,47924,47924,11,47952,47952,11,47980,47980,11,48008,48008,11,48036,48036,11,48064,48064,11,48092,48092,11,48120,48120,11,48148,48148,11,48176,48176,11,48204,48204,11,48232,48232,11,48260,48260,11,48288,48288,11,48316,48316,11,48344,48344,11,48372,48372,11,48400,48400,11,48428,48428,11,48456,48456,11,48484,48484,11,48512,48512,11,48540,48540,11,48568,48568,11,48596,48596,11,48624,48624,11,48652,48652,11,48680,48680,11,48708,48708,11,48736,48736,11,48764,48764,11,48792,48792,11,48820,48820,11,48848,48848,11,48876,48876,11,48904,48904,11,48932,48932,11,48960,48960,11,48988,48988,11,49016,49016,11,49044,49044,11,49072,49072,11,49100,49100,11,49128,49128,11,49156,49156,11,49184,49184,11,49212,49212,11,49240,49240,11,49268,49268,11,49296,49296,11,49324,49324,11,49352,49352,11,49380,49380,11,49408,49408,11,49436,49436,11,49464,49464,11,49492,49492,11,49520,49520,11,49548,49548,11,49576,49576,11,49604,49604,11,49632,49632,11,49660,49660,11,49688,49688,11,49716,49716,11,49744,49744,11,49772,49772,11,49800,49800,11,49828,49828,11,49856,49856,11,49884,49884,11,49912,49912,11,49940,49940,11,49968,49968,11,49996,49996,11,50024,50024,11,50052,50052,11,50080,50080,11,50108,50108,11,50136,50136,11,50164,50164,11,50192,50192,11,50220,50220,11,50248,50248,11,50276,50276,11,50304,50304,11,50332,50332,11,50360,50360,11,50388,50388,11,50416,50416,11,50444,50444,11,50472,50472,11,50500,50500,11,50528,50528,11,50556,50556,11,50584,50584,11,50612,50612,11,50640,50640,11,50668,50668,11,50696,50696,11,50724,50724,11,50752,50752,11,50780,50780,11,50808,50808,11,50836,50836,11,50864,50864,11,50892,50892,11,50920,50920,11,50948,50948,11,50976,50976,11,51004,51004,11,51032,51032,11,51060,51060,11,51088,51088,11,51116,51116,11,51144,51144,11,51172,51172,11,51200,51200,11,51228,51228,11,51256,51256,11,51284,51284,11,51312,51312,11,51340,51340,11,51368,51368,11,51396,51396,11,51424,51424,11,51452,51452,11,51480,51480,11,51508,51508,11,51536,51536,11,51564,51564,11,51592,51592,11,51620,51620,11,51648,51648,11,51676,51676,11,51704,51704,11,51732,51732,11,51760,51760,11,51788,51788,11,51816,51816,11,51844,51844,11,51872,51872,11,51900,51900,11,51928,51928,11,51956,51956,11,51984,51984,11,52012,52012,11,52040,52040,11,52068,52068,11,52096,52096,11,52124,52124,11,52152,52152,11,52180,52180,11,52208,52208,11,52236,52236,11,52264,52264,11,52292,52292,11,52320,52320,11,52348,52348,11,52376,52376,11,52404,52404,11,52432,52432,11,52460,52460,11,52488,52488,11,52516,52516,11,52544,52544,11,52572,52572,11,52600,52600,11,52628,52628,11,52656,52656,11,52684,52684,11,52712,52712,11,52740,52740,11,52768,52768,11,52796,52796,11,52824,52824,11,52852,52852,11,52880,52880,11,52908,52908,11,52936,52936,11,52964,52964,11,52992,52992,11,53020,53020,11,53048,53048,11,53076,53076,11,53104,53104,11,53132,53132,11,53160,53160,11,53188,53188,11,53216,53216,11,53244,53244,11,53272,53272,11,53300,53300,11,53328,53328,11,53356,53356,11,53384,53384,11,53412,53412,11,53440,53440,11,53468,53468,11,53496,53496,11,53524,53524,11,53552,53552,11,53580,53580,11,53608,53608,11,53636,53636,11,53664,53664,11,53692,53692,11,53720,53720,11,53748,53748,11,53776,53776,11,53804,53804,11,53832,53832,11,53860,53860,11,53888,53888,11,53916,53916,11,53944,53944,11,53972,53972,11,54000,54000,11,54028,54028,11,54056,54056,11,54084,54084,11,54112,54112,11,54140,54140,11,54168,54168,11,54196,54196,11,54224,54224,11,54252,54252,11,54280,54280,11,54308,54308,11,54336,54336,11,54364,54364,11,54392,54392,11,54420,54420,11,54448,54448,11,54476,54476,11,54504,54504,11,54532,54532,11,54560,54560,11,54588,54588,11,54616,54616,11,54644,54644,11,54672,54672,11,54700,54700,11,54728,54728,11,54756,54756,11,54784,54784,11,54812,54812,11,54840,54840,11,54868,54868,11,54896,54896,11,54924,54924,11,54952,54952,11,54980,54980,11,55008,55008,11,55036,55036,11,55064,55064,11,55092,55092,11,55120,55120,11,55148,55148,11,55176,55176,11,55216,55238,9,64286,64286,5,65056,65071,5,65438,65439,5,65529,65531,4,66272,66272,5,68097,68099,5,68108,68111,5,68159,68159,5,68900,68903,5,69446,69456,5,69632,69632,7,69634,69634,7,69744,69744,5,69759,69761,5,69808,69810,7,69815,69816,7,69821,69821,1,69837,69837,1,69927,69931,5,69933,69940,5,70003,70003,5,70018,70018,7,70070,70078,5,70082,70083,1,70094,70094,7,70188,70190,7,70194,70195,7,70197,70197,7,70206,70206,5,70368,70370,7,70400,70401,5,70459,70460,5,70463,70463,7,70465,70468,7,70475,70477,7,70498,70499,7,70512,70516,5,70712,70719,5,70722,70724,5,70726,70726,5,70832,70832,5,70835,70840,5,70842,70842,5,70845,70845,5,70847,70848,5,70850,70851,5,71088,71089,7,71096,71099,7,71102,71102,7,71132,71133,5,71219,71226,5,71229,71229,5,71231,71232,5,71340,71340,7,71342,71343,7,71350,71350,7,71453,71455,5,71462,71462,7,71724,71726,7,71736,71736,7,71984,71984,5,71991,71992,7,71997,71997,7,71999,71999,1,72001,72001,1,72003,72003,5,72148,72151,5,72156,72159,7,72164,72164,7,72243,72248,5,72250,72250,1,72263,72263,5,72279,72280,7,72324,72329,1,72343,72343,7,72751,72751,7,72760,72765,5,72767,72767,5,72873,72873,7,72881,72881,7,72884,72884,7,73009,73014,5,73020,73021,5,73030,73030,1,73098,73102,7,73107,73108,7,73110,73110,7,73459,73460,5,78896,78904,4,92976,92982,5,94033,94087,7,94180,94180,5,113821,113822,5,118528,118573,5,119141,119141,5,119143,119145,5,119150,119154,5,119163,119170,5,119210,119213,5,121344,121398,5,121461,121461,5,121499,121503,5,122880,122886,5,122907,122913,5,122918,122922,5,123566,123566,5,125136,125142,5,126976,126979,14,126981,127182,14,127184,127231,14,127279,127279,14,127344,127345,14,127374,127374,14,127405,127461,14,127489,127490,14,127514,127514,14,127538,127546,14,127561,127567,14,127570,127743,14,127757,127758,14,127760,127760,14,127762,127762,14,127766,127768,14,127770,127770,14,127772,127772,14,127775,127776,14,127778,127779,14,127789,127791,14,127794,127795,14,127798,127798,14,127819,127819,14,127824,127824,14,127868,127868,14,127870,127871,14,127892,127893,14,127896,127896,14,127900,127901,14,127904,127940,14,127942,127942,14,127944,127944,14,127946,127946,14,127951,127955,14,127968,127971,14,127973,127984,14,127987,127987,14,127989,127989,14,127991,127991,14,127995,127999,5,128008,128008,14,128012,128014,14,128017,128018,14,128020,128020,14,128022,128022,14,128042,128042,14,128063,128063,14,128065,128065,14,128101,128101,14,128108,128109,14,128173,128173,14,128182,128183,14,128236,128237,14,128239,128239,14,128245,128245,14,128248,128248,14,128253,128253,14,128255,128258,14,128260,128263,14,128265,128265,14,128277,128277,14,128300,128301,14,128326,128328,14,128331,128334,14,128336,128347,14,128360,128366,14,128369,128370,14,128378,128378,14,128391,128391,14,128394,128397,14,128400,128400,14,128405,128406,14,128420,128420,14,128422,128423,14,128425,128432,14,128435,128443,14,128445,128449,14,128453,128464,14,128468,128475,14,128479,128480,14,128482,128482,14,128484,128487,14,128489,128494,14,128496,128498,14,128500,128505,14,128507,128511,14,128513,128518,14,128521,128525,14,128527,128527,14,128529,128529,14,128533,128533,14,128535,128535,14,128537,128537,14]");
+  }
+  var AmbiguousCharacters = class _AmbiguousCharacters {
+    static {
+      this.ambiguousCharacterData = new Lazy(() => {
+        return JSON.parse('{"_common":[8232,32,8233,32,5760,32,8192,32,8193,32,8194,32,8195,32,8196,32,8197,32,8198,32,8200,32,8201,32,8202,32,8287,32,8199,32,8239,32,2042,95,65101,95,65102,95,65103,95,8208,45,8209,45,8210,45,65112,45,1748,45,8259,45,727,45,8722,45,10134,45,11450,45,1549,44,1643,44,184,44,42233,44,894,59,2307,58,2691,58,1417,58,1795,58,1796,58,5868,58,65072,58,6147,58,6153,58,8282,58,1475,58,760,58,42889,58,8758,58,720,58,42237,58,451,33,11601,33,660,63,577,63,2429,63,5038,63,42731,63,119149,46,8228,46,1793,46,1794,46,42510,46,68176,46,1632,46,1776,46,42232,46,1373,96,65287,96,8219,96,1523,96,8242,96,1370,96,8175,96,65344,96,900,96,8189,96,8125,96,8127,96,8190,96,697,96,884,96,712,96,714,96,715,96,756,96,699,96,701,96,700,96,702,96,42892,96,1497,96,2036,96,2037,96,5194,96,5836,96,94033,96,94034,96,65339,91,10088,40,10098,40,12308,40,64830,40,65341,93,10089,41,10099,41,12309,41,64831,41,10100,123,119060,123,10101,125,65342,94,8270,42,1645,42,8727,42,66335,42,5941,47,8257,47,8725,47,8260,47,9585,47,10187,47,10744,47,119354,47,12755,47,12339,47,11462,47,20031,47,12035,47,65340,92,65128,92,8726,92,10189,92,10741,92,10745,92,119311,92,119355,92,12756,92,20022,92,12034,92,42872,38,708,94,710,94,5869,43,10133,43,66203,43,8249,60,10094,60,706,60,119350,60,5176,60,5810,60,5120,61,11840,61,12448,61,42239,61,8250,62,10095,62,707,62,119351,62,5171,62,94015,62,8275,126,732,126,8128,126,8764,126,65372,124,65293,45,118002,50,120784,50,120794,50,120804,50,120814,50,120824,50,130034,50,42842,50,423,50,1000,50,42564,50,5311,50,42735,50,119302,51,118003,51,120785,51,120795,51,120805,51,120815,51,120825,51,130035,51,42923,51,540,51,439,51,42858,51,11468,51,1248,51,94011,51,71882,51,118004,52,120786,52,120796,52,120806,52,120816,52,120826,52,130036,52,5070,52,71855,52,118005,53,120787,53,120797,53,120807,53,120817,53,120827,53,130037,53,444,53,71867,53,118006,54,120788,54,120798,54,120808,54,120818,54,120828,54,130038,54,11474,54,5102,54,71893,54,119314,55,118007,55,120789,55,120799,55,120809,55,120819,55,120829,55,130039,55,66770,55,71878,55,2819,56,2538,56,2666,56,125131,56,118008,56,120790,56,120800,56,120810,56,120820,56,120830,56,130040,56,547,56,546,56,66330,56,2663,57,2920,57,2541,57,3437,57,118009,57,120791,57,120801,57,120811,57,120821,57,120831,57,130041,57,42862,57,11466,57,71884,57,71852,57,71894,57,9082,97,65345,97,119834,97,119886,97,119938,97,119990,97,120042,97,120094,97,120146,97,120198,97,120250,97,120302,97,120354,97,120406,97,120458,97,593,97,945,97,120514,97,120572,97,120630,97,120688,97,120746,97,65313,65,117974,65,119808,65,119860,65,119912,65,119964,65,120016,65,120068,65,120120,65,120172,65,120224,65,120276,65,120328,65,120380,65,120432,65,913,65,120488,65,120546,65,120604,65,120662,65,120720,65,5034,65,5573,65,42222,65,94016,65,66208,65,119835,98,119887,98,119939,98,119991,98,120043,98,120095,98,120147,98,120199,98,120251,98,120303,98,120355,98,120407,98,120459,98,388,98,5071,98,5234,98,5551,98,65314,66,8492,66,117975,66,119809,66,119861,66,119913,66,120017,66,120069,66,120121,66,120173,66,120225,66,120277,66,120329,66,120381,66,120433,66,42932,66,914,66,120489,66,120547,66,120605,66,120663,66,120721,66,5108,66,5623,66,42192,66,66178,66,66209,66,66305,66,65347,99,8573,99,119836,99,119888,99,119940,99,119992,99,120044,99,120096,99,120148,99,120200,99,120252,99,120304,99,120356,99,120408,99,120460,99,7428,99,1010,99,11429,99,43951,99,66621,99,128844,67,71913,67,71922,67,65315,67,8557,67,8450,67,8493,67,117976,67,119810,67,119862,67,119914,67,119966,67,120018,67,120174,67,120226,67,120278,67,120330,67,120382,67,120434,67,1017,67,11428,67,5087,67,42202,67,66210,67,66306,67,66581,67,66844,67,8574,100,8518,100,119837,100,119889,100,119941,100,119993,100,120045,100,120097,100,120149,100,120201,100,120253,100,120305,100,120357,100,120409,100,120461,100,1281,100,5095,100,5231,100,42194,100,8558,68,8517,68,117977,68,119811,68,119863,68,119915,68,119967,68,120019,68,120071,68,120123,68,120175,68,120227,68,120279,68,120331,68,120383,68,120435,68,5024,68,5598,68,5610,68,42195,68,8494,101,65349,101,8495,101,8519,101,119838,101,119890,101,119942,101,120046,101,120098,101,120150,101,120202,101,120254,101,120306,101,120358,101,120410,101,120462,101,43826,101,1213,101,8959,69,65317,69,8496,69,117978,69,119812,69,119864,69,119916,69,120020,69,120072,69,120124,69,120176,69,120228,69,120280,69,120332,69,120384,69,120436,69,917,69,120492,69,120550,69,120608,69,120666,69,120724,69,11577,69,5036,69,42224,69,71846,69,71854,69,66182,69,119839,102,119891,102,119943,102,119995,102,120047,102,120099,102,120151,102,120203,102,120255,102,120307,102,120359,102,120411,102,120463,102,43829,102,42905,102,383,102,7837,102,1412,102,119315,70,8497,70,117979,70,119813,70,119865,70,119917,70,120021,70,120073,70,120125,70,120177,70,120229,70,120281,70,120333,70,120385,70,120437,70,42904,70,988,70,120778,70,5556,70,42205,70,71874,70,71842,70,66183,70,66213,70,66853,70,65351,103,8458,103,119840,103,119892,103,119944,103,120048,103,120100,103,120152,103,120204,103,120256,103,120308,103,120360,103,120412,103,120464,103,609,103,7555,103,397,103,1409,103,117980,71,119814,71,119866,71,119918,71,119970,71,120022,71,120074,71,120126,71,120178,71,120230,71,120282,71,120334,71,120386,71,120438,71,1292,71,5056,71,5107,71,42198,71,65352,104,8462,104,119841,104,119945,104,119997,104,120049,104,120101,104,120153,104,120205,104,120257,104,120309,104,120361,104,120413,104,120465,104,1211,104,1392,104,5058,104,65320,72,8459,72,8460,72,8461,72,117981,72,119815,72,119867,72,119919,72,120023,72,120179,72,120231,72,120283,72,120335,72,120387,72,120439,72,919,72,120494,72,120552,72,120610,72,120668,72,120726,72,11406,72,5051,72,5500,72,42215,72,66255,72,731,105,9075,105,65353,105,8560,105,8505,105,8520,105,119842,105,119894,105,119946,105,119998,105,120050,105,120102,105,120154,105,120206,105,120258,105,120310,105,120362,105,120414,105,120466,105,120484,105,618,105,617,105,953,105,8126,105,890,105,120522,105,120580,105,120638,105,120696,105,120754,105,1110,105,42567,105,1231,105,43893,105,5029,105,71875,105,65354,106,8521,106,119843,106,119895,106,119947,106,119999,106,120051,106,120103,106,120155,106,120207,106,120259,106,120311,106,120363,106,120415,106,120467,106,1011,106,1112,106,65322,74,117983,74,119817,74,119869,74,119921,74,119973,74,120025,74,120077,74,120129,74,120181,74,120233,74,120285,74,120337,74,120389,74,120441,74,42930,74,895,74,1032,74,5035,74,5261,74,42201,74,119844,107,119896,107,119948,107,120000,107,120052,107,120104,107,120156,107,120208,107,120260,107,120312,107,120364,107,120416,107,120468,107,8490,75,65323,75,117984,75,119818,75,119870,75,119922,75,119974,75,120026,75,120078,75,120130,75,120182,75,120234,75,120286,75,120338,75,120390,75,120442,75,922,75,120497,75,120555,75,120613,75,120671,75,120729,75,11412,75,5094,75,5845,75,42199,75,66840,75,1472,108,8739,73,9213,73,65512,73,1633,108,1777,73,66336,108,125127,108,118001,108,120783,73,120793,73,120803,73,120813,73,120823,73,130033,73,65321,73,8544,73,8464,73,8465,73,117982,108,119816,73,119868,73,119920,73,120024,73,120128,73,120180,73,120232,73,120284,73,120336,73,120388,73,120440,73,65356,108,8572,73,8467,108,119845,108,119897,108,119949,108,120001,108,120053,108,120105,73,120157,73,120209,73,120261,73,120313,73,120365,73,120417,73,120469,73,448,73,120496,73,120554,73,120612,73,120670,73,120728,73,11410,73,1030,73,1216,73,1493,108,1503,108,1575,108,126464,108,126592,108,65166,108,65165,108,1994,108,11599,73,5825,73,42226,73,93992,73,66186,124,66313,124,119338,76,8556,76,8466,76,117985,76,119819,76,119871,76,119923,76,120027,76,120079,76,120131,76,120183,76,120235,76,120287,76,120339,76,120391,76,120443,76,11472,76,5086,76,5290,76,42209,76,93974,76,71843,76,71858,76,66587,76,66854,76,65325,77,8559,77,8499,77,117986,77,119820,77,119872,77,119924,77,120028,77,120080,77,120132,77,120184,77,120236,77,120288,77,120340,77,120392,77,120444,77,924,77,120499,77,120557,77,120615,77,120673,77,120731,77,1018,77,11416,77,5047,77,5616,77,5846,77,42207,77,66224,77,66321,77,119847,110,119899,110,119951,110,120003,110,120055,110,120107,110,120159,110,120211,110,120263,110,120315,110,120367,110,120419,110,120471,110,1400,110,1404,110,65326,78,8469,78,117987,78,119821,78,119873,78,119925,78,119977,78,120029,78,120081,78,120185,78,120237,78,120289,78,120341,78,120393,78,120445,78,925,78,120500,78,120558,78,120616,78,120674,78,120732,78,11418,78,42208,78,66835,78,3074,111,3202,111,3330,111,3458,111,2406,111,2662,111,2790,111,3046,111,3174,111,3302,111,3430,111,3664,111,3792,111,4160,111,1637,111,1781,111,65359,111,8500,111,119848,111,119900,111,119952,111,120056,111,120108,111,120160,111,120212,111,120264,111,120316,111,120368,111,120420,111,120472,111,7439,111,7441,111,43837,111,959,111,120528,111,120586,111,120644,111,120702,111,120760,111,963,111,120532,111,120590,111,120648,111,120706,111,120764,111,11423,111,4351,111,1413,111,1505,111,1607,111,126500,111,126564,111,126596,111,65259,111,65260,111,65258,111,65257,111,1726,111,64428,111,64429,111,64427,111,64426,111,1729,111,64424,111,64425,111,64423,111,64422,111,1749,111,3360,111,4125,111,66794,111,71880,111,71895,111,66604,111,1984,79,2534,79,2918,79,12295,79,70864,79,71904,79,118000,79,120782,79,120792,79,120802,79,120812,79,120822,79,130032,79,65327,79,117988,79,119822,79,119874,79,119926,79,119978,79,120030,79,120082,79,120134,79,120186,79,120238,79,120290,79,120342,79,120394,79,120446,79,927,79,120502,79,120560,79,120618,79,120676,79,120734,79,11422,79,1365,79,11604,79,4816,79,2848,79,66754,79,42227,79,71861,79,66194,79,66219,79,66564,79,66838,79,9076,112,65360,112,119849,112,119901,112,119953,112,120005,112,120057,112,120109,112,120161,112,120213,112,120265,112,120317,112,120369,112,120421,112,120473,112,961,112,120530,112,120544,112,120588,112,120602,112,120646,112,120660,112,120704,112,120718,112,120762,112,120776,112,11427,112,65328,80,8473,80,117989,80,119823,80,119875,80,119927,80,119979,80,120031,80,120083,80,120187,80,120239,80,120291,80,120343,80,120395,80,120447,80,929,80,120504,80,120562,80,120620,80,120678,80,120736,80,11426,80,5090,80,5229,80,42193,80,66197,80,119850,113,119902,113,119954,113,120006,113,120058,113,120110,113,120162,113,120214,113,120266,113,120318,113,120370,113,120422,113,120474,113,1307,113,1379,113,1382,113,8474,81,117990,81,119824,81,119876,81,119928,81,119980,81,120032,81,120084,81,120188,81,120240,81,120292,81,120344,81,120396,81,120448,81,11605,81,119851,114,119903,114,119955,114,120007,114,120059,114,120111,114,120163,114,120215,114,120267,114,120319,114,120371,114,120423,114,120475,114,43847,114,43848,114,7462,114,11397,114,43905,114,119318,82,8475,82,8476,82,8477,82,117991,82,119825,82,119877,82,119929,82,120033,82,120189,82,120241,82,120293,82,120345,82,120397,82,120449,82,422,82,5025,82,5074,82,66740,82,5511,82,42211,82,94005,82,65363,115,119852,115,119904,115,119956,115,120008,115,120060,115,120112,115,120164,115,120216,115,120268,115,120320,115,120372,115,120424,115,120476,115,42801,115,445,115,1109,115,43946,115,71873,115,66632,115,65331,83,117992,83,119826,83,119878,83,119930,83,119982,83,120034,83,120086,83,120138,83,120190,83,120242,83,120294,83,120346,83,120398,83,120450,83,1029,83,1359,83,5077,83,5082,83,42210,83,94010,83,66198,83,66592,83,119853,116,119905,116,119957,116,120009,116,120061,116,120113,116,120165,116,120217,116,120269,116,120321,116,120373,116,120425,116,120477,116,8868,84,10201,84,128872,84,65332,84,117993,84,119827,84,119879,84,119931,84,119983,84,120035,84,120087,84,120139,84,120191,84,120243,84,120295,84,120347,84,120399,84,120451,84,932,84,120507,84,120565,84,120623,84,120681,84,120739,84,11430,84,5026,84,42196,84,93962,84,71868,84,66199,84,66225,84,66325,84,119854,117,119906,117,119958,117,120010,117,120062,117,120114,117,120166,117,120218,117,120270,117,120322,117,120374,117,120426,117,120478,117,42911,117,7452,117,43854,117,43858,117,651,117,965,117,120534,117,120592,117,120650,117,120708,117,120766,117,1405,117,66806,117,71896,117,8746,85,8899,85,117994,85,119828,85,119880,85,119932,85,119984,85,120036,85,120088,85,120140,85,120192,85,120244,85,120296,85,120348,85,120400,85,120452,85,1357,85,4608,85,66766,85,5196,85,42228,85,94018,85,71864,85,8744,118,8897,118,65366,118,8564,118,119855,118,119907,118,119959,118,120011,118,120063,118,120115,118,120167,118,120219,118,120271,118,120323,118,120375,118,120427,118,120479,118,7456,118,957,118,120526,118,120584,118,120642,118,120700,118,120758,118,1141,118,1496,118,71430,118,43945,118,71872,118,119309,86,1639,86,1783,86,8548,86,117995,86,119829,86,119881,86,119933,86,119985,86,120037,86,120089,86,120141,86,120193,86,120245,86,120297,86,120349,86,120401,86,120453,86,1140,86,11576,86,5081,86,5167,86,42719,86,42214,86,93960,86,71840,86,66845,86,623,119,119856,119,119908,119,119960,119,120012,119,120064,119,120116,119,120168,119,120220,119,120272,119,120324,119,120376,119,120428,119,120480,119,7457,119,1121,119,1309,119,1377,119,71434,119,71438,119,71439,119,43907,119,71910,87,71919,87,117996,87,119830,87,119882,87,119934,87,119986,87,120038,87,120090,87,120142,87,120194,87,120246,87,120298,87,120350,87,120402,87,120454,87,1308,87,5043,87,5076,87,42218,87,5742,120,10539,120,10540,120,10799,120,65368,120,8569,120,119857,120,119909,120,119961,120,120013,120,120065,120,120117,120,120169,120,120221,120,120273,120,120325,120,120377,120,120429,120,120481,120,5441,120,5501,120,5741,88,9587,88,66338,88,71916,88,65336,88,8553,88,117997,88,119831,88,119883,88,119935,88,119987,88,120039,88,120091,88,120143,88,120195,88,120247,88,120299,88,120351,88,120403,88,120455,88,42931,88,935,88,120510,88,120568,88,120626,88,120684,88,120742,88,11436,88,11613,88,5815,88,42219,88,66192,88,66228,88,66327,88,66855,88,611,121,7564,121,65369,121,119858,121,119910,121,119962,121,120014,121,120066,121,120118,121,120170,121,120222,121,120274,121,120326,121,120378,121,120430,121,120482,121,655,121,7935,121,43866,121,947,121,8509,121,120516,121,120574,121,120632,121,120690,121,120748,121,1199,121,4327,121,71900,121,65337,89,117998,89,119832,89,119884,89,119936,89,119988,89,120040,89,120092,89,120144,89,120196,89,120248,89,120300,89,120352,89,120404,89,120456,89,933,89,978,89,120508,89,120566,89,120624,89,120682,89,120740,89,11432,89,1198,89,5033,89,5053,89,42220,89,94019,89,71844,89,66226,89,119859,122,119911,122,119963,122,120015,122,120067,122,120119,122,120171,122,120223,122,120275,122,120327,122,120379,122,120431,122,120483,122,7458,122,43923,122,71876,122,71909,90,66293,90,65338,90,8484,90,8488,90,117999,90,119833,90,119885,90,119937,90,119989,90,120041,90,120197,90,120249,90,120301,90,120353,90,120405,90,120457,90,918,90,120493,90,120551,90,120609,90,120667,90,120725,90,5059,90,42204,90,71849,90,65282,34,65283,35,65284,36,65285,37,65286,38,65290,42,65291,43,65294,46,65295,47,65296,48,65298,50,65299,51,65300,52,65301,53,65302,54,65303,55,65304,56,65305,57,65308,60,65309,61,65310,62,65312,64,65316,68,65318,70,65319,71,65324,76,65329,81,65330,82,65333,85,65334,86,65335,87,65343,95,65346,98,65348,100,65350,102,65355,107,65357,109,65358,110,65361,113,65362,114,65364,116,65365,117,65367,119,65370,122,65371,123,65373,125,119846,109],"_default":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8216,96,8217,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"cs":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"de":[65374,126,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"es":[8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"fr":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"it":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"ja":[8211,45,8218,44,65281,33,8216,96,8245,96,180,96,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65292,44,65297,49,65307,59],"ko":[8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"pl":[65374,126,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"pt-BR":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"qps-ploc":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"ru":[65374,126,8218,44,65306,58,65281,33,8216,96,8245,96,180,96,12494,47,305,105,921,73,1009,112,215,120,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"tr":[160,32,8211,45,65374,126,8218,44,65306,58,65281,33,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65288,40,65289,41,65292,44,65297,49,65307,59,65311,63],"zh-hans":[160,32,65374,126,8218,44,8245,96,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89,65297,49],"zh-hant":[8211,45,65374,126,8218,44,180,96,12494,47,1047,51,1073,54,1072,97,1040,65,1068,98,1042,66,1089,99,1057,67,1077,101,1045,69,1053,72,305,105,1050,75,921,73,1052,77,1086,111,1054,79,1009,112,1088,112,1056,80,1075,114,1058,84,215,120,1093,120,1061,88,1091,121,1059,89]}');
+      });
+    }
+    static {
+      this.cache = new LRUCachedFunction({ getCacheKey: JSON.stringify }, (locales) => {
+        function arrayToMap(arr) {
+          const result = /* @__PURE__ */ new Map();
+          for (let i = 0; i < arr.length; i += 2) {
+            result.set(arr[i], arr[i + 1]);
+          }
+          return result;
+        }
+        function mergeMaps(map1, map2) {
+          const result = new Map(map1);
+          for (const [key, value] of map2) {
+            result.set(key, value);
+          }
+          return result;
+        }
+        function intersectMaps(map1, map2) {
+          if (!map1) {
+            return map2;
+          }
+          const result = /* @__PURE__ */ new Map();
+          for (const [key, value] of map1) {
+            if (map2.has(key)) {
+              result.set(key, value);
+            }
+          }
+          return result;
+        }
+        const data = this.ambiguousCharacterData.value;
+        let filteredLocales = locales.filter((l) => !l.startsWith("_") && Object.hasOwn(data, l));
+        if (filteredLocales.length === 0) {
+          filteredLocales = ["_default"];
+        }
+        let languageSpecificMap = void 0;
+        for (const locale of filteredLocales) {
+          const map2 = arrayToMap(data[locale]);
+          languageSpecificMap = intersectMaps(languageSpecificMap, map2);
+        }
+        const commonMap = arrayToMap(data["_common"]);
+        const map = mergeMaps(commonMap, languageSpecificMap);
+        return new _AmbiguousCharacters(map);
+      });
+    }
+    static getInstance(locales) {
+      return _AmbiguousCharacters.cache.get(Array.from(locales));
+    }
+    static {
+      this._locales = new Lazy(() => Object.keys(_AmbiguousCharacters.ambiguousCharacterData.value).filter((k) => !k.startsWith("_")));
+    }
+    static getLocales() {
+      return _AmbiguousCharacters._locales.value;
+    }
+    constructor(confusableDictionary) {
+      this.confusableDictionary = confusableDictionary;
+    }
+    isAmbiguous(codePoint) {
+      return this.confusableDictionary.has(codePoint);
+    }
+    /**
+     * Returns the non basic ASCII code point that the given code point can be confused,
+     * or undefined if such code point does note exist.
+     */
+    getPrimaryConfusable(codePoint) {
+      return this.confusableDictionary.get(codePoint);
+    }
+    getConfusableCodePoints() {
+      return new Set(this.confusableDictionary.keys());
+    }
+  };
+  var InvisibleCharacters = class _InvisibleCharacters {
+    static getRawData() {
+      return JSON.parse('{"_common":[11,12,13,127,847,1564,4447,4448,6068,6069,6155,6156,6157,6158,7355,7356,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8204,8205,8206,8207,8234,8235,8236,8237,8238,8239,8287,8288,8289,8290,8291,8292,8293,8294,8295,8296,8297,8298,8299,8300,8301,8302,8303,10240,12644,65024,65025,65026,65027,65028,65029,65030,65031,65032,65033,65034,65035,65036,65037,65038,65039,65279,65440,65520,65521,65522,65523,65524,65525,65526,65527,65528,65532,78844,119155,119156,119157,119158,119159,119160,119161,119162,917504,917505,917506,917507,917508,917509,917510,917511,917512,917513,917514,917515,917516,917517,917518,917519,917520,917521,917522,917523,917524,917525,917526,917527,917528,917529,917530,917531,917532,917533,917534,917535,917536,917537,917538,917539,917540,917541,917542,917543,917544,917545,917546,917547,917548,917549,917550,917551,917552,917553,917554,917555,917556,917557,917558,917559,917560,917561,917562,917563,917564,917565,917566,917567,917568,917569,917570,917571,917572,917573,917574,917575,917576,917577,917578,917579,917580,917581,917582,917583,917584,917585,917586,917587,917588,917589,917590,917591,917592,917593,917594,917595,917596,917597,917598,917599,917600,917601,917602,917603,917604,917605,917606,917607,917608,917609,917610,917611,917612,917613,917614,917615,917616,917617,917618,917619,917620,917621,917622,917623,917624,917625,917626,917627,917628,917629,917630,917631,917760,917761,917762,917763,917764,917765,917766,917767,917768,917769,917770,917771,917772,917773,917774,917775,917776,917777,917778,917779,917780,917781,917782,917783,917784,917785,917786,917787,917788,917789,917790,917791,917792,917793,917794,917795,917796,917797,917798,917799,917800,917801,917802,917803,917804,917805,917806,917807,917808,917809,917810,917811,917812,917813,917814,917815,917816,917817,917818,917819,917820,917821,917822,917823,917824,917825,917826,917827,917828,917829,917830,917831,917832,917833,917834,917835,917836,917837,917838,917839,917840,917841,917842,917843,917844,917845,917846,917847,917848,917849,917850,917851,917852,917853,917854,917855,917856,917857,917858,917859,917860,917861,917862,917863,917864,917865,917866,917867,917868,917869,917870,917871,917872,917873,917874,917875,917876,917877,917878,917879,917880,917881,917882,917883,917884,917885,917886,917887,917888,917889,917890,917891,917892,917893,917894,917895,917896,917897,917898,917899,917900,917901,917902,917903,917904,917905,917906,917907,917908,917909,917910,917911,917912,917913,917914,917915,917916,917917,917918,917919,917920,917921,917922,917923,917924,917925,917926,917927,917928,917929,917930,917931,917932,917933,917934,917935,917936,917937,917938,917939,917940,917941,917942,917943,917944,917945,917946,917947,917948,917949,917950,917951,917952,917953,917954,917955,917956,917957,917958,917959,917960,917961,917962,917963,917964,917965,917966,917967,917968,917969,917970,917971,917972,917973,917974,917975,917976,917977,917978,917979,917980,917981,917982,917983,917984,917985,917986,917987,917988,917989,917990,917991,917992,917993,917994,917995,917996,917997,917998,917999],"cs":[173,8203,12288],"de":[173,8203,12288],"es":[8203,12288],"fr":[173,8203,12288],"it":[160,173,12288],"ja":[173],"ko":[173,12288],"pl":[173,8203,12288],"pt-BR":[173,8203,12288],"qps-ploc":[160,173,8203,12288],"ru":[173,12288],"tr":[160,173,8203,12288],"zh-hans":[160,173,8203,12288],"zh-hant":[173,12288]}');
+    }
+    static {
+      this._data = void 0;
+    }
+    static getData() {
+      if (!this._data) {
+        this._data = new Set([...Object.values(_InvisibleCharacters.getRawData())].flat());
+      }
+      return this._data;
+    }
+    static isInvisibleCharacter(codePoint) {
+      return _InvisibleCharacters.getData().has(codePoint);
+    }
+    static get codePoints() {
+      return _InvisibleCharacters.getData();
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/worker/webWorker.js
+  var DEFAULT_CHANNEL = "default";
+  var INITIALIZE = "$initialize";
+  var RequestMessage = class {
+    constructor(vsWorker, req, channel, method, args) {
+      this.vsWorker = vsWorker;
+      this.req = req;
+      this.channel = channel;
+      this.method = method;
+      this.args = args;
+      this.type = 0;
+    }
+  };
+  var ReplyMessage = class {
+    constructor(vsWorker, seq, res, err) {
+      this.vsWorker = vsWorker;
+      this.seq = seq;
+      this.res = res;
+      this.err = err;
+      this.type = 1;
+    }
+  };
+  var SubscribeEventMessage = class {
+    constructor(vsWorker, req, channel, eventName, arg) {
+      this.vsWorker = vsWorker;
+      this.req = req;
+      this.channel = channel;
+      this.eventName = eventName;
+      this.arg = arg;
+      this.type = 2;
+    }
+  };
+  var EventMessage = class {
+    constructor(vsWorker, req, event) {
+      this.vsWorker = vsWorker;
+      this.req = req;
+      this.event = event;
+      this.type = 3;
+    }
+  };
+  var UnsubscribeEventMessage = class {
+    constructor(vsWorker, req) {
+      this.vsWorker = vsWorker;
+      this.req = req;
+      this.type = 4;
+    }
+  };
+  var WebWorkerProtocol = class {
+    constructor(handler) {
+      this._workerId = -1;
+      this._handler = handler;
+      this._lastSentReq = 0;
+      this._pendingReplies = /* @__PURE__ */ Object.create(null);
+      this._pendingEmitters = /* @__PURE__ */ new Map();
+      this._pendingEvents = /* @__PURE__ */ new Map();
+    }
+    setWorkerId(workerId) {
+      this._workerId = workerId;
+    }
+    async sendMessage(channel, method, args) {
+      const req = String(++this._lastSentReq);
+      return new Promise((resolve2, reject) => {
+        this._pendingReplies[req] = {
+          resolve: resolve2,
+          reject
+        };
+        this._send(new RequestMessage(this._workerId, req, channel, method, args));
+      });
+    }
+    listen(channel, eventName, arg) {
+      let req = null;
+      const emitter = new Emitter({
+        onWillAddFirstListener: () => {
+          req = String(++this._lastSentReq);
+          this._pendingEmitters.set(req, emitter);
+          this._send(new SubscribeEventMessage(this._workerId, req, channel, eventName, arg));
+        },
+        onDidRemoveLastListener: () => {
+          this._pendingEmitters.delete(req);
+          this._send(new UnsubscribeEventMessage(this._workerId, req));
+          req = null;
+        }
+      });
+      return emitter.event;
+    }
+    handleMessage(message) {
+      if (!message || !message.vsWorker) {
+        return;
+      }
+      if (this._workerId !== -1 && message.vsWorker !== this._workerId) {
+        return;
+      }
+      this._handleMessage(message);
+    }
+    createProxyToRemoteChannel(channel, sendMessageBarrier) {
+      const handler = {
+        get: (target, name) => {
+          if (typeof name === "string" && !target[name]) {
+            if (propertyIsDynamicEvent(name)) {
+              target[name] = (arg) => {
+                return this.listen(channel, name, arg);
+              };
+            } else if (propertyIsEvent(name)) {
+              target[name] = this.listen(channel, name, void 0);
+            } else if (name.charCodeAt(0) === 36) {
+              target[name] = async (...myArgs) => {
+                await sendMessageBarrier?.();
+                return this.sendMessage(channel, name, myArgs);
+              };
+            }
+          }
+          return target[name];
+        }
+      };
+      return new Proxy(/* @__PURE__ */ Object.create(null), handler);
+    }
+    _handleMessage(msg) {
+      switch (msg.type) {
+        case 1:
+          return this._handleReplyMessage(msg);
+        case 0:
+          return this._handleRequestMessage(msg);
+        case 2:
+          return this._handleSubscribeEventMessage(msg);
+        case 3:
+          return this._handleEventMessage(msg);
+        case 4:
+          return this._handleUnsubscribeEventMessage(msg);
+      }
+    }
+    _handleReplyMessage(replyMessage) {
+      if (!this._pendingReplies[replyMessage.seq]) {
+        console.warn("Got reply to unknown seq");
+        return;
+      }
+      const reply = this._pendingReplies[replyMessage.seq];
+      delete this._pendingReplies[replyMessage.seq];
+      if (replyMessage.err) {
+        let err = replyMessage.err;
+        if (replyMessage.err.$isError) {
+          const newErr = new Error();
+          newErr.name = replyMessage.err.name;
+          newErr.message = replyMessage.err.message;
+          newErr.stack = replyMessage.err.stack;
+          err = newErr;
+        }
+        reply.reject(err);
+        return;
+      }
+      reply.resolve(replyMessage.res);
+    }
+    _handleRequestMessage(requestMessage) {
+      const req = requestMessage.req;
+      const result = this._handler.handleMessage(requestMessage.channel, requestMessage.method, requestMessage.args);
+      result.then((r) => {
+        this._send(new ReplyMessage(this._workerId, req, r, void 0));
+      }, (e) => {
+        if (e.detail instanceof Error) {
+          e.detail = transformErrorForSerialization(e.detail);
+        }
+        this._send(new ReplyMessage(this._workerId, req, void 0, transformErrorForSerialization(e)));
+      });
+    }
+    _handleSubscribeEventMessage(msg) {
+      const req = msg.req;
+      const disposable = this._handler.handleEvent(msg.channel, msg.eventName, msg.arg)((event) => {
+        this._send(new EventMessage(this._workerId, req, event));
+      });
+      this._pendingEvents.set(req, disposable);
+    }
+    _handleEventMessage(msg) {
+      if (!this._pendingEmitters.has(msg.req)) {
+        console.warn("Got event for unknown req");
+        return;
+      }
+      this._pendingEmitters.get(msg.req).fire(msg.event);
+    }
+    _handleUnsubscribeEventMessage(msg) {
+      if (!this._pendingEvents.has(msg.req)) {
+        console.warn("Got unsubscribe for unknown req");
+        return;
+      }
+      this._pendingEvents.get(msg.req).dispose();
+      this._pendingEvents.delete(msg.req);
+    }
+    _send(msg) {
+      const transfer = [];
+      if (msg.type === 0) {
+        for (let i = 0; i < msg.args.length; i++) {
+          const arg = msg.args[i];
+          if (arg instanceof ArrayBuffer) {
+            transfer.push(arg);
+          }
+        }
+      } else if (msg.type === 1) {
+        if (msg.res instanceof ArrayBuffer) {
+          transfer.push(msg.res);
+        }
+      }
+      this._handler.sendMessage(msg, transfer);
+    }
+  };
+  function propertyIsEvent(name) {
+    return name[0] === "o" && name[1] === "n" && isUpperAsciiLetter(name.charCodeAt(2));
+  }
+  function propertyIsDynamicEvent(name) {
+    return /^onDynamic/.test(name) && isUpperAsciiLetter(name.charCodeAt(9));
+  }
+  var WebWorkerServer = class {
+    constructor(postMessage, requestHandlerFactory) {
+      this._localChannels = /* @__PURE__ */ new Map();
+      this._remoteChannels = /* @__PURE__ */ new Map();
+      this._protocol = new WebWorkerProtocol({
+        sendMessage: (msg, transfer) => {
+          postMessage(msg, transfer);
+        },
+        handleMessage: (channel, method, args) => this._handleMessage(channel, method, args),
+        handleEvent: (channel, eventName, arg) => this._handleEvent(channel, eventName, arg)
+      });
+      this.requestHandler = requestHandlerFactory(this);
+    }
+    onmessage(msg) {
+      this._protocol.handleMessage(msg);
+    }
+    _handleMessage(channel, method, args) {
+      if (channel === DEFAULT_CHANNEL && method === INITIALIZE) {
+        return this.initialize(args[0]);
+      }
+      const requestHandler = channel === DEFAULT_CHANNEL ? this.requestHandler : this._localChannels.get(channel);
+      if (!requestHandler) {
+        return Promise.reject(new Error(`Missing channel ${channel} on worker thread`));
+      }
+      const fn = requestHandler[method];
+      if (typeof fn !== "function") {
+        return Promise.reject(new Error(`Missing method ${method} on worker thread channel ${channel}`));
+      }
+      try {
+        return Promise.resolve(fn.apply(requestHandler, args));
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+    _handleEvent(channel, eventName, arg) {
+      const requestHandler = channel === DEFAULT_CHANNEL ? this.requestHandler : this._localChannels.get(channel);
+      if (!requestHandler) {
+        throw new Error(`Missing channel ${channel} on worker thread`);
+      }
+      if (propertyIsDynamicEvent(eventName)) {
+        const fn = requestHandler[eventName];
+        if (typeof fn !== "function") {
+          throw new Error(`Missing dynamic event ${eventName} on request handler.`);
+        }
+        const event = fn.call(requestHandler, arg);
+        if (typeof event !== "function") {
+          throw new Error(`Missing dynamic event ${eventName} on request handler.`);
+        }
+        return event;
+      }
+      if (propertyIsEvent(eventName)) {
+        const event = requestHandler[eventName];
+        if (typeof event !== "function") {
+          throw new Error(`Missing event ${eventName} on request handler.`);
+        }
+        return event;
+      }
+      throw new Error(`Malformed event name ${eventName}`);
+    }
+    getChannel(channel) {
+      if (!this._remoteChannels.has(channel)) {
+        const inst = this._protocol.createProxyToRemoteChannel(channel);
+        this._remoteChannels.set(channel, inst);
+      }
+      return this._remoteChannels.get(channel);
+    }
+    async initialize(workerId) {
+      this._protocol.setWorkerId(workerId);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/worker/webWorkerBootstrap.js
+  var initialized = false;
+  function initialize(factory) {
+    if (initialized) {
+      throw new Error("WebWorker already initialized!");
+    }
+    initialized = true;
+    const webWorkerServer = new WebWorkerServer((msg) => globalThis.postMessage(msg), (workerServer) => factory(workerServer));
+    globalThis.onmessage = (e) => {
+      webWorkerServer.onmessage(e.data);
+    };
+    return webWorkerServer;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/diff/diffChange.js
+  var DiffChange = class {
+    /**
+     * Constructs a new DiffChange with the given sequence information
+     * and content.
+     */
+    constructor(originalStart, originalLength, modifiedStart, modifiedLength) {
+      this.originalStart = originalStart;
+      this.originalLength = originalLength;
+      this.modifiedStart = modifiedStart;
+      this.modifiedLength = modifiedLength;
+    }
+    /**
+     * The end point (exclusive) of the change in the original sequence.
+     */
+    getOriginalEnd() {
+      return this.originalStart + this.originalLength;
+    }
+    /**
+     * The end point (exclusive) of the change in the modified sequence.
+     */
+    getModifiedEnd() {
+      return this.modifiedStart + this.modifiedLength;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/buffer.js
+  var hasBuffer = typeof Buffer !== "undefined";
+  new Lazy(() => new Uint8Array(256));
+  var textDecoder;
+  var VSBuffer = class _VSBuffer {
+    /**
+     * When running in a nodejs context, if `actual` is not a nodejs Buffer, the backing store for
+     * the returned `VSBuffer` instance might use a nodejs Buffer allocated from node's Buffer pool,
+     * which is not transferrable.
+     */
+    static wrap(actual) {
+      if (hasBuffer && !Buffer.isBuffer(actual)) {
+        actual = Buffer.from(actual.buffer, actual.byteOffset, actual.byteLength);
+      }
+      return new _VSBuffer(actual);
+    }
+    constructor(buffer) {
+      this.buffer = buffer;
+      this.byteLength = this.buffer.byteLength;
+    }
+    toString() {
+      if (hasBuffer) {
+        return this.buffer.toString();
+      } else {
+        if (!textDecoder) {
+          textDecoder = new TextDecoder();
+        }
+        return textDecoder.decode(this.buffer);
+      }
+    }
+  };
+  var hexChars = "0123456789abcdef";
+  function encodeHex({ buffer }) {
+    let result = "";
+    for (let i = 0; i < buffer.length; i++) {
+      const byte = buffer[i];
+      result += hexChars[byte >>> 4];
+      result += hexChars[byte & 15];
+    }
+    return result;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/hash.js
+  function numberHash(val, initialHashVal) {
+    return (initialHashVal << 5) - initialHashVal + val | 0;
+  }
+  function stringHash(s, hashVal) {
+    hashVal = numberHash(149417, hashVal);
+    for (let i = 0, length = s.length; i < length; i++) {
+      hashVal = numberHash(s.charCodeAt(i), hashVal);
+    }
+    return hashVal;
+  }
+  function leftRotate(value, bits, totalBits = 32) {
+    const delta = totalBits - bits;
+    const mask = ~((1 << delta) - 1);
+    return (value << bits | (mask & value) >>> delta) >>> 0;
+  }
+  function toHexString(bufferOrValue, bitsize = 32) {
+    if (bufferOrValue instanceof ArrayBuffer) {
+      return encodeHex(VSBuffer.wrap(new Uint8Array(bufferOrValue)));
+    }
+    return (bufferOrValue >>> 0).toString(16).padStart(bitsize / 4, "0");
+  }
+  var StringSHA1 = class _StringSHA1 {
+    static {
+      this._bigBlock32 = new DataView(new ArrayBuffer(320));
+    }
+    // 80 * 4 = 320
+    constructor() {
+      this._h0 = 1732584193;
+      this._h1 = 4023233417;
+      this._h2 = 2562383102;
+      this._h3 = 271733878;
+      this._h4 = 3285377520;
+      this._buff = new Uint8Array(
+        64 + 3
+        /* to fit any utf-8 */
+      );
+      this._buffDV = new DataView(this._buff.buffer);
+      this._buffLen = 0;
+      this._totalLen = 0;
+      this._leftoverHighSurrogate = 0;
+      this._finished = false;
+    }
+    update(str) {
+      const strLen = str.length;
+      if (strLen === 0) {
+        return;
+      }
+      const buff = this._buff;
+      let buffLen = this._buffLen;
+      let leftoverHighSurrogate = this._leftoverHighSurrogate;
+      let charCode;
+      let offset;
+      if (leftoverHighSurrogate !== 0) {
+        charCode = leftoverHighSurrogate;
+        offset = -1;
+        leftoverHighSurrogate = 0;
+      } else {
+        charCode = str.charCodeAt(0);
+        offset = 0;
+      }
+      while (true) {
+        let codePoint = charCode;
+        if (isHighSurrogate(charCode)) {
+          if (offset + 1 < strLen) {
+            const nextCharCode = str.charCodeAt(offset + 1);
+            if (isLowSurrogate(nextCharCode)) {
+              offset++;
+              codePoint = computeCodePoint(charCode, nextCharCode);
+            } else {
+              codePoint = 65533;
+            }
+          } else {
+            leftoverHighSurrogate = charCode;
+            break;
+          }
+        } else if (isLowSurrogate(charCode)) {
+          codePoint = 65533;
+        }
+        buffLen = this._push(buff, buffLen, codePoint);
+        offset++;
+        if (offset < strLen) {
+          charCode = str.charCodeAt(offset);
+        } else {
+          break;
+        }
+      }
+      this._buffLen = buffLen;
+      this._leftoverHighSurrogate = leftoverHighSurrogate;
+    }
+    _push(buff, buffLen, codePoint) {
+      if (codePoint < 128) {
+        buff[buffLen++] = codePoint;
+      } else if (codePoint < 2048) {
+        buff[buffLen++] = 192 | (codePoint & 1984) >>> 6;
+        buff[buffLen++] = 128 | (codePoint & 63) >>> 0;
+      } else if (codePoint < 65536) {
+        buff[buffLen++] = 224 | (codePoint & 61440) >>> 12;
+        buff[buffLen++] = 128 | (codePoint & 4032) >>> 6;
+        buff[buffLen++] = 128 | (codePoint & 63) >>> 0;
+      } else {
+        buff[buffLen++] = 240 | (codePoint & 1835008) >>> 18;
+        buff[buffLen++] = 128 | (codePoint & 258048) >>> 12;
+        buff[buffLen++] = 128 | (codePoint & 4032) >>> 6;
+        buff[buffLen++] = 128 | (codePoint & 63) >>> 0;
+      }
+      if (buffLen >= 64) {
+        this._step();
+        buffLen -= 64;
+        this._totalLen += 64;
+        buff[0] = buff[64 + 0];
+        buff[1] = buff[64 + 1];
+        buff[2] = buff[64 + 2];
+      }
+      return buffLen;
+    }
+    digest() {
+      if (!this._finished) {
+        this._finished = true;
+        if (this._leftoverHighSurrogate) {
+          this._leftoverHighSurrogate = 0;
+          this._buffLen = this._push(
+            this._buff,
+            this._buffLen,
+            65533
+            /* SHA1Constant.UNICODE_REPLACEMENT */
+          );
+        }
+        this._totalLen += this._buffLen;
+        this._wrapUp();
+      }
+      return toHexString(this._h0) + toHexString(this._h1) + toHexString(this._h2) + toHexString(this._h3) + toHexString(this._h4);
+    }
+    _wrapUp() {
+      this._buff[this._buffLen++] = 128;
+      this._buff.subarray(this._buffLen).fill(0);
+      if (this._buffLen > 56) {
+        this._step();
+        this._buff.fill(0);
+      }
+      const ml = 8 * this._totalLen;
+      this._buffDV.setUint32(56, Math.floor(ml / 4294967296), false);
+      this._buffDV.setUint32(60, ml % 4294967296, false);
+      this._step();
+    }
+    _step() {
+      const bigBlock32 = _StringSHA1._bigBlock32;
+      const data = this._buffDV;
+      for (let j = 0; j < 64; j += 4) {
+        bigBlock32.setUint32(j, data.getUint32(j, false), false);
+      }
+      for (let j = 64; j < 320; j += 4) {
+        bigBlock32.setUint32(j, leftRotate(bigBlock32.getUint32(j - 12, false) ^ bigBlock32.getUint32(j - 32, false) ^ bigBlock32.getUint32(j - 56, false) ^ bigBlock32.getUint32(j - 64, false), 1), false);
+      }
+      let a = this._h0;
+      let b = this._h1;
+      let c = this._h2;
+      let d = this._h3;
+      let e = this._h4;
+      let f, k;
+      let temp;
+      for (let j = 0; j < 80; j++) {
+        if (j < 20) {
+          f = b & c | ~b & d;
+          k = 1518500249;
+        } else if (j < 40) {
+          f = b ^ c ^ d;
+          k = 1859775393;
+        } else if (j < 60) {
+          f = b & c | b & d | c & d;
+          k = 2400959708;
+        } else {
+          f = b ^ c ^ d;
+          k = 3395469782;
+        }
+        temp = leftRotate(a, 5) + f + e + k + bigBlock32.getUint32(j * 4, false) & 4294967295;
+        e = d;
+        d = c;
+        c = leftRotate(b, 30);
+        b = a;
+        a = temp;
+      }
+      this._h0 = this._h0 + a & 4294967295;
+      this._h1 = this._h1 + b & 4294967295;
+      this._h2 = this._h2 + c & 4294967295;
+      this._h3 = this._h3 + d & 4294967295;
+      this._h4 = this._h4 + e & 4294967295;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/diff/diff.js
+  var StringDiffSequence = class {
+    constructor(source) {
+      this.source = source;
+    }
+    getElements() {
+      const source = this.source;
+      const characters = new Int32Array(source.length);
+      for (let i = 0, len = source.length; i < len; i++) {
+        characters[i] = source.charCodeAt(i);
+      }
+      return characters;
+    }
+  };
+  function stringDiff(original, modified, pretty) {
+    return new LcsDiff(new StringDiffSequence(original), new StringDiffSequence(modified)).ComputeDiff(pretty).changes;
+  }
+  var Debug = class {
+    static Assert(condition, message) {
+      if (!condition) {
+        throw new Error(message);
+      }
+    }
+  };
+  var MyArray = class {
+    /**
+     * Copies a range of elements from an Array starting at the specified source index and pastes
+     * them to another Array starting at the specified destination index. The length and the indexes
+     * are specified as 64-bit integers.
+     * sourceArray:
+     *		The Array that contains the data to copy.
+     * sourceIndex:
+     *		A 64-bit integer that represents the index in the sourceArray at which copying begins.
+     * destinationArray:
+     *		The Array that receives the data.
+     * destinationIndex:
+     *		A 64-bit integer that represents the index in the destinationArray at which storing begins.
+     * length:
+     *		A 64-bit integer that represents the number of elements to copy.
+     */
+    static Copy(sourceArray, sourceIndex, destinationArray, destinationIndex, length) {
+      for (let i = 0; i < length; i++) {
+        destinationArray[destinationIndex + i] = sourceArray[sourceIndex + i];
+      }
+    }
+    static Copy2(sourceArray, sourceIndex, destinationArray, destinationIndex, length) {
+      for (let i = 0; i < length; i++) {
+        destinationArray[destinationIndex + i] = sourceArray[sourceIndex + i];
+      }
+    }
+  };
+  var DiffChangeHelper = class {
+    /**
+     * Constructs a new DiffChangeHelper for the given DiffSequences.
+     */
+    constructor() {
+      this.m_changes = [];
+      this.m_originalStart = 1073741824;
+      this.m_modifiedStart = 1073741824;
+      this.m_originalCount = 0;
+      this.m_modifiedCount = 0;
+    }
+    /**
+     * Marks the beginning of the next change in the set of differences.
+     */
+    MarkNextChange() {
+      if (this.m_originalCount > 0 || this.m_modifiedCount > 0) {
+        this.m_changes.push(new DiffChange(this.m_originalStart, this.m_originalCount, this.m_modifiedStart, this.m_modifiedCount));
+      }
+      this.m_originalCount = 0;
+      this.m_modifiedCount = 0;
+      this.m_originalStart = 1073741824;
+      this.m_modifiedStart = 1073741824;
+    }
+    /**
+     * Adds the original element at the given position to the elements
+     * affected by the current change. The modified index gives context
+     * to the change position with respect to the original sequence.
+     * @param originalIndex The index of the original element to add.
+     * @param modifiedIndex The index of the modified element that provides corresponding position in the modified sequence.
+     */
+    AddOriginalElement(originalIndex, modifiedIndex) {
+      this.m_originalStart = Math.min(this.m_originalStart, originalIndex);
+      this.m_modifiedStart = Math.min(this.m_modifiedStart, modifiedIndex);
+      this.m_originalCount++;
+    }
+    /**
+     * Adds the modified element at the given position to the elements
+     * affected by the current change. The original index gives context
+     * to the change position with respect to the modified sequence.
+     * @param originalIndex The index of the original element that provides corresponding position in the original sequence.
+     * @param modifiedIndex The index of the modified element to add.
+     */
+    AddModifiedElement(originalIndex, modifiedIndex) {
+      this.m_originalStart = Math.min(this.m_originalStart, originalIndex);
+      this.m_modifiedStart = Math.min(this.m_modifiedStart, modifiedIndex);
+      this.m_modifiedCount++;
+    }
+    /**
+     * Retrieves all of the changes marked by the class.
+     */
+    getChanges() {
+      if (this.m_originalCount > 0 || this.m_modifiedCount > 0) {
+        this.MarkNextChange();
+      }
+      return this.m_changes;
+    }
+    /**
+     * Retrieves all of the changes marked by the class in the reverse order
+     */
+    getReverseChanges() {
+      if (this.m_originalCount > 0 || this.m_modifiedCount > 0) {
+        this.MarkNextChange();
+      }
+      this.m_changes.reverse();
+      return this.m_changes;
+    }
+  };
+  var LcsDiff = class _LcsDiff {
+    /**
+     * Constructs the DiffFinder
+     */
+    constructor(originalSequence, modifiedSequence, continueProcessingPredicate = null) {
+      this.ContinueProcessingPredicate = continueProcessingPredicate;
+      this._originalSequence = originalSequence;
+      this._modifiedSequence = modifiedSequence;
+      const [originalStringElements, originalElementsOrHash, originalHasStrings] = _LcsDiff._getElements(originalSequence);
+      const [modifiedStringElements, modifiedElementsOrHash, modifiedHasStrings] = _LcsDiff._getElements(modifiedSequence);
+      this._hasStrings = originalHasStrings && modifiedHasStrings;
+      this._originalStringElements = originalStringElements;
+      this._originalElementsOrHash = originalElementsOrHash;
+      this._modifiedStringElements = modifiedStringElements;
+      this._modifiedElementsOrHash = modifiedElementsOrHash;
+      this.m_forwardHistory = [];
+      this.m_reverseHistory = [];
+    }
+    static _isStringArray(arr) {
+      return arr.length > 0 && typeof arr[0] === "string";
+    }
+    static _getElements(sequence) {
+      const elements = sequence.getElements();
+      if (_LcsDiff._isStringArray(elements)) {
+        const hashes = new Int32Array(elements.length);
+        for (let i = 0, len = elements.length; i < len; i++) {
+          hashes[i] = stringHash(elements[i], 0);
+        }
+        return [elements, hashes, true];
+      }
+      if (elements instanceof Int32Array) {
+        return [[], elements, false];
+      }
+      return [[], new Int32Array(elements), false];
+    }
+    ElementsAreEqual(originalIndex, newIndex) {
+      if (this._originalElementsOrHash[originalIndex] !== this._modifiedElementsOrHash[newIndex]) {
+        return false;
+      }
+      return this._hasStrings ? this._originalStringElements[originalIndex] === this._modifiedStringElements[newIndex] : true;
+    }
+    ElementsAreStrictEqual(originalIndex, newIndex) {
+      if (!this.ElementsAreEqual(originalIndex, newIndex)) {
+        return false;
+      }
+      const originalElement = _LcsDiff._getStrictElement(this._originalSequence, originalIndex);
+      const modifiedElement = _LcsDiff._getStrictElement(this._modifiedSequence, newIndex);
+      return originalElement === modifiedElement;
+    }
+    static _getStrictElement(sequence, index) {
+      if (typeof sequence.getStrictElement === "function") {
+        return sequence.getStrictElement(index);
+      }
+      return null;
+    }
+    OriginalElementsAreEqual(index1, index2) {
+      if (this._originalElementsOrHash[index1] !== this._originalElementsOrHash[index2]) {
+        return false;
+      }
+      return this._hasStrings ? this._originalStringElements[index1] === this._originalStringElements[index2] : true;
+    }
+    ModifiedElementsAreEqual(index1, index2) {
+      if (this._modifiedElementsOrHash[index1] !== this._modifiedElementsOrHash[index2]) {
+        return false;
+      }
+      return this._hasStrings ? this._modifiedStringElements[index1] === this._modifiedStringElements[index2] : true;
+    }
+    ComputeDiff(pretty) {
+      return this._ComputeDiff(0, this._originalElementsOrHash.length - 1, 0, this._modifiedElementsOrHash.length - 1, pretty);
+    }
+    /**
+     * Computes the differences between the original and modified input
+     * sequences on the bounded range.
+     * @returns An array of the differences between the two input sequences.
+     */
+    _ComputeDiff(originalStart, originalEnd, modifiedStart, modifiedEnd, pretty) {
+      const quitEarlyArr = [false];
+      let changes = this.ComputeDiffRecursive(originalStart, originalEnd, modifiedStart, modifiedEnd, quitEarlyArr);
+      if (pretty) {
+        changes = this.PrettifyChanges(changes);
+      }
+      return {
+        quitEarly: quitEarlyArr[0],
+        changes
+      };
+    }
+    /**
+     * Private helper method which computes the differences on the bounded range
+     * recursively.
+     * @returns An array of the differences between the two input sequences.
+     */
+    ComputeDiffRecursive(originalStart, originalEnd, modifiedStart, modifiedEnd, quitEarlyArr) {
+      quitEarlyArr[0] = false;
+      while (originalStart <= originalEnd && modifiedStart <= modifiedEnd && this.ElementsAreEqual(originalStart, modifiedStart)) {
+        originalStart++;
+        modifiedStart++;
+      }
+      while (originalEnd >= originalStart && modifiedEnd >= modifiedStart && this.ElementsAreEqual(originalEnd, modifiedEnd)) {
+        originalEnd--;
+        modifiedEnd--;
+      }
+      if (originalStart > originalEnd || modifiedStart > modifiedEnd) {
+        let changes;
+        if (modifiedStart <= modifiedEnd) {
+          Debug.Assert(originalStart === originalEnd + 1, "originalStart should only be one more than originalEnd");
+          changes = [
+            new DiffChange(originalStart, 0, modifiedStart, modifiedEnd - modifiedStart + 1)
+          ];
+        } else if (originalStart <= originalEnd) {
+          Debug.Assert(modifiedStart === modifiedEnd + 1, "modifiedStart should only be one more than modifiedEnd");
+          changes = [
+            new DiffChange(originalStart, originalEnd - originalStart + 1, modifiedStart, 0)
+          ];
+        } else {
+          Debug.Assert(originalStart === originalEnd + 1, "originalStart should only be one more than originalEnd");
+          Debug.Assert(modifiedStart === modifiedEnd + 1, "modifiedStart should only be one more than modifiedEnd");
+          changes = [];
+        }
+        return changes;
+      }
+      const midOriginalArr = [0];
+      const midModifiedArr = [0];
+      const result = this.ComputeRecursionPoint(originalStart, originalEnd, modifiedStart, modifiedEnd, midOriginalArr, midModifiedArr, quitEarlyArr);
+      const midOriginal = midOriginalArr[0];
+      const midModified = midModifiedArr[0];
+      if (result !== null) {
+        return result;
+      } else if (!quitEarlyArr[0]) {
+        const leftChanges = this.ComputeDiffRecursive(originalStart, midOriginal, modifiedStart, midModified, quitEarlyArr);
+        let rightChanges = [];
+        if (!quitEarlyArr[0]) {
+          rightChanges = this.ComputeDiffRecursive(midOriginal + 1, originalEnd, midModified + 1, modifiedEnd, quitEarlyArr);
+        } else {
+          rightChanges = [
+            new DiffChange(midOriginal + 1, originalEnd - (midOriginal + 1) + 1, midModified + 1, modifiedEnd - (midModified + 1) + 1)
+          ];
+        }
+        return this.ConcatenateChanges(leftChanges, rightChanges);
+      }
+      return [
+        new DiffChange(originalStart, originalEnd - originalStart + 1, modifiedStart, modifiedEnd - modifiedStart + 1)
+      ];
+    }
+    WALKTRACE(diagonalForwardBase, diagonalForwardStart, diagonalForwardEnd, diagonalForwardOffset, diagonalReverseBase, diagonalReverseStart, diagonalReverseEnd, diagonalReverseOffset, forwardPoints, reversePoints, originalIndex, originalEnd, midOriginalArr, modifiedIndex, modifiedEnd, midModifiedArr, deltaIsEven, quitEarlyArr) {
+      let forwardChanges = null;
+      let reverseChanges = null;
+      let changeHelper = new DiffChangeHelper();
+      let diagonalMin = diagonalForwardStart;
+      let diagonalMax = diagonalForwardEnd;
+      let diagonalRelative = midOriginalArr[0] - midModifiedArr[0] - diagonalForwardOffset;
+      let lastOriginalIndex = -1073741824;
+      let historyIndex = this.m_forwardHistory.length - 1;
+      do {
+        const diagonal = diagonalRelative + diagonalForwardBase;
+        if (diagonal === diagonalMin || diagonal < diagonalMax && forwardPoints[diagonal - 1] < forwardPoints[diagonal + 1]) {
+          originalIndex = forwardPoints[diagonal + 1];
+          modifiedIndex = originalIndex - diagonalRelative - diagonalForwardOffset;
+          if (originalIndex < lastOriginalIndex) {
+            changeHelper.MarkNextChange();
+          }
+          lastOriginalIndex = originalIndex;
+          changeHelper.AddModifiedElement(originalIndex + 1, modifiedIndex);
+          diagonalRelative = diagonal + 1 - diagonalForwardBase;
+        } else {
+          originalIndex = forwardPoints[diagonal - 1] + 1;
+          modifiedIndex = originalIndex - diagonalRelative - diagonalForwardOffset;
+          if (originalIndex < lastOriginalIndex) {
+            changeHelper.MarkNextChange();
+          }
+          lastOriginalIndex = originalIndex - 1;
+          changeHelper.AddOriginalElement(originalIndex, modifiedIndex + 1);
+          diagonalRelative = diagonal - 1 - diagonalForwardBase;
+        }
+        if (historyIndex >= 0) {
+          forwardPoints = this.m_forwardHistory[historyIndex];
+          diagonalForwardBase = forwardPoints[0];
+          diagonalMin = 1;
+          diagonalMax = forwardPoints.length - 1;
+        }
+      } while (--historyIndex >= -1);
+      forwardChanges = changeHelper.getReverseChanges();
+      if (quitEarlyArr[0]) {
+        let originalStartPoint = midOriginalArr[0] + 1;
+        let modifiedStartPoint = midModifiedArr[0] + 1;
+        if (forwardChanges !== null && forwardChanges.length > 0) {
+          const lastForwardChange = forwardChanges[forwardChanges.length - 1];
+          originalStartPoint = Math.max(originalStartPoint, lastForwardChange.getOriginalEnd());
+          modifiedStartPoint = Math.max(modifiedStartPoint, lastForwardChange.getModifiedEnd());
+        }
+        reverseChanges = [
+          new DiffChange(originalStartPoint, originalEnd - originalStartPoint + 1, modifiedStartPoint, modifiedEnd - modifiedStartPoint + 1)
+        ];
+      } else {
+        changeHelper = new DiffChangeHelper();
+        diagonalMin = diagonalReverseStart;
+        diagonalMax = diagonalReverseEnd;
+        diagonalRelative = midOriginalArr[0] - midModifiedArr[0] - diagonalReverseOffset;
+        lastOriginalIndex = 1073741824;
+        historyIndex = deltaIsEven ? this.m_reverseHistory.length - 1 : this.m_reverseHistory.length - 2;
+        do {
+          const diagonal = diagonalRelative + diagonalReverseBase;
+          if (diagonal === diagonalMin || diagonal < diagonalMax && reversePoints[diagonal - 1] >= reversePoints[diagonal + 1]) {
+            originalIndex = reversePoints[diagonal + 1] - 1;
+            modifiedIndex = originalIndex - diagonalRelative - diagonalReverseOffset;
+            if (originalIndex > lastOriginalIndex) {
+              changeHelper.MarkNextChange();
+            }
+            lastOriginalIndex = originalIndex + 1;
+            changeHelper.AddOriginalElement(originalIndex + 1, modifiedIndex + 1);
+            diagonalRelative = diagonal + 1 - diagonalReverseBase;
+          } else {
+            originalIndex = reversePoints[diagonal - 1];
+            modifiedIndex = originalIndex - diagonalRelative - diagonalReverseOffset;
+            if (originalIndex > lastOriginalIndex) {
+              changeHelper.MarkNextChange();
+            }
+            lastOriginalIndex = originalIndex;
+            changeHelper.AddModifiedElement(originalIndex + 1, modifiedIndex + 1);
+            diagonalRelative = diagonal - 1 - diagonalReverseBase;
+          }
+          if (historyIndex >= 0) {
+            reversePoints = this.m_reverseHistory[historyIndex];
+            diagonalReverseBase = reversePoints[0];
+            diagonalMin = 1;
+            diagonalMax = reversePoints.length - 1;
+          }
+        } while (--historyIndex >= -1);
+        reverseChanges = changeHelper.getChanges();
+      }
+      return this.ConcatenateChanges(forwardChanges, reverseChanges);
+    }
+    /**
+     * Given the range to compute the diff on, this method finds the point:
+     * (midOriginal, midModified)
+     * that exists in the middle of the LCS of the two sequences and
+     * is the point at which the LCS problem may be broken down recursively.
+     * This method will try to keep the LCS trace in memory. If the LCS recursion
+     * point is calculated and the full trace is available in memory, then this method
+     * will return the change list.
+     * @param originalStart The start bound of the original sequence range
+     * @param originalEnd The end bound of the original sequence range
+     * @param modifiedStart The start bound of the modified sequence range
+     * @param modifiedEnd The end bound of the modified sequence range
+     * @param midOriginal The middle point of the original sequence range
+     * @param midModified The middle point of the modified sequence range
+     * @returns The diff changes, if available, otherwise null
+     */
+    ComputeRecursionPoint(originalStart, originalEnd, modifiedStart, modifiedEnd, midOriginalArr, midModifiedArr, quitEarlyArr) {
+      let originalIndex = 0, modifiedIndex = 0;
+      let diagonalForwardStart = 0, diagonalForwardEnd = 0;
+      let diagonalReverseStart = 0, diagonalReverseEnd = 0;
+      originalStart--;
+      modifiedStart--;
+      midOriginalArr[0] = 0;
+      midModifiedArr[0] = 0;
+      this.m_forwardHistory = [];
+      this.m_reverseHistory = [];
+      const maxDifferences = originalEnd - originalStart + (modifiedEnd - modifiedStart);
+      const numDiagonals = maxDifferences + 1;
+      const forwardPoints = new Int32Array(numDiagonals);
+      const reversePoints = new Int32Array(numDiagonals);
+      const diagonalForwardBase = modifiedEnd - modifiedStart;
+      const diagonalReverseBase = originalEnd - originalStart;
+      const diagonalForwardOffset = originalStart - modifiedStart;
+      const diagonalReverseOffset = originalEnd - modifiedEnd;
+      const delta = diagonalReverseBase - diagonalForwardBase;
+      const deltaIsEven = delta % 2 === 0;
+      forwardPoints[diagonalForwardBase] = originalStart;
+      reversePoints[diagonalReverseBase] = originalEnd;
+      quitEarlyArr[0] = false;
+      for (let numDifferences = 1; numDifferences <= maxDifferences / 2 + 1; numDifferences++) {
+        let furthestOriginalIndex = 0;
+        let furthestModifiedIndex = 0;
+        diagonalForwardStart = this.ClipDiagonalBound(diagonalForwardBase - numDifferences, numDifferences, diagonalForwardBase, numDiagonals);
+        diagonalForwardEnd = this.ClipDiagonalBound(diagonalForwardBase + numDifferences, numDifferences, diagonalForwardBase, numDiagonals);
+        for (let diagonal = diagonalForwardStart; diagonal <= diagonalForwardEnd; diagonal += 2) {
+          if (diagonal === diagonalForwardStart || diagonal < diagonalForwardEnd && forwardPoints[diagonal - 1] < forwardPoints[diagonal + 1]) {
+            originalIndex = forwardPoints[diagonal + 1];
+          } else {
+            originalIndex = forwardPoints[diagonal - 1] + 1;
+          }
+          modifiedIndex = originalIndex - (diagonal - diagonalForwardBase) - diagonalForwardOffset;
+          const tempOriginalIndex = originalIndex;
+          while (originalIndex < originalEnd && modifiedIndex < modifiedEnd && this.ElementsAreEqual(originalIndex + 1, modifiedIndex + 1)) {
+            originalIndex++;
+            modifiedIndex++;
+          }
+          forwardPoints[diagonal] = originalIndex;
+          if (originalIndex + modifiedIndex > furthestOriginalIndex + furthestModifiedIndex) {
+            furthestOriginalIndex = originalIndex;
+            furthestModifiedIndex = modifiedIndex;
+          }
+          if (!deltaIsEven && Math.abs(diagonal - diagonalReverseBase) <= numDifferences - 1) {
+            if (originalIndex >= reversePoints[diagonal]) {
+              midOriginalArr[0] = originalIndex;
+              midModifiedArr[0] = modifiedIndex;
+              if (tempOriginalIndex <= reversePoints[diagonal] && 1447 > 0 && numDifferences <= 1447 + 1) {
+                return this.WALKTRACE(diagonalForwardBase, diagonalForwardStart, diagonalForwardEnd, diagonalForwardOffset, diagonalReverseBase, diagonalReverseStart, diagonalReverseEnd, diagonalReverseOffset, forwardPoints, reversePoints, originalIndex, originalEnd, midOriginalArr, modifiedIndex, modifiedEnd, midModifiedArr, deltaIsEven, quitEarlyArr);
+              } else {
+                return null;
+              }
+            }
+          }
+        }
+        const matchLengthOfLongest = (furthestOriginalIndex - originalStart + (furthestModifiedIndex - modifiedStart) - numDifferences) / 2;
+        if (this.ContinueProcessingPredicate !== null && !this.ContinueProcessingPredicate(furthestOriginalIndex, matchLengthOfLongest)) {
+          quitEarlyArr[0] = true;
+          midOriginalArr[0] = furthestOriginalIndex;
+          midModifiedArr[0] = furthestModifiedIndex;
+          if (matchLengthOfLongest > 0 && 1447 > 0 && numDifferences <= 1447 + 1) {
+            return this.WALKTRACE(diagonalForwardBase, diagonalForwardStart, diagonalForwardEnd, diagonalForwardOffset, diagonalReverseBase, diagonalReverseStart, diagonalReverseEnd, diagonalReverseOffset, forwardPoints, reversePoints, originalIndex, originalEnd, midOriginalArr, modifiedIndex, modifiedEnd, midModifiedArr, deltaIsEven, quitEarlyArr);
+          } else {
+            originalStart++;
+            modifiedStart++;
+            return [
+              new DiffChange(originalStart, originalEnd - originalStart + 1, modifiedStart, modifiedEnd - modifiedStart + 1)
+            ];
+          }
+        }
+        diagonalReverseStart = this.ClipDiagonalBound(diagonalReverseBase - numDifferences, numDifferences, diagonalReverseBase, numDiagonals);
+        diagonalReverseEnd = this.ClipDiagonalBound(diagonalReverseBase + numDifferences, numDifferences, diagonalReverseBase, numDiagonals);
+        for (let diagonal = diagonalReverseStart; diagonal <= diagonalReverseEnd; diagonal += 2) {
+          if (diagonal === diagonalReverseStart || diagonal < diagonalReverseEnd && reversePoints[diagonal - 1] >= reversePoints[diagonal + 1]) {
+            originalIndex = reversePoints[diagonal + 1] - 1;
+          } else {
+            originalIndex = reversePoints[diagonal - 1];
+          }
+          modifiedIndex = originalIndex - (diagonal - diagonalReverseBase) - diagonalReverseOffset;
+          const tempOriginalIndex = originalIndex;
+          while (originalIndex > originalStart && modifiedIndex > modifiedStart && this.ElementsAreEqual(originalIndex, modifiedIndex)) {
+            originalIndex--;
+            modifiedIndex--;
+          }
+          reversePoints[diagonal] = originalIndex;
+          if (deltaIsEven && Math.abs(diagonal - diagonalForwardBase) <= numDifferences) {
+            if (originalIndex <= forwardPoints[diagonal]) {
+              midOriginalArr[0] = originalIndex;
+              midModifiedArr[0] = modifiedIndex;
+              if (tempOriginalIndex >= forwardPoints[diagonal] && 1447 > 0 && numDifferences <= 1447 + 1) {
+                return this.WALKTRACE(diagonalForwardBase, diagonalForwardStart, diagonalForwardEnd, diagonalForwardOffset, diagonalReverseBase, diagonalReverseStart, diagonalReverseEnd, diagonalReverseOffset, forwardPoints, reversePoints, originalIndex, originalEnd, midOriginalArr, modifiedIndex, modifiedEnd, midModifiedArr, deltaIsEven, quitEarlyArr);
+              } else {
+                return null;
+              }
+            }
+          }
+        }
+        if (numDifferences <= 1447) {
+          let temp = new Int32Array(diagonalForwardEnd - diagonalForwardStart + 2);
+          temp[0] = diagonalForwardBase - diagonalForwardStart + 1;
+          MyArray.Copy2(forwardPoints, diagonalForwardStart, temp, 1, diagonalForwardEnd - diagonalForwardStart + 1);
+          this.m_forwardHistory.push(temp);
+          temp = new Int32Array(diagonalReverseEnd - diagonalReverseStart + 2);
+          temp[0] = diagonalReverseBase - diagonalReverseStart + 1;
+          MyArray.Copy2(reversePoints, diagonalReverseStart, temp, 1, diagonalReverseEnd - diagonalReverseStart + 1);
+          this.m_reverseHistory.push(temp);
+        }
+      }
+      return this.WALKTRACE(diagonalForwardBase, diagonalForwardStart, diagonalForwardEnd, diagonalForwardOffset, diagonalReverseBase, diagonalReverseStart, diagonalReverseEnd, diagonalReverseOffset, forwardPoints, reversePoints, originalIndex, originalEnd, midOriginalArr, modifiedIndex, modifiedEnd, midModifiedArr, deltaIsEven, quitEarlyArr);
+    }
+    /**
+     * Shifts the given changes to provide a more intuitive diff.
+     * While the first element in a diff matches the first element after the diff,
+     * we shift the diff down.
+     *
+     * @param changes The list of changes to shift
+     * @returns The shifted changes
+     */
+    PrettifyChanges(changes) {
+      for (let i = 0; i < changes.length; i++) {
+        const change = changes[i];
+        const originalStop = i < changes.length - 1 ? changes[i + 1].originalStart : this._originalElementsOrHash.length;
+        const modifiedStop = i < changes.length - 1 ? changes[i + 1].modifiedStart : this._modifiedElementsOrHash.length;
+        const checkOriginal = change.originalLength > 0;
+        const checkModified = change.modifiedLength > 0;
+        while (change.originalStart + change.originalLength < originalStop && change.modifiedStart + change.modifiedLength < modifiedStop && (!checkOriginal || this.OriginalElementsAreEqual(change.originalStart, change.originalStart + change.originalLength)) && (!checkModified || this.ModifiedElementsAreEqual(change.modifiedStart, change.modifiedStart + change.modifiedLength))) {
+          const startStrictEqual = this.ElementsAreStrictEqual(change.originalStart, change.modifiedStart);
+          const endStrictEqual = this.ElementsAreStrictEqual(change.originalStart + change.originalLength, change.modifiedStart + change.modifiedLength);
+          if (endStrictEqual && !startStrictEqual) {
+            break;
+          }
+          change.originalStart++;
+          change.modifiedStart++;
+        }
+        const mergedChangeArr = [null];
+        if (i < changes.length - 1 && this.ChangesOverlap(changes[i], changes[i + 1], mergedChangeArr)) {
+          changes[i] = mergedChangeArr[0];
+          changes.splice(i + 1, 1);
+          i--;
+          continue;
+        }
+      }
+      for (let i = changes.length - 1; i >= 0; i--) {
+        const change = changes[i];
+        let originalStop = 0;
+        let modifiedStop = 0;
+        if (i > 0) {
+          const prevChange = changes[i - 1];
+          originalStop = prevChange.originalStart + prevChange.originalLength;
+          modifiedStop = prevChange.modifiedStart + prevChange.modifiedLength;
+        }
+        const checkOriginal = change.originalLength > 0;
+        const checkModified = change.modifiedLength > 0;
+        let bestDelta = 0;
+        let bestScore = this._boundaryScore(change.originalStart, change.originalLength, change.modifiedStart, change.modifiedLength);
+        for (let delta = 1; ; delta++) {
+          const originalStart = change.originalStart - delta;
+          const modifiedStart = change.modifiedStart - delta;
+          if (originalStart < originalStop || modifiedStart < modifiedStop) {
+            break;
+          }
+          if (checkOriginal && !this.OriginalElementsAreEqual(originalStart, originalStart + change.originalLength)) {
+            break;
+          }
+          if (checkModified && !this.ModifiedElementsAreEqual(modifiedStart, modifiedStart + change.modifiedLength)) {
+            break;
+          }
+          const touchingPreviousChange = originalStart === originalStop && modifiedStart === modifiedStop;
+          const score2 = (touchingPreviousChange ? 5 : 0) + this._boundaryScore(originalStart, change.originalLength, modifiedStart, change.modifiedLength);
+          if (score2 > bestScore) {
+            bestScore = score2;
+            bestDelta = delta;
+          }
+        }
+        change.originalStart -= bestDelta;
+        change.modifiedStart -= bestDelta;
+        const mergedChangeArr = [null];
+        if (i > 0 && this.ChangesOverlap(changes[i - 1], changes[i], mergedChangeArr)) {
+          changes[i - 1] = mergedChangeArr[0];
+          changes.splice(i, 1);
+          i++;
+          continue;
+        }
+      }
+      if (this._hasStrings) {
+        for (let i = 1, len = changes.length; i < len; i++) {
+          const aChange = changes[i - 1];
+          const bChange = changes[i];
+          const matchedLength = bChange.originalStart - aChange.originalStart - aChange.originalLength;
+          const aOriginalStart = aChange.originalStart;
+          const bOriginalEnd = bChange.originalStart + bChange.originalLength;
+          const abOriginalLength = bOriginalEnd - aOriginalStart;
+          const aModifiedStart = aChange.modifiedStart;
+          const bModifiedEnd = bChange.modifiedStart + bChange.modifiedLength;
+          const abModifiedLength = bModifiedEnd - aModifiedStart;
+          if (matchedLength < 5 && abOriginalLength < 20 && abModifiedLength < 20) {
+            const t = this._findBetterContiguousSequence(aOriginalStart, abOriginalLength, aModifiedStart, abModifiedLength, matchedLength);
+            if (t) {
+              const [originalMatchStart, modifiedMatchStart] = t;
+              if (originalMatchStart !== aChange.originalStart + aChange.originalLength || modifiedMatchStart !== aChange.modifiedStart + aChange.modifiedLength) {
+                aChange.originalLength = originalMatchStart - aChange.originalStart;
+                aChange.modifiedLength = modifiedMatchStart - aChange.modifiedStart;
+                bChange.originalStart = originalMatchStart + matchedLength;
+                bChange.modifiedStart = modifiedMatchStart + matchedLength;
+                bChange.originalLength = bOriginalEnd - bChange.originalStart;
+                bChange.modifiedLength = bModifiedEnd - bChange.modifiedStart;
+              }
+            }
+          }
+        }
+      }
+      return changes;
+    }
+    _findBetterContiguousSequence(originalStart, originalLength, modifiedStart, modifiedLength, desiredLength) {
+      if (originalLength < desiredLength || modifiedLength < desiredLength) {
+        return null;
+      }
+      const originalMax = originalStart + originalLength - desiredLength + 1;
+      const modifiedMax = modifiedStart + modifiedLength - desiredLength + 1;
+      let bestScore = 0;
+      let bestOriginalStart = 0;
+      let bestModifiedStart = 0;
+      for (let i = originalStart; i < originalMax; i++) {
+        for (let j = modifiedStart; j < modifiedMax; j++) {
+          const score2 = this._contiguousSequenceScore(i, j, desiredLength);
+          if (score2 > 0 && score2 > bestScore) {
+            bestScore = score2;
+            bestOriginalStart = i;
+            bestModifiedStart = j;
+          }
+        }
+      }
+      if (bestScore > 0) {
+        return [bestOriginalStart, bestModifiedStart];
+      }
+      return null;
+    }
+    _contiguousSequenceScore(originalStart, modifiedStart, length) {
+      let score2 = 0;
+      for (let l = 0; l < length; l++) {
+        if (!this.ElementsAreEqual(originalStart + l, modifiedStart + l)) {
+          return 0;
+        }
+        score2 += this._originalStringElements[originalStart + l].length;
+      }
+      return score2;
+    }
+    _OriginalIsBoundary(index) {
+      if (index <= 0 || index >= this._originalElementsOrHash.length - 1) {
+        return true;
+      }
+      return this._hasStrings && /^\s*$/.test(this._originalStringElements[index]);
+    }
+    _OriginalRegionIsBoundary(originalStart, originalLength) {
+      if (this._OriginalIsBoundary(originalStart) || this._OriginalIsBoundary(originalStart - 1)) {
+        return true;
+      }
+      if (originalLength > 0) {
+        const originalEnd = originalStart + originalLength;
+        if (this._OriginalIsBoundary(originalEnd - 1) || this._OriginalIsBoundary(originalEnd)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    _ModifiedIsBoundary(index) {
+      if (index <= 0 || index >= this._modifiedElementsOrHash.length - 1) {
+        return true;
+      }
+      return this._hasStrings && /^\s*$/.test(this._modifiedStringElements[index]);
+    }
+    _ModifiedRegionIsBoundary(modifiedStart, modifiedLength) {
+      if (this._ModifiedIsBoundary(modifiedStart) || this._ModifiedIsBoundary(modifiedStart - 1)) {
+        return true;
+      }
+      if (modifiedLength > 0) {
+        const modifiedEnd = modifiedStart + modifiedLength;
+        if (this._ModifiedIsBoundary(modifiedEnd - 1) || this._ModifiedIsBoundary(modifiedEnd)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    _boundaryScore(originalStart, originalLength, modifiedStart, modifiedLength) {
+      const originalScore = this._OriginalRegionIsBoundary(originalStart, originalLength) ? 1 : 0;
+      const modifiedScore = this._ModifiedRegionIsBoundary(modifiedStart, modifiedLength) ? 1 : 0;
+      return originalScore + modifiedScore;
+    }
+    /**
+     * Concatenates the two input DiffChange lists and returns the resulting
+     * list.
+     * @param The left changes
+     * @param The right changes
+     * @returns The concatenated list
+     */
+    ConcatenateChanges(left, right) {
+      const mergedChangeArr = [];
+      if (left.length === 0 || right.length === 0) {
+        return right.length > 0 ? right : left;
+      } else if (this.ChangesOverlap(left[left.length - 1], right[0], mergedChangeArr)) {
+        const result = new Array(left.length + right.length - 1);
+        MyArray.Copy(left, 0, result, 0, left.length - 1);
+        result[left.length - 1] = mergedChangeArr[0];
+        MyArray.Copy(right, 1, result, left.length, right.length - 1);
+        return result;
+      } else {
+        const result = new Array(left.length + right.length);
+        MyArray.Copy(left, 0, result, 0, left.length);
+        MyArray.Copy(right, 0, result, left.length, right.length);
+        return result;
+      }
+    }
+    /**
+     * Returns true if the two changes overlap and can be merged into a single
+     * change
+     * @param left The left change
+     * @param right The right change
+     * @param mergedChange The merged change if the two overlap, null otherwise
+     * @returns True if the two changes overlap
+     */
+    ChangesOverlap(left, right, mergedChangeArr) {
+      Debug.Assert(left.originalStart <= right.originalStart, "Left change is not less than or equal to right change");
+      Debug.Assert(left.modifiedStart <= right.modifiedStart, "Left change is not less than or equal to right change");
+      if (left.originalStart + left.originalLength >= right.originalStart || left.modifiedStart + left.modifiedLength >= right.modifiedStart) {
+        const originalStart = left.originalStart;
+        let originalLength = left.originalLength;
+        const modifiedStart = left.modifiedStart;
+        let modifiedLength = left.modifiedLength;
+        if (left.originalStart + left.originalLength >= right.originalStart) {
+          originalLength = right.originalStart + right.originalLength - left.originalStart;
+        }
+        if (left.modifiedStart + left.modifiedLength >= right.modifiedStart) {
+          modifiedLength = right.modifiedStart + right.modifiedLength - left.modifiedStart;
+        }
+        mergedChangeArr[0] = new DiffChange(originalStart, originalLength, modifiedStart, modifiedLength);
+        return true;
+      } else {
+        mergedChangeArr[0] = null;
+        return false;
+      }
+    }
+    /**
+     * Helper method used to clip a diagonal index to the range of valid
+     * diagonals. This also decides whether or not the diagonal index,
+     * if it exceeds the boundary, should be clipped to the boundary or clipped
+     * one inside the boundary depending on the Even/Odd status of the boundary
+     * and numDifferences.
+     * @param diagonal The index of the diagonal to clip.
+     * @param numDifferences The current number of differences being iterated upon.
+     * @param diagonalBaseIndex The base reference diagonal.
+     * @param numDiagonals The total number of diagonals.
+     * @returns The clipped diagonal index.
+     */
+    ClipDiagonalBound(diagonal, numDifferences, diagonalBaseIndex, numDiagonals) {
+      if (diagonal >= 0 && diagonal < numDiagonals) {
+        return diagonal;
+      }
+      const diagonalsBelow = diagonalBaseIndex;
+      const diagonalsAbove = numDiagonals - diagonalBaseIndex - 1;
+      const diffEven = numDifferences % 2 === 0;
+      if (diagonal < 0) {
+        const lowerBoundEven = diagonalsBelow % 2 === 0;
+        return diffEven === lowerBoundEven ? 0 : 1;
+      } else {
+        const upperBoundEven = diagonalsAbove % 2 === 0;
+        return diffEven === upperBoundEven ? numDiagonals - 1 : numDiagonals - 2;
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/position.js
+  var Position = class _Position {
+    constructor(lineNumber, column) {
+      this.lineNumber = lineNumber;
+      this.column = column;
+    }
+    /**
+     * Create a new position from this position.
+     *
+     * @param newLineNumber new line number
+     * @param newColumn new column
+     */
+    with(newLineNumber = this.lineNumber, newColumn = this.column) {
+      if (newLineNumber === this.lineNumber && newColumn === this.column) {
+        return this;
+      } else {
+        return new _Position(newLineNumber, newColumn);
+      }
+    }
+    /**
+     * Derive a new position from this position.
+     *
+     * @param deltaLineNumber line number delta
+     * @param deltaColumn column delta
+     */
+    delta(deltaLineNumber = 0, deltaColumn = 0) {
+      return this.with(Math.max(1, this.lineNumber + deltaLineNumber), Math.max(1, this.column + deltaColumn));
+    }
+    /**
+     * Test if this position equals other position
+     */
+    equals(other) {
+      return _Position.equals(this, other);
+    }
+    /**
+     * Test if position `a` equals position `b`
+     */
+    static equals(a, b) {
+      if (!a && !b) {
+        return true;
+      }
+      return !!a && !!b && a.lineNumber === b.lineNumber && a.column === b.column;
+    }
+    /**
+     * Test if this position is before other position.
+     * If the two positions are equal, the result will be false.
+     */
+    isBefore(other) {
+      return _Position.isBefore(this, other);
+    }
+    /**
+     * Test if position `a` is before position `b`.
+     * If the two positions are equal, the result will be false.
+     */
+    static isBefore(a, b) {
+      if (a.lineNumber < b.lineNumber) {
+        return true;
+      }
+      if (b.lineNumber < a.lineNumber) {
+        return false;
+      }
+      return a.column < b.column;
+    }
+    /**
+     * Test if this position is before other position.
+     * If the two positions are equal, the result will be true.
+     */
+    isBeforeOrEqual(other) {
+      return _Position.isBeforeOrEqual(this, other);
+    }
+    /**
+     * Test if position `a` is before position `b`.
+     * If the two positions are equal, the result will be true.
+     */
+    static isBeforeOrEqual(a, b) {
+      if (a.lineNumber < b.lineNumber) {
+        return true;
+      }
+      if (b.lineNumber < a.lineNumber) {
+        return false;
+      }
+      return a.column <= b.column;
+    }
+    /**
+     * A function that compares positions, useful for sorting
+     */
+    static compare(a, b) {
+      const aLineNumber = a.lineNumber | 0;
+      const bLineNumber = b.lineNumber | 0;
+      if (aLineNumber === bLineNumber) {
+        const aColumn = a.column | 0;
+        const bColumn = b.column | 0;
+        return aColumn - bColumn;
+      }
+      return aLineNumber - bLineNumber;
+    }
+    /**
+     * Clone this position.
+     */
+    clone() {
+      return new _Position(this.lineNumber, this.column);
+    }
+    /**
+     * Convert to a human-readable representation.
+     */
+    toString() {
+      return "(" + this.lineNumber + "," + this.column + ")";
+    }
+    // ---
+    /**
+     * Create a `Position` from an `IPosition`.
+     */
+    static lift(pos) {
+      return new _Position(pos.lineNumber, pos.column);
+    }
+    /**
+     * Test if `obj` is an `IPosition`.
+     */
+    static isIPosition(obj) {
+      return !!obj && typeof obj.lineNumber === "number" && typeof obj.column === "number";
+    }
+    toJSON() {
+      return {
+        lineNumber: this.lineNumber,
+        column: this.column
+      };
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/range.js
+  var Range = class _Range {
+    constructor(startLineNumber, startColumn, endLineNumber, endColumn) {
+      if (startLineNumber > endLineNumber || startLineNumber === endLineNumber && startColumn > endColumn) {
+        this.startLineNumber = endLineNumber;
+        this.startColumn = endColumn;
+        this.endLineNumber = startLineNumber;
+        this.endColumn = startColumn;
+      } else {
+        this.startLineNumber = startLineNumber;
+        this.startColumn = startColumn;
+        this.endLineNumber = endLineNumber;
+        this.endColumn = endColumn;
+      }
+    }
+    /**
+     * Test if this range is empty.
+     */
+    isEmpty() {
+      return _Range.isEmpty(this);
+    }
+    /**
+     * Test if `range` is empty.
+     */
+    static isEmpty(range) {
+      return range.startLineNumber === range.endLineNumber && range.startColumn === range.endColumn;
+    }
+    /**
+     * Test if position is in this range. If the position is at the edges, will return true.
+     */
+    containsPosition(position) {
+      return _Range.containsPosition(this, position);
+    }
+    /**
+     * Test if `position` is in `range`. If the position is at the edges, will return true.
+     */
+    static containsPosition(range, position) {
+      if (position.lineNumber < range.startLineNumber || position.lineNumber > range.endLineNumber) {
+        return false;
+      }
+      if (position.lineNumber === range.startLineNumber && position.column < range.startColumn) {
+        return false;
+      }
+      if (position.lineNumber === range.endLineNumber && position.column > range.endColumn) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * Test if `position` is in `range`. If the position is at the edges, will return false.
+     * @internal
+     */
+    static strictContainsPosition(range, position) {
+      if (position.lineNumber < range.startLineNumber || position.lineNumber > range.endLineNumber) {
+        return false;
+      }
+      if (position.lineNumber === range.startLineNumber && position.column <= range.startColumn) {
+        return false;
+      }
+      if (position.lineNumber === range.endLineNumber && position.column >= range.endColumn) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * Test if range is in this range. If the range is equal to this range, will return true.
+     */
+    containsRange(range) {
+      return _Range.containsRange(this, range);
+    }
+    /**
+     * Test if `otherRange` is in `range`. If the ranges are equal, will return true.
+     */
+    static containsRange(range, otherRange) {
+      if (otherRange.startLineNumber < range.startLineNumber || otherRange.endLineNumber < range.startLineNumber) {
+        return false;
+      }
+      if (otherRange.startLineNumber > range.endLineNumber || otherRange.endLineNumber > range.endLineNumber) {
+        return false;
+      }
+      if (otherRange.startLineNumber === range.startLineNumber && otherRange.startColumn < range.startColumn) {
+        return false;
+      }
+      if (otherRange.endLineNumber === range.endLineNumber && otherRange.endColumn > range.endColumn) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * Test if `range` is strictly in this range. `range` must start after and end before this range for the result to be true.
+     */
+    strictContainsRange(range) {
+      return _Range.strictContainsRange(this, range);
+    }
+    /**
+     * Test if `otherRange` is strictly in `range` (must start after, and end before). If the ranges are equal, will return false.
+     */
+    static strictContainsRange(range, otherRange) {
+      if (otherRange.startLineNumber < range.startLineNumber || otherRange.endLineNumber < range.startLineNumber) {
+        return false;
+      }
+      if (otherRange.startLineNumber > range.endLineNumber || otherRange.endLineNumber > range.endLineNumber) {
+        return false;
+      }
+      if (otherRange.startLineNumber === range.startLineNumber && otherRange.startColumn <= range.startColumn) {
+        return false;
+      }
+      if (otherRange.endLineNumber === range.endLineNumber && otherRange.endColumn >= range.endColumn) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * A reunion of the two ranges.
+     * The smallest position will be used as the start point, and the largest one as the end point.
+     */
+    plusRange(range) {
+      return _Range.plusRange(this, range);
+    }
+    /**
+     * A reunion of the two ranges.
+     * The smallest position will be used as the start point, and the largest one as the end point.
+     */
+    static plusRange(a, b) {
+      let startLineNumber;
+      let startColumn;
+      let endLineNumber;
+      let endColumn;
+      if (b.startLineNumber < a.startLineNumber) {
+        startLineNumber = b.startLineNumber;
+        startColumn = b.startColumn;
+      } else if (b.startLineNumber === a.startLineNumber) {
+        startLineNumber = b.startLineNumber;
+        startColumn = Math.min(b.startColumn, a.startColumn);
+      } else {
+        startLineNumber = a.startLineNumber;
+        startColumn = a.startColumn;
+      }
+      if (b.endLineNumber > a.endLineNumber) {
+        endLineNumber = b.endLineNumber;
+        endColumn = b.endColumn;
+      } else if (b.endLineNumber === a.endLineNumber) {
+        endLineNumber = b.endLineNumber;
+        endColumn = Math.max(b.endColumn, a.endColumn);
+      } else {
+        endLineNumber = a.endLineNumber;
+        endColumn = a.endColumn;
+      }
+      return new _Range(startLineNumber, startColumn, endLineNumber, endColumn);
+    }
+    /**
+     * A intersection of the two ranges.
+     */
+    intersectRanges(range) {
+      return _Range.intersectRanges(this, range);
+    }
+    /**
+     * A intersection of the two ranges.
+     */
+    static intersectRanges(a, b) {
+      let resultStartLineNumber = a.startLineNumber;
+      let resultStartColumn = a.startColumn;
+      let resultEndLineNumber = a.endLineNumber;
+      let resultEndColumn = a.endColumn;
+      const otherStartLineNumber = b.startLineNumber;
+      const otherStartColumn = b.startColumn;
+      const otherEndLineNumber = b.endLineNumber;
+      const otherEndColumn = b.endColumn;
+      if (resultStartLineNumber < otherStartLineNumber) {
+        resultStartLineNumber = otherStartLineNumber;
+        resultStartColumn = otherStartColumn;
+      } else if (resultStartLineNumber === otherStartLineNumber) {
+        resultStartColumn = Math.max(resultStartColumn, otherStartColumn);
+      }
+      if (resultEndLineNumber > otherEndLineNumber) {
+        resultEndLineNumber = otherEndLineNumber;
+        resultEndColumn = otherEndColumn;
+      } else if (resultEndLineNumber === otherEndLineNumber) {
+        resultEndColumn = Math.min(resultEndColumn, otherEndColumn);
+      }
+      if (resultStartLineNumber > resultEndLineNumber) {
+        return null;
+      }
+      if (resultStartLineNumber === resultEndLineNumber && resultStartColumn > resultEndColumn) {
+        return null;
+      }
+      return new _Range(resultStartLineNumber, resultStartColumn, resultEndLineNumber, resultEndColumn);
+    }
+    /**
+     * Test if this range equals other.
+     */
+    equalsRange(other) {
+      return _Range.equalsRange(this, other);
+    }
+    /**
+     * Test if range `a` equals `b`.
+     */
+    static equalsRange(a, b) {
+      if (!a && !b) {
+        return true;
+      }
+      return !!a && !!b && a.startLineNumber === b.startLineNumber && a.startColumn === b.startColumn && a.endLineNumber === b.endLineNumber && a.endColumn === b.endColumn;
+    }
+    /**
+     * Return the end position (which will be after or equal to the start position)
+     */
+    getEndPosition() {
+      return _Range.getEndPosition(this);
+    }
+    /**
+     * Return the end position (which will be after or equal to the start position)
+     */
+    static getEndPosition(range) {
+      return new Position(range.endLineNumber, range.endColumn);
+    }
+    /**
+     * Return the start position (which will be before or equal to the end position)
+     */
+    getStartPosition() {
+      return _Range.getStartPosition(this);
+    }
+    /**
+     * Return the start position (which will be before or equal to the end position)
+     */
+    static getStartPosition(range) {
+      return new Position(range.startLineNumber, range.startColumn);
+    }
+    /**
+     * Transform to a user presentable string representation.
+     */
+    toString() {
+      return "[" + this.startLineNumber + "," + this.startColumn + " -> " + this.endLineNumber + "," + this.endColumn + "]";
+    }
+    /**
+     * Create a new range using this range's start position, and using endLineNumber and endColumn as the end position.
+     */
+    setEndPosition(endLineNumber, endColumn) {
+      return new _Range(this.startLineNumber, this.startColumn, endLineNumber, endColumn);
+    }
+    /**
+     * Create a new range using this range's end position, and using startLineNumber and startColumn as the start position.
+     */
+    setStartPosition(startLineNumber, startColumn) {
+      return new _Range(startLineNumber, startColumn, this.endLineNumber, this.endColumn);
+    }
+    /**
+     * Create a new empty range using this range's start position.
+     */
+    collapseToStart() {
+      return _Range.collapseToStart(this);
+    }
+    /**
+     * Create a new empty range using this range's start position.
+     */
+    static collapseToStart(range) {
+      return new _Range(range.startLineNumber, range.startColumn, range.startLineNumber, range.startColumn);
+    }
+    /**
+     * Create a new empty range using this range's end position.
+     */
+    collapseToEnd() {
+      return _Range.collapseToEnd(this);
+    }
+    /**
+     * Create a new empty range using this range's end position.
+     */
+    static collapseToEnd(range) {
+      return new _Range(range.endLineNumber, range.endColumn, range.endLineNumber, range.endColumn);
+    }
+    /**
+     * Moves the range by the given amount of lines.
+     */
+    delta(lineCount) {
+      return new _Range(this.startLineNumber + lineCount, this.startColumn, this.endLineNumber + lineCount, this.endColumn);
+    }
+    isSingleLine() {
+      return this.startLineNumber === this.endLineNumber;
+    }
+    // ---
+    static fromPositions(start2, end = start2) {
+      return new _Range(start2.lineNumber, start2.column, end.lineNumber, end.column);
+    }
+    static lift(range) {
+      if (!range) {
+        return null;
+      }
+      return new _Range(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
+    }
+    /**
+     * Test if `obj` is an `IRange`.
+     */
+    static isIRange(obj) {
+      return !!obj && typeof obj.startLineNumber === "number" && typeof obj.startColumn === "number" && typeof obj.endLineNumber === "number" && typeof obj.endColumn === "number";
+    }
+    /**
+     * Test if the two ranges are touching in any way.
+     */
+    static areIntersectingOrTouching(a, b) {
+      if (a.endLineNumber < b.startLineNumber || a.endLineNumber === b.startLineNumber && a.endColumn < b.startColumn) {
+        return false;
+      }
+      if (b.endLineNumber < a.startLineNumber || b.endLineNumber === a.startLineNumber && b.endColumn < a.startColumn) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * Test if the two ranges are intersecting. If the ranges are touching it returns true.
+     */
+    static areIntersecting(a, b) {
+      if (a.endLineNumber < b.startLineNumber || a.endLineNumber === b.startLineNumber && a.endColumn <= b.startColumn) {
+        return false;
+      }
+      if (b.endLineNumber < a.startLineNumber || b.endLineNumber === a.startLineNumber && b.endColumn <= a.startColumn) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * Test if the two ranges are intersecting, but not touching at all.
+     */
+    static areOnlyIntersecting(a, b) {
+      if (a.endLineNumber < b.startLineNumber - 1 || a.endLineNumber === b.startLineNumber && a.endColumn < b.startColumn - 1) {
+        return false;
+      }
+      if (b.endLineNumber < a.startLineNumber - 1 || b.endLineNumber === a.startLineNumber && b.endColumn < a.startColumn - 1) {
+        return false;
+      }
+      return true;
+    }
+    /**
+     * A function that compares ranges, useful for sorting ranges
+     * It will first compare ranges on the startPosition and then on the endPosition
+     */
+    static compareRangesUsingStarts(a, b) {
+      if (a && b) {
+        const aStartLineNumber = a.startLineNumber | 0;
+        const bStartLineNumber = b.startLineNumber | 0;
+        if (aStartLineNumber === bStartLineNumber) {
+          const aStartColumn = a.startColumn | 0;
+          const bStartColumn = b.startColumn | 0;
+          if (aStartColumn === bStartColumn) {
+            const aEndLineNumber = a.endLineNumber | 0;
+            const bEndLineNumber = b.endLineNumber | 0;
+            if (aEndLineNumber === bEndLineNumber) {
+              const aEndColumn = a.endColumn | 0;
+              const bEndColumn = b.endColumn | 0;
+              return aEndColumn - bEndColumn;
+            }
+            return aEndLineNumber - bEndLineNumber;
+          }
+          return aStartColumn - bStartColumn;
+        }
+        return aStartLineNumber - bStartLineNumber;
+      }
+      const aExists = a ? 1 : 0;
+      const bExists = b ? 1 : 0;
+      return aExists - bExists;
+    }
+    /**
+     * A function that compares ranges, useful for sorting ranges
+     * It will first compare ranges on the endPosition and then on the startPosition
+     */
+    static compareRangesUsingEnds(a, b) {
+      if (a.endLineNumber === b.endLineNumber) {
+        if (a.endColumn === b.endColumn) {
+          if (a.startLineNumber === b.startLineNumber) {
+            return a.startColumn - b.startColumn;
+          }
+          return a.startLineNumber - b.startLineNumber;
+        }
+        return a.endColumn - b.endColumn;
+      }
+      return a.endLineNumber - b.endLineNumber;
+    }
+    /**
+     * Test if the range spans multiple lines.
+     */
+    static spansMultipleLines(range) {
+      return range.endLineNumber > range.startLineNumber;
+    }
+    toJSON() {
+      return this;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/uint.js
+  function toUint8(v) {
+    if (v < 0) {
+      return 0;
+    }
+    if (v > 255) {
+      return 255;
+    }
+    return v | 0;
+  }
+  function toUint32(v) {
+    if (v < 0) {
+      return 0;
+    }
+    if (v > 4294967295) {
+      return 4294967295;
+    }
+    return v | 0;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/characterClassifier.js
+  var CharacterClassifier = class _CharacterClassifier {
+    constructor(_defaultValue) {
+      const defaultValue = toUint8(_defaultValue);
+      this._defaultValue = defaultValue;
+      this._asciiMap = _CharacterClassifier._createAsciiMap(defaultValue);
+      this._map = /* @__PURE__ */ new Map();
+    }
+    static _createAsciiMap(defaultValue) {
+      const asciiMap = new Uint8Array(256);
+      asciiMap.fill(defaultValue);
+      return asciiMap;
+    }
+    set(charCode, _value) {
+      const value = toUint8(_value);
+      if (charCode >= 0 && charCode < 256) {
+        this._asciiMap[charCode] = value;
+      } else {
+        this._map.set(charCode, value);
+      }
+    }
+    get(charCode) {
+      if (charCode >= 0 && charCode < 256) {
+        return this._asciiMap[charCode];
+      } else {
+        return this._map.get(charCode) || this._defaultValue;
+      }
+    }
+    clear() {
+      this._asciiMap.fill(this._defaultValue);
+      this._map.clear();
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/languages/linkComputer.js
+  var Uint8Matrix = class {
+    constructor(rows, cols, defaultValue) {
+      const data = new Uint8Array(rows * cols);
+      for (let i = 0, len = rows * cols; i < len; i++) {
+        data[i] = defaultValue;
+      }
+      this._data = data;
+      this.rows = rows;
+      this.cols = cols;
+    }
+    get(row, col) {
+      return this._data[row * this.cols + col];
+    }
+    set(row, col, value) {
+      this._data[row * this.cols + col] = value;
+    }
+  };
+  var StateMachine = class {
+    constructor(edges) {
+      let maxCharCode = 0;
+      let maxState = 0;
+      for (let i = 0, len = edges.length; i < len; i++) {
+        const [from, chCode, to] = edges[i];
+        if (chCode > maxCharCode) {
+          maxCharCode = chCode;
+        }
+        if (from > maxState) {
+          maxState = from;
+        }
+        if (to > maxState) {
+          maxState = to;
+        }
+      }
+      maxCharCode++;
+      maxState++;
+      const states = new Uint8Matrix(
+        maxState,
+        maxCharCode,
+        0
+        /* State.Invalid */
+      );
+      for (let i = 0, len = edges.length; i < len; i++) {
+        const [from, chCode, to] = edges[i];
+        states.set(from, chCode, to);
+      }
+      this._states = states;
+      this._maxCharCode = maxCharCode;
+    }
+    nextState(currentState, chCode) {
+      if (chCode < 0 || chCode >= this._maxCharCode) {
+        return 0;
+      }
+      return this._states.get(currentState, chCode);
+    }
+  };
+  var _stateMachine = null;
+  function getStateMachine() {
+    if (_stateMachine === null) {
+      _stateMachine = new StateMachine([
+        [
+          1,
+          104,
+          2
+          /* State.H */
+        ],
+        [
+          1,
+          72,
+          2
+          /* State.H */
+        ],
+        [
+          1,
+          102,
+          6
+          /* State.F */
+        ],
+        [
+          1,
+          70,
+          6
+          /* State.F */
+        ],
+        [
+          2,
+          116,
+          3
+          /* State.HT */
+        ],
+        [
+          2,
+          84,
+          3
+          /* State.HT */
+        ],
+        [
+          3,
+          116,
+          4
+          /* State.HTT */
+        ],
+        [
+          3,
+          84,
+          4
+          /* State.HTT */
+        ],
+        [
+          4,
+          112,
+          5
+          /* State.HTTP */
+        ],
+        [
+          4,
+          80,
+          5
+          /* State.HTTP */
+        ],
+        [
+          5,
+          115,
+          9
+          /* State.BeforeColon */
+        ],
+        [
+          5,
+          83,
+          9
+          /* State.BeforeColon */
+        ],
+        [
+          5,
+          58,
+          10
+          /* State.AfterColon */
+        ],
+        [
+          6,
+          105,
+          7
+          /* State.FI */
+        ],
+        [
+          6,
+          73,
+          7
+          /* State.FI */
+        ],
+        [
+          7,
+          108,
+          8
+          /* State.FIL */
+        ],
+        [
+          7,
+          76,
+          8
+          /* State.FIL */
+        ],
+        [
+          8,
+          101,
+          9
+          /* State.BeforeColon */
+        ],
+        [
+          8,
+          69,
+          9
+          /* State.BeforeColon */
+        ],
+        [
+          9,
+          58,
+          10
+          /* State.AfterColon */
+        ],
+        [
+          10,
+          47,
+          11
+          /* State.AlmostThere */
+        ],
+        [
+          11,
+          47,
+          12
+          /* State.End */
+        ]
+      ]);
+    }
+    return _stateMachine;
+  }
+  var _classifier = null;
+  function getClassifier() {
+    if (_classifier === null) {
+      _classifier = new CharacterClassifier(
+        0
+        /* CharacterClass.None */
+      );
+      const FORCE_TERMINATION_CHARACTERS = ` 	<>'"\u3001\u3002\uFF61\uFF64\uFF0C\uFF0E\uFF1A\uFF1B\u2018\u3008\u300C\u300E\u3014\uFF08\uFF3B\uFF5B\uFF62\uFF63\uFF5D\uFF3D\uFF09\u3015\u300F\u300D\u3009\u2019\uFF40\uFF5E\u2026|`;
+      for (let i = 0; i < FORCE_TERMINATION_CHARACTERS.length; i++) {
+        _classifier.set(
+          FORCE_TERMINATION_CHARACTERS.charCodeAt(i),
+          1
+          /* CharacterClass.ForceTermination */
+        );
+      }
+      const CANNOT_END_WITH_CHARACTERS = ".,;:";
+      for (let i = 0; i < CANNOT_END_WITH_CHARACTERS.length; i++) {
+        _classifier.set(
+          CANNOT_END_WITH_CHARACTERS.charCodeAt(i),
+          2
+          /* CharacterClass.CannotEndIn */
+        );
+      }
+    }
+    return _classifier;
+  }
+  var LinkComputer = class _LinkComputer {
+    static _createLink(classifier, line, lineNumber, linkBeginIndex, linkEndIndex) {
+      let lastIncludedCharIndex = linkEndIndex - 1;
+      do {
+        const chCode = line.charCodeAt(lastIncludedCharIndex);
+        const chClass = classifier.get(chCode);
+        if (chClass !== 2) {
+          break;
+        }
+        lastIncludedCharIndex--;
+      } while (lastIncludedCharIndex > linkBeginIndex);
+      if (linkBeginIndex > 0) {
+        const charCodeBeforeLink = line.charCodeAt(linkBeginIndex - 1);
+        const lastCharCodeInLink = line.charCodeAt(lastIncludedCharIndex);
+        if (charCodeBeforeLink === 40 && lastCharCodeInLink === 41 || charCodeBeforeLink === 91 && lastCharCodeInLink === 93 || charCodeBeforeLink === 123 && lastCharCodeInLink === 125) {
+          lastIncludedCharIndex--;
+        }
+      }
+      return {
+        range: {
+          startLineNumber: lineNumber,
+          startColumn: linkBeginIndex + 1,
+          endLineNumber: lineNumber,
+          endColumn: lastIncludedCharIndex + 2
+        },
+        url: line.substring(linkBeginIndex, lastIncludedCharIndex + 1)
+      };
+    }
+    static computeLinks(model, stateMachine = getStateMachine()) {
+      const classifier = getClassifier();
+      const result = [];
+      for (let i = 1, lineCount = model.getLineCount(); i <= lineCount; i++) {
+        const line = model.getLineContent(i);
+        const len = line.length;
+        let j = 0;
+        let linkBeginIndex = 0;
+        let linkBeginChCode = 0;
+        let state = 1;
+        let hasOpenParens = false;
+        let hasOpenSquareBracket = false;
+        let inSquareBrackets = false;
+        let hasOpenCurlyBracket = false;
+        while (j < len) {
+          let resetStateMachine = false;
+          const chCode = line.charCodeAt(j);
+          if (state === 13) {
+            let chClass;
+            switch (chCode) {
+              case 40:
+                hasOpenParens = true;
+                chClass = 0;
+                break;
+              case 41:
+                chClass = hasOpenParens ? 0 : 1;
+                break;
+              case 91:
+                inSquareBrackets = true;
+                hasOpenSquareBracket = true;
+                chClass = 0;
+                break;
+              case 93:
+                inSquareBrackets = false;
+                chClass = hasOpenSquareBracket ? 0 : 1;
+                break;
+              case 123:
+                hasOpenCurlyBracket = true;
+                chClass = 0;
+                break;
+              case 125:
+                chClass = hasOpenCurlyBracket ? 0 : 1;
+                break;
+              // The following three rules make it that ' or " or ` are allowed inside links
+              // only if the link is wrapped by some other quote character
+              case 39:
+              case 34:
+              case 96:
+                if (linkBeginChCode === chCode) {
+                  chClass = 1;
+                } else if (linkBeginChCode === 39 || linkBeginChCode === 34 || linkBeginChCode === 96) {
+                  chClass = 0;
+                } else {
+                  chClass = 1;
+                }
+                break;
+              case 42:
+                chClass = linkBeginChCode === 42 ? 1 : 0;
+                break;
+              case 32:
+                chClass = inSquareBrackets ? 0 : 1;
+                break;
+              default:
+                chClass = classifier.get(chCode);
+            }
+            if (chClass === 1) {
+              result.push(_LinkComputer._createLink(classifier, line, i, linkBeginIndex, j));
+              resetStateMachine = true;
+            }
+          } else if (state === 12) {
+            let chClass;
+            if (chCode === 91) {
+              hasOpenSquareBracket = true;
+              chClass = 0;
+            } else {
+              chClass = classifier.get(chCode);
+            }
+            if (chClass === 1) {
+              resetStateMachine = true;
+            } else {
+              state = 13;
+            }
+          } else {
+            state = stateMachine.nextState(state, chCode);
+            if (state === 0) {
+              resetStateMachine = true;
+            }
+          }
+          if (resetStateMachine) {
+            state = 1;
+            hasOpenParens = false;
+            hasOpenSquareBracket = false;
+            hasOpenCurlyBracket = false;
+            linkBeginIndex = j + 1;
+            linkBeginChCode = chCode;
+          }
+          j++;
+        }
+        if (state === 13) {
+          result.push(_LinkComputer._createLink(classifier, line, i, linkBeginIndex, len));
+        }
+      }
+      return result;
+    }
+  };
+  function computeLinks(model) {
+    if (!model || typeof model.getLineCount !== "function" || typeof model.getLineContent !== "function") {
+      return [];
+    }
+    return LinkComputer.computeLinks(model);
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/languages/supports/inplaceReplaceSupport.js
+  var BasicInplaceReplace = class _BasicInplaceReplace {
+    constructor() {
+      this._defaultValueSet = [
+        ["true", "false"],
+        ["True", "False"],
+        ["Private", "Public", "Friend", "ReadOnly", "Partial", "Protected", "WriteOnly"],
+        ["public", "protected", "private"]
+      ];
+    }
+    static {
+      this.INSTANCE = new _BasicInplaceReplace();
+    }
+    navigateValueSet(range1, text1, range2, text2, up) {
+      if (range1 && text1) {
+        const result = this.doNavigateValueSet(text1, up);
+        if (result) {
+          return {
+            range: range1,
+            value: result
+          };
+        }
+      }
+      if (range2 && text2) {
+        const result = this.doNavigateValueSet(text2, up);
+        if (result) {
+          return {
+            range: range2,
+            value: result
+          };
+        }
+      }
+      return null;
+    }
+    doNavigateValueSet(text, up) {
+      const numberResult = this.numberReplace(text, up);
+      if (numberResult !== null) {
+        return numberResult;
+      }
+      return this.textReplace(text, up);
+    }
+    numberReplace(value, up) {
+      const precision = Math.pow(10, value.length - (value.lastIndexOf(".") + 1));
+      let n1 = Number(value);
+      const n2 = parseFloat(value);
+      if (!isNaN(n1) && !isNaN(n2) && n1 === n2) {
+        if (n1 === 0 && !up) {
+          return null;
+        } else {
+          n1 = Math.floor(n1 * precision);
+          n1 += up ? precision : -precision;
+          return String(n1 / precision);
+        }
+      }
+      return null;
+    }
+    textReplace(value, up) {
+      return this.valueSetsReplace(this._defaultValueSet, value, up);
+    }
+    valueSetsReplace(valueSets, value, up) {
+      let result = null;
+      for (let i = 0, len = valueSets.length; result === null && i < len; i++) {
+        result = this.valueSetReplace(valueSets[i], value, up);
+      }
+      return result;
+    }
+    valueSetReplace(valueSet, value, up) {
+      let idx = valueSet.indexOf(value);
+      if (idx >= 0) {
+        idx += up ? 1 : -1;
+        if (idx < 0) {
+          idx = valueSet.length - 1;
+        } else {
+          idx %= valueSet.length;
+        }
+        return valueSet[idx];
+      }
+      return null;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/cancellation.js
+  var shortcutEvent = Object.freeze(function(callback, context) {
+    const handle = setTimeout(callback.bind(context), 0);
+    return { dispose() {
+      clearTimeout(handle);
+    } };
+  });
+  var CancellationToken;
+  (function(CancellationToken2) {
+    function isCancellationToken(thing) {
+      if (thing === CancellationToken2.None || thing === CancellationToken2.Cancelled) {
+        return true;
+      }
+      if (thing instanceof MutableToken) {
+        return true;
+      }
+      if (!thing || typeof thing !== "object") {
+        return false;
+      }
+      return typeof thing.isCancellationRequested === "boolean" && typeof thing.onCancellationRequested === "function";
+    }
+    CancellationToken2.isCancellationToken = isCancellationToken;
+    CancellationToken2.None = Object.freeze({
+      isCancellationRequested: false,
+      onCancellationRequested: Event.None
+    });
+    CancellationToken2.Cancelled = Object.freeze({
+      isCancellationRequested: true,
+      onCancellationRequested: shortcutEvent
+    });
+  })(CancellationToken || (CancellationToken = {}));
+  var MutableToken = class {
+    constructor() {
+      this._isCancelled = false;
+      this._emitter = null;
+    }
+    cancel() {
+      if (!this._isCancelled) {
+        this._isCancelled = true;
+        if (this._emitter) {
+          this._emitter.fire(void 0);
+          this.dispose();
+        }
+      }
+    }
+    get isCancellationRequested() {
+      return this._isCancelled;
+    }
+    get onCancellationRequested() {
+      if (this._isCancelled) {
+        return shortcutEvent;
+      }
+      if (!this._emitter) {
+        this._emitter = new Emitter();
+      }
+      return this._emitter.event;
+    }
+    dispose() {
+      if (this._emitter) {
+        this._emitter.dispose();
+        this._emitter = null;
+      }
+    }
+  };
+  var CancellationTokenSource = class {
+    constructor(parent) {
+      this._token = void 0;
+      this._parentListener = void 0;
+      this._parentListener = parent && parent.onCancellationRequested(this.cancel, this);
+    }
+    get token() {
+      if (!this._token) {
+        this._token = new MutableToken();
+      }
+      return this._token;
+    }
+    cancel() {
+      if (!this._token) {
+        this._token = CancellationToken.Cancelled;
+      } else if (this._token instanceof MutableToken) {
+        this._token.cancel();
+      }
+    }
+    dispose(cancel = false) {
+      if (cancel) {
+        this.cancel();
+      }
+      this._parentListener?.dispose();
+      if (!this._token) {
+        this._token = CancellationToken.None;
+      } else if (this._token instanceof MutableToken) {
+        this._token.dispose();
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/keyCodes.js
+  var KeyCodeStrMap = class {
+    constructor() {
+      this._keyCodeToStr = [];
+      this._strToKeyCode = /* @__PURE__ */ Object.create(null);
+    }
+    define(keyCode, str) {
+      this._keyCodeToStr[keyCode] = str;
+      this._strToKeyCode[str.toLowerCase()] = keyCode;
+    }
+    keyCodeToStr(keyCode) {
+      return this._keyCodeToStr[keyCode];
+    }
+    strToKeyCode(str) {
+      return this._strToKeyCode[str.toLowerCase()] || 0;
+    }
+  };
+  var uiMap = new KeyCodeStrMap();
+  var userSettingsUSMap = new KeyCodeStrMap();
+  var userSettingsGeneralMap = new KeyCodeStrMap();
+  var EVENT_KEY_CODE_MAP = new Array(230);
+  var scanCodeStrToInt = /* @__PURE__ */ Object.create(null);
+  var scanCodeLowerCaseStrToInt = /* @__PURE__ */ Object.create(null);
+  var IMMUTABLE_CODE_TO_KEY_CODE = [];
+  for (let i = 0; i <= 193; i++) {
+    IMMUTABLE_CODE_TO_KEY_CODE[i] = -1;
+  }
+  (function() {
+    const empty = "";
+    const mappings = [
+      // immutable, scanCode, scanCodeStr, keyCode, keyCodeStr, eventKeyCode, vkey, usUserSettingsLabel, generalUserSettingsLabel
+      [1, 0, "None", 0, "unknown", 0, "VK_UNKNOWN", empty, empty],
+      [1, 1, "Hyper", 0, empty, 0, empty, empty, empty],
+      [1, 2, "Super", 0, empty, 0, empty, empty, empty],
+      [1, 3, "Fn", 0, empty, 0, empty, empty, empty],
+      [1, 4, "FnLock", 0, empty, 0, empty, empty, empty],
+      [1, 5, "Suspend", 0, empty, 0, empty, empty, empty],
+      [1, 6, "Resume", 0, empty, 0, empty, empty, empty],
+      [1, 7, "Turbo", 0, empty, 0, empty, empty, empty],
+      [1, 8, "Sleep", 0, empty, 0, "VK_SLEEP", empty, empty],
+      [1, 9, "WakeUp", 0, empty, 0, empty, empty, empty],
+      [0, 10, "KeyA", 31, "A", 65, "VK_A", empty, empty],
+      [0, 11, "KeyB", 32, "B", 66, "VK_B", empty, empty],
+      [0, 12, "KeyC", 33, "C", 67, "VK_C", empty, empty],
+      [0, 13, "KeyD", 34, "D", 68, "VK_D", empty, empty],
+      [0, 14, "KeyE", 35, "E", 69, "VK_E", empty, empty],
+      [0, 15, "KeyF", 36, "F", 70, "VK_F", empty, empty],
+      [0, 16, "KeyG", 37, "G", 71, "VK_G", empty, empty],
+      [0, 17, "KeyH", 38, "H", 72, "VK_H", empty, empty],
+      [0, 18, "KeyI", 39, "I", 73, "VK_I", empty, empty],
+      [0, 19, "KeyJ", 40, "J", 74, "VK_J", empty, empty],
+      [0, 20, "KeyK", 41, "K", 75, "VK_K", empty, empty],
+      [0, 21, "KeyL", 42, "L", 76, "VK_L", empty, empty],
+      [0, 22, "KeyM", 43, "M", 77, "VK_M", empty, empty],
+      [0, 23, "KeyN", 44, "N", 78, "VK_N", empty, empty],
+      [0, 24, "KeyO", 45, "O", 79, "VK_O", empty, empty],
+      [0, 25, "KeyP", 46, "P", 80, "VK_P", empty, empty],
+      [0, 26, "KeyQ", 47, "Q", 81, "VK_Q", empty, empty],
+      [0, 27, "KeyR", 48, "R", 82, "VK_R", empty, empty],
+      [0, 28, "KeyS", 49, "S", 83, "VK_S", empty, empty],
+      [0, 29, "KeyT", 50, "T", 84, "VK_T", empty, empty],
+      [0, 30, "KeyU", 51, "U", 85, "VK_U", empty, empty],
+      [0, 31, "KeyV", 52, "V", 86, "VK_V", empty, empty],
+      [0, 32, "KeyW", 53, "W", 87, "VK_W", empty, empty],
+      [0, 33, "KeyX", 54, "X", 88, "VK_X", empty, empty],
+      [0, 34, "KeyY", 55, "Y", 89, "VK_Y", empty, empty],
+      [0, 35, "KeyZ", 56, "Z", 90, "VK_Z", empty, empty],
+      [0, 36, "Digit1", 22, "1", 49, "VK_1", empty, empty],
+      [0, 37, "Digit2", 23, "2", 50, "VK_2", empty, empty],
+      [0, 38, "Digit3", 24, "3", 51, "VK_3", empty, empty],
+      [0, 39, "Digit4", 25, "4", 52, "VK_4", empty, empty],
+      [0, 40, "Digit5", 26, "5", 53, "VK_5", empty, empty],
+      [0, 41, "Digit6", 27, "6", 54, "VK_6", empty, empty],
+      [0, 42, "Digit7", 28, "7", 55, "VK_7", empty, empty],
+      [0, 43, "Digit8", 29, "8", 56, "VK_8", empty, empty],
+      [0, 44, "Digit9", 30, "9", 57, "VK_9", empty, empty],
+      [0, 45, "Digit0", 21, "0", 48, "VK_0", empty, empty],
+      [1, 46, "Enter", 3, "Enter", 13, "VK_RETURN", empty, empty],
+      [1, 47, "Escape", 9, "Escape", 27, "VK_ESCAPE", empty, empty],
+      [1, 48, "Backspace", 1, "Backspace", 8, "VK_BACK", empty, empty],
+      [1, 49, "Tab", 2, "Tab", 9, "VK_TAB", empty, empty],
+      [1, 50, "Space", 10, "Space", 32, "VK_SPACE", empty, empty],
+      [0, 51, "Minus", 88, "-", 189, "VK_OEM_MINUS", "-", "OEM_MINUS"],
+      [0, 52, "Equal", 86, "=", 187, "VK_OEM_PLUS", "=", "OEM_PLUS"],
+      [0, 53, "BracketLeft", 92, "[", 219, "VK_OEM_4", "[", "OEM_4"],
+      [0, 54, "BracketRight", 94, "]", 221, "VK_OEM_6", "]", "OEM_6"],
+      [0, 55, "Backslash", 93, "\\", 220, "VK_OEM_5", "\\", "OEM_5"],
+      [0, 56, "IntlHash", 0, empty, 0, empty, empty, empty],
+      // has been dropped from the w3c spec
+      [0, 57, "Semicolon", 85, ";", 186, "VK_OEM_1", ";", "OEM_1"],
+      [0, 58, "Quote", 95, "'", 222, "VK_OEM_7", "'", "OEM_7"],
+      [0, 59, "Backquote", 91, "`", 192, "VK_OEM_3", "`", "OEM_3"],
+      [0, 60, "Comma", 87, ",", 188, "VK_OEM_COMMA", ",", "OEM_COMMA"],
+      [0, 61, "Period", 89, ".", 190, "VK_OEM_PERIOD", ".", "OEM_PERIOD"],
+      [0, 62, "Slash", 90, "/", 191, "VK_OEM_2", "/", "OEM_2"],
+      [1, 63, "CapsLock", 8, "CapsLock", 20, "VK_CAPITAL", empty, empty],
+      [1, 64, "F1", 59, "F1", 112, "VK_F1", empty, empty],
+      [1, 65, "F2", 60, "F2", 113, "VK_F2", empty, empty],
+      [1, 66, "F3", 61, "F3", 114, "VK_F3", empty, empty],
+      [1, 67, "F4", 62, "F4", 115, "VK_F4", empty, empty],
+      [1, 68, "F5", 63, "F5", 116, "VK_F5", empty, empty],
+      [1, 69, "F6", 64, "F6", 117, "VK_F6", empty, empty],
+      [1, 70, "F7", 65, "F7", 118, "VK_F7", empty, empty],
+      [1, 71, "F8", 66, "F8", 119, "VK_F8", empty, empty],
+      [1, 72, "F9", 67, "F9", 120, "VK_F9", empty, empty],
+      [1, 73, "F10", 68, "F10", 121, "VK_F10", empty, empty],
+      [1, 74, "F11", 69, "F11", 122, "VK_F11", empty, empty],
+      [1, 75, "F12", 70, "F12", 123, "VK_F12", empty, empty],
+      [1, 76, "PrintScreen", 0, empty, 0, empty, empty, empty],
+      [1, 77, "ScrollLock", 84, "ScrollLock", 145, "VK_SCROLL", empty, empty],
+      [1, 78, "Pause", 7, "PauseBreak", 19, "VK_PAUSE", empty, empty],
+      [1, 79, "Insert", 19, "Insert", 45, "VK_INSERT", empty, empty],
+      [1, 80, "Home", 14, "Home", 36, "VK_HOME", empty, empty],
+      [1, 81, "PageUp", 11, "PageUp", 33, "VK_PRIOR", empty, empty],
+      [1, 82, "Delete", 20, "Delete", 46, "VK_DELETE", empty, empty],
+      [1, 83, "End", 13, "End", 35, "VK_END", empty, empty],
+      [1, 84, "PageDown", 12, "PageDown", 34, "VK_NEXT", empty, empty],
+      [1, 85, "ArrowRight", 17, "RightArrow", 39, "VK_RIGHT", "Right", empty],
+      [1, 86, "ArrowLeft", 15, "LeftArrow", 37, "VK_LEFT", "Left", empty],
+      [1, 87, "ArrowDown", 18, "DownArrow", 40, "VK_DOWN", "Down", empty],
+      [1, 88, "ArrowUp", 16, "UpArrow", 38, "VK_UP", "Up", empty],
+      [1, 89, "NumLock", 83, "NumLock", 144, "VK_NUMLOCK", empty, empty],
+      [1, 90, "NumpadDivide", 113, "NumPad_Divide", 111, "VK_DIVIDE", empty, empty],
+      [1, 91, "NumpadMultiply", 108, "NumPad_Multiply", 106, "VK_MULTIPLY", empty, empty],
+      [1, 92, "NumpadSubtract", 111, "NumPad_Subtract", 109, "VK_SUBTRACT", empty, empty],
+      [1, 93, "NumpadAdd", 109, "NumPad_Add", 107, "VK_ADD", empty, empty],
+      [1, 94, "NumpadEnter", 3, empty, 0, empty, empty, empty],
+      [1, 95, "Numpad1", 99, "NumPad1", 97, "VK_NUMPAD1", empty, empty],
+      [1, 96, "Numpad2", 100, "NumPad2", 98, "VK_NUMPAD2", empty, empty],
+      [1, 97, "Numpad3", 101, "NumPad3", 99, "VK_NUMPAD3", empty, empty],
+      [1, 98, "Numpad4", 102, "NumPad4", 100, "VK_NUMPAD4", empty, empty],
+      [1, 99, "Numpad5", 103, "NumPad5", 101, "VK_NUMPAD5", empty, empty],
+      [1, 100, "Numpad6", 104, "NumPad6", 102, "VK_NUMPAD6", empty, empty],
+      [1, 101, "Numpad7", 105, "NumPad7", 103, "VK_NUMPAD7", empty, empty],
+      [1, 102, "Numpad8", 106, "NumPad8", 104, "VK_NUMPAD8", empty, empty],
+      [1, 103, "Numpad9", 107, "NumPad9", 105, "VK_NUMPAD9", empty, empty],
+      [1, 104, "Numpad0", 98, "NumPad0", 96, "VK_NUMPAD0", empty, empty],
+      [1, 105, "NumpadDecimal", 112, "NumPad_Decimal", 110, "VK_DECIMAL", empty, empty],
+      [0, 106, "IntlBackslash", 97, "OEM_102", 226, "VK_OEM_102", empty, empty],
+      [1, 107, "ContextMenu", 58, "ContextMenu", 93, empty, empty, empty],
+      [1, 108, "Power", 0, empty, 0, empty, empty, empty],
+      [1, 109, "NumpadEqual", 0, empty, 0, empty, empty, empty],
+      [1, 110, "F13", 71, "F13", 124, "VK_F13", empty, empty],
+      [1, 111, "F14", 72, "F14", 125, "VK_F14", empty, empty],
+      [1, 112, "F15", 73, "F15", 126, "VK_F15", empty, empty],
+      [1, 113, "F16", 74, "F16", 127, "VK_F16", empty, empty],
+      [1, 114, "F17", 75, "F17", 128, "VK_F17", empty, empty],
+      [1, 115, "F18", 76, "F18", 129, "VK_F18", empty, empty],
+      [1, 116, "F19", 77, "F19", 130, "VK_F19", empty, empty],
+      [1, 117, "F20", 78, "F20", 131, "VK_F20", empty, empty],
+      [1, 118, "F21", 79, "F21", 132, "VK_F21", empty, empty],
+      [1, 119, "F22", 80, "F22", 133, "VK_F22", empty, empty],
+      [1, 120, "F23", 81, "F23", 134, "VK_F23", empty, empty],
+      [1, 121, "F24", 82, "F24", 135, "VK_F24", empty, empty],
+      [1, 122, "Open", 0, empty, 0, empty, empty, empty],
+      [1, 123, "Help", 0, empty, 0, empty, empty, empty],
+      [1, 124, "Select", 0, empty, 0, empty, empty, empty],
+      [1, 125, "Again", 0, empty, 0, empty, empty, empty],
+      [1, 126, "Undo", 0, empty, 0, empty, empty, empty],
+      [1, 127, "Cut", 0, empty, 0, empty, empty, empty],
+      [1, 128, "Copy", 0, empty, 0, empty, empty, empty],
+      [1, 129, "Paste", 0, empty, 0, empty, empty, empty],
+      [1, 130, "Find", 0, empty, 0, empty, empty, empty],
+      [1, 131, "AudioVolumeMute", 117, "AudioVolumeMute", 173, "VK_VOLUME_MUTE", empty, empty],
+      [1, 132, "AudioVolumeUp", 118, "AudioVolumeUp", 175, "VK_VOLUME_UP", empty, empty],
+      [1, 133, "AudioVolumeDown", 119, "AudioVolumeDown", 174, "VK_VOLUME_DOWN", empty, empty],
+      [1, 134, "NumpadComma", 110, "NumPad_Separator", 108, "VK_SEPARATOR", empty, empty],
+      [0, 135, "IntlRo", 115, "ABNT_C1", 193, "VK_ABNT_C1", empty, empty],
+      [1, 136, "KanaMode", 0, empty, 0, empty, empty, empty],
+      [0, 137, "IntlYen", 0, empty, 0, empty, empty, empty],
+      [1, 138, "Convert", 0, empty, 0, empty, empty, empty],
+      [1, 139, "NonConvert", 0, empty, 0, empty, empty, empty],
+      [1, 140, "Lang1", 0, empty, 0, empty, empty, empty],
+      [1, 141, "Lang2", 0, empty, 0, empty, empty, empty],
+      [1, 142, "Lang3", 0, empty, 0, empty, empty, empty],
+      [1, 143, "Lang4", 0, empty, 0, empty, empty, empty],
+      [1, 144, "Lang5", 0, empty, 0, empty, empty, empty],
+      [1, 145, "Abort", 0, empty, 0, empty, empty, empty],
+      [1, 146, "Props", 0, empty, 0, empty, empty, empty],
+      [1, 147, "NumpadParenLeft", 0, empty, 0, empty, empty, empty],
+      [1, 148, "NumpadParenRight", 0, empty, 0, empty, empty, empty],
+      [1, 149, "NumpadBackspace", 0, empty, 0, empty, empty, empty],
+      [1, 150, "NumpadMemoryStore", 0, empty, 0, empty, empty, empty],
+      [1, 151, "NumpadMemoryRecall", 0, empty, 0, empty, empty, empty],
+      [1, 152, "NumpadMemoryClear", 0, empty, 0, empty, empty, empty],
+      [1, 153, "NumpadMemoryAdd", 0, empty, 0, empty, empty, empty],
+      [1, 154, "NumpadMemorySubtract", 0, empty, 0, empty, empty, empty],
+      [1, 155, "NumpadClear", 131, "Clear", 12, "VK_CLEAR", empty, empty],
+      [1, 156, "NumpadClearEntry", 0, empty, 0, empty, empty, empty],
+      [1, 0, empty, 5, "Ctrl", 17, "VK_CONTROL", empty, empty],
+      [1, 0, empty, 4, "Shift", 16, "VK_SHIFT", empty, empty],
+      [1, 0, empty, 6, "Alt", 18, "VK_MENU", empty, empty],
+      [1, 0, empty, 57, "Meta", 91, "VK_COMMAND", empty, empty],
+      [1, 157, "ControlLeft", 5, empty, 0, "VK_LCONTROL", empty, empty],
+      [1, 158, "ShiftLeft", 4, empty, 0, "VK_LSHIFT", empty, empty],
+      [1, 159, "AltLeft", 6, empty, 0, "VK_LMENU", empty, empty],
+      [1, 160, "MetaLeft", 57, empty, 0, "VK_LWIN", empty, empty],
+      [1, 161, "ControlRight", 5, empty, 0, "VK_RCONTROL", empty, empty],
+      [1, 162, "ShiftRight", 4, empty, 0, "VK_RSHIFT", empty, empty],
+      [1, 163, "AltRight", 6, empty, 0, "VK_RMENU", empty, empty],
+      [1, 164, "MetaRight", 57, empty, 0, "VK_RWIN", empty, empty],
+      [1, 165, "BrightnessUp", 0, empty, 0, empty, empty, empty],
+      [1, 166, "BrightnessDown", 0, empty, 0, empty, empty, empty],
+      [1, 167, "MediaPlay", 0, empty, 0, empty, empty, empty],
+      [1, 168, "MediaRecord", 0, empty, 0, empty, empty, empty],
+      [1, 169, "MediaFastForward", 0, empty, 0, empty, empty, empty],
+      [1, 170, "MediaRewind", 0, empty, 0, empty, empty, empty],
+      [1, 171, "MediaTrackNext", 124, "MediaTrackNext", 176, "VK_MEDIA_NEXT_TRACK", empty, empty],
+      [1, 172, "MediaTrackPrevious", 125, "MediaTrackPrevious", 177, "VK_MEDIA_PREV_TRACK", empty, empty],
+      [1, 173, "MediaStop", 126, "MediaStop", 178, "VK_MEDIA_STOP", empty, empty],
+      [1, 174, "Eject", 0, empty, 0, empty, empty, empty],
+      [1, 175, "MediaPlayPause", 127, "MediaPlayPause", 179, "VK_MEDIA_PLAY_PAUSE", empty, empty],
+      [1, 176, "MediaSelect", 128, "LaunchMediaPlayer", 181, "VK_MEDIA_LAUNCH_MEDIA_SELECT", empty, empty],
+      [1, 177, "LaunchMail", 129, "LaunchMail", 180, "VK_MEDIA_LAUNCH_MAIL", empty, empty],
+      [1, 178, "LaunchApp2", 130, "LaunchApp2", 183, "VK_MEDIA_LAUNCH_APP2", empty, empty],
+      [1, 179, "LaunchApp1", 0, empty, 0, "VK_MEDIA_LAUNCH_APP1", empty, empty],
+      [1, 180, "SelectTask", 0, empty, 0, empty, empty, empty],
+      [1, 181, "LaunchScreenSaver", 0, empty, 0, empty, empty, empty],
+      [1, 182, "BrowserSearch", 120, "BrowserSearch", 170, "VK_BROWSER_SEARCH", empty, empty],
+      [1, 183, "BrowserHome", 121, "BrowserHome", 172, "VK_BROWSER_HOME", empty, empty],
+      [1, 184, "BrowserBack", 122, "BrowserBack", 166, "VK_BROWSER_BACK", empty, empty],
+      [1, 185, "BrowserForward", 123, "BrowserForward", 167, "VK_BROWSER_FORWARD", empty, empty],
+      [1, 186, "BrowserStop", 0, empty, 0, "VK_BROWSER_STOP", empty, empty],
+      [1, 187, "BrowserRefresh", 0, empty, 0, "VK_BROWSER_REFRESH", empty, empty],
+      [1, 188, "BrowserFavorites", 0, empty, 0, "VK_BROWSER_FAVORITES", empty, empty],
+      [1, 189, "ZoomToggle", 0, empty, 0, empty, empty, empty],
+      [1, 190, "MailReply", 0, empty, 0, empty, empty, empty],
+      [1, 191, "MailForward", 0, empty, 0, empty, empty, empty],
+      [1, 192, "MailSend", 0, empty, 0, empty, empty, empty],
+      // See https://lists.w3.org/Archives/Public/www-dom/2010JulSep/att-0182/keyCode-spec.html
+      // If an Input Method Editor is processing key input and the event is keydown, return 229.
+      [1, 0, empty, 114, "KeyInComposition", 229, empty, empty, empty],
+      [1, 0, empty, 116, "ABNT_C2", 194, "VK_ABNT_C2", empty, empty],
+      [1, 0, empty, 96, "OEM_8", 223, "VK_OEM_8", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_KANA", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_HANGUL", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_JUNJA", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_FINAL", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_HANJA", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_KANJI", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_CONVERT", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_NONCONVERT", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_ACCEPT", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_MODECHANGE", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_SELECT", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_PRINT", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_EXECUTE", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_SNAPSHOT", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_HELP", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_APPS", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_PROCESSKEY", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_PACKET", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_DBE_SBCSCHAR", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_DBE_DBCSCHAR", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_ATTN", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_CRSEL", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_EXSEL", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_EREOF", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_PLAY", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_ZOOM", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_NONAME", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_PA1", empty, empty],
+      [1, 0, empty, 0, empty, 0, "VK_OEM_CLEAR", empty, empty]
+    ];
+    const seenKeyCode = [];
+    const seenScanCode = [];
+    for (const mapping of mappings) {
+      const [immutable, scanCode, scanCodeStr, keyCode, keyCodeStr, eventKeyCode, vkey, usUserSettingsLabel, generalUserSettingsLabel] = mapping;
+      if (!seenScanCode[scanCode]) {
+        seenScanCode[scanCode] = true;
+        scanCodeStrToInt[scanCodeStr] = scanCode;
+        scanCodeLowerCaseStrToInt[scanCodeStr.toLowerCase()] = scanCode;
+        if (immutable) {
+          IMMUTABLE_CODE_TO_KEY_CODE[scanCode] = keyCode;
+        }
+      }
+      if (!seenKeyCode[keyCode]) {
+        seenKeyCode[keyCode] = true;
+        if (!keyCodeStr) {
+          throw new Error(`String representation missing for key code ${keyCode} around scan code ${scanCodeStr}`);
+        }
+        uiMap.define(keyCode, keyCodeStr);
+        userSettingsUSMap.define(keyCode, usUserSettingsLabel || keyCodeStr);
+        userSettingsGeneralMap.define(keyCode, generalUserSettingsLabel || usUserSettingsLabel || keyCodeStr);
+      }
+      if (eventKeyCode) {
+        EVENT_KEY_CODE_MAP[eventKeyCode] = keyCode;
+      }
+    }
+  })();
+  var KeyCodeUtils;
+  (function(KeyCodeUtils2) {
+    function toString(keyCode) {
+      return uiMap.keyCodeToStr(keyCode);
+    }
+    KeyCodeUtils2.toString = toString;
+    function fromString(key) {
+      return uiMap.strToKeyCode(key);
+    }
+    KeyCodeUtils2.fromString = fromString;
+    function toUserSettingsUS(keyCode) {
+      return userSettingsUSMap.keyCodeToStr(keyCode);
+    }
+    KeyCodeUtils2.toUserSettingsUS = toUserSettingsUS;
+    function toUserSettingsGeneral(keyCode) {
+      return userSettingsGeneralMap.keyCodeToStr(keyCode);
+    }
+    KeyCodeUtils2.toUserSettingsGeneral = toUserSettingsGeneral;
+    function fromUserSettings(key) {
+      return userSettingsUSMap.strToKeyCode(key) || userSettingsGeneralMap.strToKeyCode(key);
+    }
+    KeyCodeUtils2.fromUserSettings = fromUserSettings;
+    function toElectronAccelerator(keyCode) {
+      if (keyCode >= 98 && keyCode <= 113) {
+        return null;
+      }
+      switch (keyCode) {
+        case 16:
+          return "Up";
+        case 18:
+          return "Down";
+        case 15:
+          return "Left";
+        case 17:
+          return "Right";
+      }
+      return uiMap.keyCodeToStr(keyCode);
+    }
+    KeyCodeUtils2.toElectronAccelerator = toElectronAccelerator;
+  })(KeyCodeUtils || (KeyCodeUtils = {}));
+  function KeyChord(firstPart, secondPart) {
+    const chordPart = (secondPart & 65535) << 16 >>> 0;
+    return (firstPart | chordPart) >>> 0;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/process.js
+  var safeProcess;
+  var vscodeGlobal = globalThis.vscode;
+  if (typeof vscodeGlobal !== "undefined" && typeof vscodeGlobal.process !== "undefined") {
+    const sandboxProcess = vscodeGlobal.process;
+    safeProcess = {
+      get platform() {
+        return sandboxProcess.platform;
+      },
+      get arch() {
+        return sandboxProcess.arch;
+      },
+      get env() {
+        return sandboxProcess.env;
+      },
+      cwd() {
+        return sandboxProcess.cwd();
+      }
+    };
+  } else if (typeof process !== "undefined" && typeof process?.versions?.node === "string") {
+    safeProcess = {
+      get platform() {
+        return process.platform;
+      },
+      get arch() {
+        return process.arch;
+      },
+      get env() {
+        return process.env;
+      },
+      cwd() {
+        return process.env["VSCODE_CWD"] || process.cwd();
+      }
+    };
+  } else {
+    safeProcess = {
+      // Supported
+      get platform() {
+        return isWindows ? "win32" : isMacintosh ? "darwin" : "linux";
+      },
+      get arch() {
+        return void 0;
+      },
+      // Unsupported
+      get env() {
+        return {};
+      },
+      cwd() {
+        return "/";
+      }
+    };
+  }
+  var cwd = safeProcess.cwd;
+  var env = safeProcess.env;
+  var platform = safeProcess.platform;
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/path.js
+  var CHAR_UPPERCASE_A = 65;
+  var CHAR_LOWERCASE_A = 97;
+  var CHAR_UPPERCASE_Z = 90;
+  var CHAR_LOWERCASE_Z = 122;
+  var CHAR_DOT = 46;
+  var CHAR_FORWARD_SLASH = 47;
+  var CHAR_BACKWARD_SLASH = 92;
+  var CHAR_COLON = 58;
+  var CHAR_QUESTION_MARK = 63;
+  var ErrorInvalidArgType = class extends Error {
+    constructor(name, expected, actual) {
+      let determiner;
+      if (typeof expected === "string" && expected.indexOf("not ") === 0) {
+        determiner = "must not be";
+        expected = expected.replace(/^not /, "");
+      } else {
+        determiner = "must be";
+      }
+      const type = name.indexOf(".") !== -1 ? "property" : "argument";
+      let msg = `The "${name}" ${type} ${determiner} of type ${expected}`;
+      msg += `. Received type ${typeof actual}`;
+      super(msg);
+      this.code = "ERR_INVALID_ARG_TYPE";
+    }
+  };
+  function validateObject(pathObject, name) {
+    if (pathObject === null || typeof pathObject !== "object") {
+      throw new ErrorInvalidArgType(name, "Object", pathObject);
+    }
+  }
+  function validateString(value, name) {
+    if (typeof value !== "string") {
+      throw new ErrorInvalidArgType(name, "string", value);
+    }
+  }
+  var platformIsWin32 = platform === "win32";
+  function isPathSeparator(code) {
+    return code === CHAR_FORWARD_SLASH || code === CHAR_BACKWARD_SLASH;
+  }
+  function isPosixPathSeparator(code) {
+    return code === CHAR_FORWARD_SLASH;
+  }
+  function isWindowsDeviceRoot(code) {
+    return code >= CHAR_UPPERCASE_A && code <= CHAR_UPPERCASE_Z || code >= CHAR_LOWERCASE_A && code <= CHAR_LOWERCASE_Z;
+  }
+  function normalizeString(path, allowAboveRoot, separator, isPathSeparator2) {
+    let res = "";
+    let lastSegmentLength = 0;
+    let lastSlash = -1;
+    let dots = 0;
+    let code = 0;
+    for (let i = 0; i <= path.length; ++i) {
+      if (i < path.length) {
+        code = path.charCodeAt(i);
+      } else if (isPathSeparator2(code)) {
+        break;
+      } else {
+        code = CHAR_FORWARD_SLASH;
+      }
+      if (isPathSeparator2(code)) {
+        if (lastSlash === i - 1 || dots === 1) ;
+        else if (dots === 2) {
+          if (res.length < 2 || lastSegmentLength !== 2 || res.charCodeAt(res.length - 1) !== CHAR_DOT || res.charCodeAt(res.length - 2) !== CHAR_DOT) {
+            if (res.length > 2) {
+              const lastSlashIndex = res.lastIndexOf(separator);
+              if (lastSlashIndex === -1) {
+                res = "";
+                lastSegmentLength = 0;
+              } else {
+                res = res.slice(0, lastSlashIndex);
+                lastSegmentLength = res.length - 1 - res.lastIndexOf(separator);
+              }
+              lastSlash = i;
+              dots = 0;
+              continue;
+            } else if (res.length !== 0) {
+              res = "";
+              lastSegmentLength = 0;
+              lastSlash = i;
+              dots = 0;
+              continue;
+            }
+          }
+          if (allowAboveRoot) {
+            res += res.length > 0 ? `${separator}..` : "..";
+            lastSegmentLength = 2;
+          }
+        } else {
+          if (res.length > 0) {
+            res += `${separator}${path.slice(lastSlash + 1, i)}`;
+          } else {
+            res = path.slice(lastSlash + 1, i);
+          }
+          lastSegmentLength = i - lastSlash - 1;
+        }
+        lastSlash = i;
+        dots = 0;
+      } else if (code === CHAR_DOT && dots !== -1) {
+        ++dots;
+      } else {
+        dots = -1;
+      }
+    }
+    return res;
+  }
+  function formatExt(ext) {
+    return ext ? `${ext[0] === "." ? "" : "."}${ext}` : "";
+  }
+  function _format2(sep2, pathObject) {
+    validateObject(pathObject, "pathObject");
+    const dir = pathObject.dir || pathObject.root;
+    const base = pathObject.base || `${pathObject.name || ""}${formatExt(pathObject.ext)}`;
+    if (!dir) {
+      return base;
+    }
+    return dir === pathObject.root ? `${dir}${base}` : `${dir}${sep2}${base}`;
+  }
+  var win32 = {
+    // path.resolve([from ...], to)
+    resolve(...pathSegments) {
+      let resolvedDevice = "";
+      let resolvedTail = "";
+      let resolvedAbsolute = false;
+      for (let i = pathSegments.length - 1; i >= -1; i--) {
+        let path;
+        if (i >= 0) {
+          path = pathSegments[i];
+          validateString(path, `paths[${i}]`);
+          if (path.length === 0) {
+            continue;
+          }
+        } else if (resolvedDevice.length === 0) {
+          path = cwd();
+        } else {
+          path = env[`=${resolvedDevice}`] || cwd();
+          if (path === void 0 || path.slice(0, 2).toLowerCase() !== resolvedDevice.toLowerCase() && path.charCodeAt(2) === CHAR_BACKWARD_SLASH) {
+            path = `${resolvedDevice}\\`;
+          }
+        }
+        const len = path.length;
+        let rootEnd = 0;
+        let device = "";
+        let isAbsolute = false;
+        const code = path.charCodeAt(0);
+        if (len === 1) {
+          if (isPathSeparator(code)) {
+            rootEnd = 1;
+            isAbsolute = true;
+          }
+        } else if (isPathSeparator(code)) {
+          isAbsolute = true;
+          if (isPathSeparator(path.charCodeAt(1))) {
+            let j = 2;
+            let last = j;
+            while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+              j++;
+            }
+            if (j < len && j !== last) {
+              const firstPart = path.slice(last, j);
+              last = j;
+              while (j < len && isPathSeparator(path.charCodeAt(j))) {
+                j++;
+              }
+              if (j < len && j !== last) {
+                last = j;
+                while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+                  j++;
+                }
+                if (j === len || j !== last) {
+                  device = `\\\\${firstPart}\\${path.slice(last, j)}`;
+                  rootEnd = j;
+                }
+              }
+            }
+          } else {
+            rootEnd = 1;
+          }
+        } else if (isWindowsDeviceRoot(code) && path.charCodeAt(1) === CHAR_COLON) {
+          device = path.slice(0, 2);
+          rootEnd = 2;
+          if (len > 2 && isPathSeparator(path.charCodeAt(2))) {
+            isAbsolute = true;
+            rootEnd = 3;
+          }
+        }
+        if (device.length > 0) {
+          if (resolvedDevice.length > 0) {
+            if (device.toLowerCase() !== resolvedDevice.toLowerCase()) {
+              continue;
+            }
+          } else {
+            resolvedDevice = device;
+          }
+        }
+        if (resolvedAbsolute) {
+          if (resolvedDevice.length > 0) {
+            break;
+          }
+        } else {
+          resolvedTail = `${path.slice(rootEnd)}\\${resolvedTail}`;
+          resolvedAbsolute = isAbsolute;
+          if (isAbsolute && resolvedDevice.length > 0) {
+            break;
+          }
+        }
+      }
+      resolvedTail = normalizeString(resolvedTail, !resolvedAbsolute, "\\", isPathSeparator);
+      return resolvedAbsolute ? `${resolvedDevice}\\${resolvedTail}` : `${resolvedDevice}${resolvedTail}` || ".";
+    },
+    normalize(path) {
+      validateString(path, "path");
+      const len = path.length;
+      if (len === 0) {
+        return ".";
+      }
+      let rootEnd = 0;
+      let device;
+      let isAbsolute = false;
+      const code = path.charCodeAt(0);
+      if (len === 1) {
+        return isPosixPathSeparator(code) ? "\\" : path;
+      }
+      if (isPathSeparator(code)) {
+        isAbsolute = true;
+        if (isPathSeparator(path.charCodeAt(1))) {
+          let j = 2;
+          let last = j;
+          while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+            j++;
+          }
+          if (j < len && j !== last) {
+            const firstPart = path.slice(last, j);
+            last = j;
+            while (j < len && isPathSeparator(path.charCodeAt(j))) {
+              j++;
+            }
+            if (j < len && j !== last) {
+              last = j;
+              while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+                j++;
+              }
+              if (j === len) {
+                return `\\\\${firstPart}\\${path.slice(last)}\\`;
+              }
+              if (j !== last) {
+                device = `\\\\${firstPart}\\${path.slice(last, j)}`;
+                rootEnd = j;
+              }
+            }
+          }
+        } else {
+          rootEnd = 1;
+        }
+      } else if (isWindowsDeviceRoot(code) && path.charCodeAt(1) === CHAR_COLON) {
+        device = path.slice(0, 2);
+        rootEnd = 2;
+        if (len > 2 && isPathSeparator(path.charCodeAt(2))) {
+          isAbsolute = true;
+          rootEnd = 3;
+        }
+      }
+      let tail = rootEnd < len ? normalizeString(path.slice(rootEnd), !isAbsolute, "\\", isPathSeparator) : "";
+      if (tail.length === 0 && !isAbsolute) {
+        tail = ".";
+      }
+      if (tail.length > 0 && isPathSeparator(path.charCodeAt(len - 1))) {
+        tail += "\\";
+      }
+      if (!isAbsolute && device === void 0 && path.includes(":")) {
+        if (tail.length >= 2 && isWindowsDeviceRoot(tail.charCodeAt(0)) && tail.charCodeAt(1) === CHAR_COLON) {
+          return `.\\${tail}`;
+        }
+        let index = path.indexOf(":");
+        do {
+          if (index === len - 1 || isPathSeparator(path.charCodeAt(index + 1))) {
+            return `.\\${tail}`;
+          }
+        } while ((index = path.indexOf(":", index + 1)) !== -1);
+      }
+      if (device === void 0) {
+        return isAbsolute ? `\\${tail}` : tail;
+      }
+      return isAbsolute ? `${device}\\${tail}` : `${device}${tail}`;
+    },
+    isAbsolute(path) {
+      validateString(path, "path");
+      const len = path.length;
+      if (len === 0) {
+        return false;
+      }
+      const code = path.charCodeAt(0);
+      return isPathSeparator(code) || // Possible device root
+      len > 2 && isWindowsDeviceRoot(code) && path.charCodeAt(1) === CHAR_COLON && isPathSeparator(path.charCodeAt(2));
+    },
+    join(...paths) {
+      if (paths.length === 0) {
+        return ".";
+      }
+      let joined;
+      let firstPart;
+      for (let i = 0; i < paths.length; ++i) {
+        const arg = paths[i];
+        validateString(arg, "path");
+        if (arg.length > 0) {
+          if (joined === void 0) {
+            joined = firstPart = arg;
+          } else {
+            joined += `\\${arg}`;
+          }
+        }
+      }
+      if (joined === void 0) {
+        return ".";
+      }
+      let needsReplace = true;
+      let slashCount = 0;
+      if (typeof firstPart === "string" && isPathSeparator(firstPart.charCodeAt(0))) {
+        ++slashCount;
+        const firstLen = firstPart.length;
+        if (firstLen > 1 && isPathSeparator(firstPart.charCodeAt(1))) {
+          ++slashCount;
+          if (firstLen > 2) {
+            if (isPathSeparator(firstPart.charCodeAt(2))) {
+              ++slashCount;
+            } else {
+              needsReplace = false;
+            }
+          }
+        }
+      }
+      if (needsReplace) {
+        while (slashCount < joined.length && isPathSeparator(joined.charCodeAt(slashCount))) {
+          slashCount++;
+        }
+        if (slashCount >= 2) {
+          joined = `\\${joined.slice(slashCount)}`;
+        }
+      }
+      return win32.normalize(joined);
+    },
+    // It will solve the relative path from `from` to `to`, for instance:
+    //  from = 'C:\\orandea\\test\\aaa'
+    //  to = 'C:\\orandea\\impl\\bbb'
+    // The output of the function should be: '..\\..\\impl\\bbb'
+    relative(from, to) {
+      validateString(from, "from");
+      validateString(to, "to");
+      if (from === to) {
+        return "";
+      }
+      const fromOrig = win32.resolve(from);
+      const toOrig = win32.resolve(to);
+      if (fromOrig === toOrig) {
+        return "";
+      }
+      from = fromOrig.toLowerCase();
+      to = toOrig.toLowerCase();
+      if (from === to) {
+        return "";
+      }
+      if (fromOrig.length !== from.length || toOrig.length !== to.length) {
+        const fromSplit = fromOrig.split("\\");
+        const toSplit = toOrig.split("\\");
+        if (fromSplit[fromSplit.length - 1] === "") {
+          fromSplit.pop();
+        }
+        if (toSplit[toSplit.length - 1] === "") {
+          toSplit.pop();
+        }
+        const fromLen2 = fromSplit.length;
+        const toLen2 = toSplit.length;
+        const length2 = fromLen2 < toLen2 ? fromLen2 : toLen2;
+        let i2;
+        for (i2 = 0; i2 < length2; i2++) {
+          if (fromSplit[i2].toLowerCase() !== toSplit[i2].toLowerCase()) {
+            break;
+          }
+        }
+        if (i2 === 0) {
+          return toOrig;
+        } else if (i2 === length2) {
+          if (toLen2 > length2) {
+            return toSplit.slice(i2).join("\\");
+          }
+          if (fromLen2 > length2) {
+            return "..\\".repeat(fromLen2 - 1 - i2) + "..";
+          }
+          return "";
+        }
+        return "..\\".repeat(fromLen2 - i2) + toSplit.slice(i2).join("\\");
+      }
+      let fromStart = 0;
+      while (fromStart < from.length && from.charCodeAt(fromStart) === CHAR_BACKWARD_SLASH) {
+        fromStart++;
+      }
+      let fromEnd = from.length;
+      while (fromEnd - 1 > fromStart && from.charCodeAt(fromEnd - 1) === CHAR_BACKWARD_SLASH) {
+        fromEnd--;
+      }
+      const fromLen = fromEnd - fromStart;
+      let toStart = 0;
+      while (toStart < to.length && to.charCodeAt(toStart) === CHAR_BACKWARD_SLASH) {
+        toStart++;
+      }
+      let toEnd = to.length;
+      while (toEnd - 1 > toStart && to.charCodeAt(toEnd - 1) === CHAR_BACKWARD_SLASH) {
+        toEnd--;
+      }
+      const toLen = toEnd - toStart;
+      const length = fromLen < toLen ? fromLen : toLen;
+      let lastCommonSep = -1;
+      let i = 0;
+      for (; i < length; i++) {
+        const fromCode = from.charCodeAt(fromStart + i);
+        if (fromCode !== to.charCodeAt(toStart + i)) {
+          break;
+        } else if (fromCode === CHAR_BACKWARD_SLASH) {
+          lastCommonSep = i;
+        }
+      }
+      if (i !== length) {
+        if (lastCommonSep === -1) {
+          return toOrig;
+        }
+      } else {
+        if (toLen > length) {
+          if (to.charCodeAt(toStart + i) === CHAR_BACKWARD_SLASH) {
+            return toOrig.slice(toStart + i + 1);
+          }
+          if (i === 2) {
+            return toOrig.slice(toStart + i);
+          }
+        }
+        if (fromLen > length) {
+          if (from.charCodeAt(fromStart + i) === CHAR_BACKWARD_SLASH) {
+            lastCommonSep = i;
+          } else if (i === 2) {
+            lastCommonSep = 3;
+          }
+        }
+        if (lastCommonSep === -1) {
+          lastCommonSep = 0;
+        }
+      }
+      let out = "";
+      for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
+        if (i === fromEnd || from.charCodeAt(i) === CHAR_BACKWARD_SLASH) {
+          out += out.length === 0 ? ".." : "\\..";
+        }
+      }
+      toStart += lastCommonSep;
+      if (out.length > 0) {
+        return `${out}${toOrig.slice(toStart, toEnd)}`;
+      }
+      if (toOrig.charCodeAt(toStart) === CHAR_BACKWARD_SLASH) {
+        ++toStart;
+      }
+      return toOrig.slice(toStart, toEnd);
+    },
+    toNamespacedPath(path) {
+      if (typeof path !== "string" || path.length === 0) {
+        return path;
+      }
+      const resolvedPath = win32.resolve(path);
+      if (resolvedPath.length <= 2) {
+        return path;
+      }
+      if (resolvedPath.charCodeAt(0) === CHAR_BACKWARD_SLASH) {
+        if (resolvedPath.charCodeAt(1) === CHAR_BACKWARD_SLASH) {
+          const code = resolvedPath.charCodeAt(2);
+          if (code !== CHAR_QUESTION_MARK && code !== CHAR_DOT) {
+            return `\\\\?\\UNC\\${resolvedPath.slice(2)}`;
+          }
+        }
+      } else if (isWindowsDeviceRoot(resolvedPath.charCodeAt(0)) && resolvedPath.charCodeAt(1) === CHAR_COLON && resolvedPath.charCodeAt(2) === CHAR_BACKWARD_SLASH) {
+        return `\\\\?\\${resolvedPath}`;
+      }
+      return resolvedPath;
+    },
+    dirname(path) {
+      validateString(path, "path");
+      const len = path.length;
+      if (len === 0) {
+        return ".";
+      }
+      let rootEnd = -1;
+      let offset = 0;
+      const code = path.charCodeAt(0);
+      if (len === 1) {
+        return isPathSeparator(code) ? path : ".";
+      }
+      if (isPathSeparator(code)) {
+        rootEnd = offset = 1;
+        if (isPathSeparator(path.charCodeAt(1))) {
+          let j = 2;
+          let last = j;
+          while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+            j++;
+          }
+          if (j < len && j !== last) {
+            last = j;
+            while (j < len && isPathSeparator(path.charCodeAt(j))) {
+              j++;
+            }
+            if (j < len && j !== last) {
+              last = j;
+              while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+                j++;
+              }
+              if (j === len) {
+                return path;
+              }
+              if (j !== last) {
+                rootEnd = offset = j + 1;
+              }
+            }
+          }
+        }
+      } else if (isWindowsDeviceRoot(code) && path.charCodeAt(1) === CHAR_COLON) {
+        rootEnd = len > 2 && isPathSeparator(path.charCodeAt(2)) ? 3 : 2;
+        offset = rootEnd;
+      }
+      let end = -1;
+      let matchedSlash = true;
+      for (let i = len - 1; i >= offset; --i) {
+        if (isPathSeparator(path.charCodeAt(i))) {
+          if (!matchedSlash) {
+            end = i;
+            break;
+          }
+        } else {
+          matchedSlash = false;
+        }
+      }
+      if (end === -1) {
+        if (rootEnd === -1) {
+          return ".";
+        }
+        end = rootEnd;
+      }
+      return path.slice(0, end);
+    },
+    basename(path, suffix) {
+      if (suffix !== void 0) {
+        validateString(suffix, "suffix");
+      }
+      validateString(path, "path");
+      let start2 = 0;
+      let end = -1;
+      let matchedSlash = true;
+      let i;
+      if (path.length >= 2 && isWindowsDeviceRoot(path.charCodeAt(0)) && path.charCodeAt(1) === CHAR_COLON) {
+        start2 = 2;
+      }
+      if (suffix !== void 0 && suffix.length > 0 && suffix.length <= path.length) {
+        if (suffix === path) {
+          return "";
+        }
+        let extIdx = suffix.length - 1;
+        let firstNonSlashEnd = -1;
+        for (i = path.length - 1; i >= start2; --i) {
+          const code = path.charCodeAt(i);
+          if (isPathSeparator(code)) {
+            if (!matchedSlash) {
+              start2 = i + 1;
+              break;
+            }
+          } else {
+            if (firstNonSlashEnd === -1) {
+              matchedSlash = false;
+              firstNonSlashEnd = i + 1;
+            }
+            if (extIdx >= 0) {
+              if (code === suffix.charCodeAt(extIdx)) {
+                if (--extIdx === -1) {
+                  end = i;
+                }
+              } else {
+                extIdx = -1;
+                end = firstNonSlashEnd;
+              }
+            }
+          }
+        }
+        if (start2 === end) {
+          end = firstNonSlashEnd;
+        } else if (end === -1) {
+          end = path.length;
+        }
+        return path.slice(start2, end);
+      }
+      for (i = path.length - 1; i >= start2; --i) {
+        if (isPathSeparator(path.charCodeAt(i))) {
+          if (!matchedSlash) {
+            start2 = i + 1;
+            break;
+          }
+        } else if (end === -1) {
+          matchedSlash = false;
+          end = i + 1;
+        }
+      }
+      if (end === -1) {
+        return "";
+      }
+      return path.slice(start2, end);
+    },
+    extname(path) {
+      validateString(path, "path");
+      let start2 = 0;
+      let startDot = -1;
+      let startPart = 0;
+      let end = -1;
+      let matchedSlash = true;
+      let preDotState = 0;
+      if (path.length >= 2 && path.charCodeAt(1) === CHAR_COLON && isWindowsDeviceRoot(path.charCodeAt(0))) {
+        start2 = startPart = 2;
+      }
+      for (let i = path.length - 1; i >= start2; --i) {
+        const code = path.charCodeAt(i);
+        if (isPathSeparator(code)) {
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+        if (end === -1) {
+          matchedSlash = false;
+          end = i + 1;
+        }
+        if (code === CHAR_DOT) {
+          if (startDot === -1) {
+            startDot = i;
+          } else if (preDotState !== 1) {
+            preDotState = 1;
+          }
+        } else if (startDot !== -1) {
+          preDotState = -1;
+        }
+      }
+      if (startDot === -1 || end === -1 || // We saw a non-dot character immediately before the dot
+      preDotState === 0 || // The (right-most) trimmed path component is exactly '..'
+      preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+        return "";
+      }
+      return path.slice(startDot, end);
+    },
+    format: _format2.bind(null, "\\"),
+    parse(path) {
+      validateString(path, "path");
+      const ret = { root: "", dir: "", base: "", ext: "", name: "" };
+      if (path.length === 0) {
+        return ret;
+      }
+      const len = path.length;
+      let rootEnd = 0;
+      let code = path.charCodeAt(0);
+      if (len === 1) {
+        if (isPathSeparator(code)) {
+          ret.root = ret.dir = path;
+          return ret;
+        }
+        ret.base = ret.name = path;
+        return ret;
+      }
+      if (isPathSeparator(code)) {
+        rootEnd = 1;
+        if (isPathSeparator(path.charCodeAt(1))) {
+          let j = 2;
+          let last = j;
+          while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+            j++;
+          }
+          if (j < len && j !== last) {
+            last = j;
+            while (j < len && isPathSeparator(path.charCodeAt(j))) {
+              j++;
+            }
+            if (j < len && j !== last) {
+              last = j;
+              while (j < len && !isPathSeparator(path.charCodeAt(j))) {
+                j++;
+              }
+              if (j === len) {
+                rootEnd = j;
+              } else if (j !== last) {
+                rootEnd = j + 1;
+              }
+            }
+          }
+        }
+      } else if (isWindowsDeviceRoot(code) && path.charCodeAt(1) === CHAR_COLON) {
+        if (len <= 2) {
+          ret.root = ret.dir = path;
+          return ret;
+        }
+        rootEnd = 2;
+        if (isPathSeparator(path.charCodeAt(2))) {
+          if (len === 3) {
+            ret.root = ret.dir = path;
+            return ret;
+          }
+          rootEnd = 3;
+        }
+      }
+      if (rootEnd > 0) {
+        ret.root = path.slice(0, rootEnd);
+      }
+      let startDot = -1;
+      let startPart = rootEnd;
+      let end = -1;
+      let matchedSlash = true;
+      let i = path.length - 1;
+      let preDotState = 0;
+      for (; i >= rootEnd; --i) {
+        code = path.charCodeAt(i);
+        if (isPathSeparator(code)) {
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+        if (end === -1) {
+          matchedSlash = false;
+          end = i + 1;
+        }
+        if (code === CHAR_DOT) {
+          if (startDot === -1) {
+            startDot = i;
+          } else if (preDotState !== 1) {
+            preDotState = 1;
+          }
+        } else if (startDot !== -1) {
+          preDotState = -1;
+        }
+      }
+      if (end !== -1) {
+        if (startDot === -1 || // We saw a non-dot character immediately before the dot
+        preDotState === 0 || // The (right-most) trimmed path component is exactly '..'
+        preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+          ret.base = ret.name = path.slice(startPart, end);
+        } else {
+          ret.name = path.slice(startPart, startDot);
+          ret.base = path.slice(startPart, end);
+          ret.ext = path.slice(startDot, end);
+        }
+      }
+      if (startPart > 0 && startPart !== rootEnd) {
+        ret.dir = path.slice(0, startPart - 1);
+      } else {
+        ret.dir = ret.root;
+      }
+      return ret;
+    },
+    sep: "\\",
+    delimiter: ";",
+    win32: null,
+    posix: null
+  };
+  var posixCwd = (() => {
+    if (platformIsWin32) {
+      const regexp = /\\/g;
+      return () => {
+        const cwd$1 = cwd().replace(regexp, "/");
+        return cwd$1.slice(cwd$1.indexOf("/"));
+      };
+    }
+    return () => cwd();
+  })();
+  var posix = {
+    // path.resolve([from ...], to)
+    resolve(...pathSegments) {
+      let resolvedPath = "";
+      let resolvedAbsolute = false;
+      for (let i = pathSegments.length - 1; i >= 0 && !resolvedAbsolute; i--) {
+        const path = pathSegments[i];
+        validateString(path, `paths[${i}]`);
+        if (path.length === 0) {
+          continue;
+        }
+        resolvedPath = `${path}/${resolvedPath}`;
+        resolvedAbsolute = path.charCodeAt(0) === CHAR_FORWARD_SLASH;
+      }
+      if (!resolvedAbsolute) {
+        const cwd2 = posixCwd();
+        resolvedPath = `${cwd2}/${resolvedPath}`;
+        resolvedAbsolute = cwd2.charCodeAt(0) === CHAR_FORWARD_SLASH;
+      }
+      resolvedPath = normalizeString(resolvedPath, !resolvedAbsolute, "/", isPosixPathSeparator);
+      if (resolvedAbsolute) {
+        return `/${resolvedPath}`;
+      }
+      return resolvedPath.length > 0 ? resolvedPath : ".";
+    },
+    normalize(path) {
+      validateString(path, "path");
+      if (path.length === 0) {
+        return ".";
+      }
+      const isAbsolute = path.charCodeAt(0) === CHAR_FORWARD_SLASH;
+      const trailingSeparator = path.charCodeAt(path.length - 1) === CHAR_FORWARD_SLASH;
+      path = normalizeString(path, !isAbsolute, "/", isPosixPathSeparator);
+      if (path.length === 0) {
+        if (isAbsolute) {
+          return "/";
+        }
+        return trailingSeparator ? "./" : ".";
+      }
+      if (trailingSeparator) {
+        path += "/";
+      }
+      return isAbsolute ? `/${path}` : path;
+    },
+    isAbsolute(path) {
+      validateString(path, "path");
+      return path.length > 0 && path.charCodeAt(0) === CHAR_FORWARD_SLASH;
+    },
+    join(...paths) {
+      if (paths.length === 0) {
+        return ".";
+      }
+      const path = [];
+      for (let i = 0; i < paths.length; ++i) {
+        const arg = paths[i];
+        validateString(arg, "path");
+        if (arg.length > 0) {
+          path.push(arg);
+        }
+      }
+      if (path.length === 0) {
+        return ".";
+      }
+      return posix.normalize(path.join("/"));
+    },
+    relative(from, to) {
+      validateString(from, "from");
+      validateString(to, "to");
+      if (from === to) {
+        return "";
+      }
+      from = posix.resolve(from);
+      to = posix.resolve(to);
+      if (from === to) {
+        return "";
+      }
+      const fromStart = 1;
+      const fromEnd = from.length;
+      const fromLen = fromEnd - fromStart;
+      const toStart = 1;
+      const toLen = to.length - toStart;
+      const length = fromLen < toLen ? fromLen : toLen;
+      let lastCommonSep = -1;
+      let i = 0;
+      for (; i < length; i++) {
+        const fromCode = from.charCodeAt(fromStart + i);
+        if (fromCode !== to.charCodeAt(toStart + i)) {
+          break;
+        } else if (fromCode === CHAR_FORWARD_SLASH) {
+          lastCommonSep = i;
+        }
+      }
+      if (i === length) {
+        if (toLen > length) {
+          if (to.charCodeAt(toStart + i) === CHAR_FORWARD_SLASH) {
+            return to.slice(toStart + i + 1);
+          }
+          if (i === 0) {
+            return to.slice(toStart + i);
+          }
+        } else if (fromLen > length) {
+          if (from.charCodeAt(fromStart + i) === CHAR_FORWARD_SLASH) {
+            lastCommonSep = i;
+          } else if (i === 0) {
+            lastCommonSep = 0;
+          }
+        }
+      }
+      let out = "";
+      for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
+        if (i === fromEnd || from.charCodeAt(i) === CHAR_FORWARD_SLASH) {
+          out += out.length === 0 ? ".." : "/..";
+        }
+      }
+      return `${out}${to.slice(toStart + lastCommonSep)}`;
+    },
+    toNamespacedPath(path) {
+      return path;
+    },
+    dirname(path) {
+      validateString(path, "path");
+      if (path.length === 0) {
+        return ".";
+      }
+      const hasRoot = path.charCodeAt(0) === CHAR_FORWARD_SLASH;
+      let end = -1;
+      let matchedSlash = true;
+      for (let i = path.length - 1; i >= 1; --i) {
+        if (path.charCodeAt(i) === CHAR_FORWARD_SLASH) {
+          if (!matchedSlash) {
+            end = i;
+            break;
+          }
+        } else {
+          matchedSlash = false;
+        }
+      }
+      if (end === -1) {
+        return hasRoot ? "/" : ".";
+      }
+      if (hasRoot && end === 1) {
+        return "//";
+      }
+      return path.slice(0, end);
+    },
+    basename(path, suffix) {
+      if (suffix !== void 0) {
+        validateString(suffix, "suffix");
+      }
+      validateString(path, "path");
+      let start2 = 0;
+      let end = -1;
+      let matchedSlash = true;
+      let i;
+      if (suffix !== void 0 && suffix.length > 0 && suffix.length <= path.length) {
+        if (suffix === path) {
+          return "";
+        }
+        let extIdx = suffix.length - 1;
+        let firstNonSlashEnd = -1;
+        for (i = path.length - 1; i >= 0; --i) {
+          const code = path.charCodeAt(i);
+          if (code === CHAR_FORWARD_SLASH) {
+            if (!matchedSlash) {
+              start2 = i + 1;
+              break;
+            }
+          } else {
+            if (firstNonSlashEnd === -1) {
+              matchedSlash = false;
+              firstNonSlashEnd = i + 1;
+            }
+            if (extIdx >= 0) {
+              if (code === suffix.charCodeAt(extIdx)) {
+                if (--extIdx === -1) {
+                  end = i;
+                }
+              } else {
+                extIdx = -1;
+                end = firstNonSlashEnd;
+              }
+            }
+          }
+        }
+        if (start2 === end) {
+          end = firstNonSlashEnd;
+        } else if (end === -1) {
+          end = path.length;
+        }
+        return path.slice(start2, end);
+      }
+      for (i = path.length - 1; i >= 0; --i) {
+        if (path.charCodeAt(i) === CHAR_FORWARD_SLASH) {
+          if (!matchedSlash) {
+            start2 = i + 1;
+            break;
+          }
+        } else if (end === -1) {
+          matchedSlash = false;
+          end = i + 1;
+        }
+      }
+      if (end === -1) {
+        return "";
+      }
+      return path.slice(start2, end);
+    },
+    extname(path) {
+      validateString(path, "path");
+      let startDot = -1;
+      let startPart = 0;
+      let end = -1;
+      let matchedSlash = true;
+      let preDotState = 0;
+      for (let i = path.length - 1; i >= 0; --i) {
+        const char = path[i];
+        if (char === "/") {
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+        if (end === -1) {
+          matchedSlash = false;
+          end = i + 1;
+        }
+        if (char === ".") {
+          if (startDot === -1) {
+            startDot = i;
+          } else if (preDotState !== 1) {
+            preDotState = 1;
+          }
+        } else if (startDot !== -1) {
+          preDotState = -1;
+        }
+      }
+      if (startDot === -1 || end === -1 || // We saw a non-dot character immediately before the dot
+      preDotState === 0 || // The (right-most) trimmed path component is exactly '..'
+      preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+        return "";
+      }
+      return path.slice(startDot, end);
+    },
+    format: _format2.bind(null, "/"),
+    parse(path) {
+      validateString(path, "path");
+      const ret = { root: "", dir: "", base: "", ext: "", name: "" };
+      if (path.length === 0) {
+        return ret;
+      }
+      const isAbsolute = path.charCodeAt(0) === CHAR_FORWARD_SLASH;
+      let start2;
+      if (isAbsolute) {
+        ret.root = "/";
+        start2 = 1;
+      } else {
+        start2 = 0;
+      }
+      let startDot = -1;
+      let startPart = 0;
+      let end = -1;
+      let matchedSlash = true;
+      let i = path.length - 1;
+      let preDotState = 0;
+      for (; i >= start2; --i) {
+        const code = path.charCodeAt(i);
+        if (code === CHAR_FORWARD_SLASH) {
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+        if (end === -1) {
+          matchedSlash = false;
+          end = i + 1;
+        }
+        if (code === CHAR_DOT) {
+          if (startDot === -1) {
+            startDot = i;
+          } else if (preDotState !== 1) {
+            preDotState = 1;
+          }
+        } else if (startDot !== -1) {
+          preDotState = -1;
+        }
+      }
+      if (end !== -1) {
+        const start3 = startPart === 0 && isAbsolute ? 1 : startPart;
+        if (startDot === -1 || // We saw a non-dot character immediately before the dot
+        preDotState === 0 || // The (right-most) trimmed path component is exactly '..'
+        preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+          ret.base = ret.name = path.slice(start3, end);
+        } else {
+          ret.name = path.slice(start3, startDot);
+          ret.base = path.slice(start3, end);
+          ret.ext = path.slice(startDot, end);
+        }
+      }
+      if (startPart > 0) {
+        ret.dir = path.slice(0, startPart - 1);
+      } else if (isAbsolute) {
+        ret.dir = "/";
+      }
+      return ret;
+    },
+    sep: "/",
+    delimiter: ":",
+    win32: null,
+    posix: null
+  };
+  posix.win32 = win32.win32 = win32;
+  posix.posix = win32.posix = posix;
+  var normalize = platformIsWin32 ? win32.normalize : posix.normalize;
+  var resolve = platformIsWin32 ? win32.resolve : posix.resolve;
+  var relative = platformIsWin32 ? win32.relative : posix.relative;
+  var dirname = platformIsWin32 ? win32.dirname : posix.dirname;
+  var basename = platformIsWin32 ? win32.basename : posix.basename;
+  var extname = platformIsWin32 ? win32.extname : posix.extname;
+  var sep = platformIsWin32 ? win32.sep : posix.sep;
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/uri.js
+  var _schemePattern = /^\w[\w\d+.-]*$/;
+  var _singleSlashStart = /^\//;
+  var _doubleSlashStart = /^\/\//;
+  function _validateUri(ret, _strict) {
+    if (!ret.scheme && _strict) {
+      throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
+    }
+    if (ret.scheme && !_schemePattern.test(ret.scheme)) {
+      throw new Error("[UriError]: Scheme contains illegal characters.");
+    }
+    if (ret.path) {
+      if (ret.authority) {
+        if (!_singleSlashStart.test(ret.path)) {
+          throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
+        }
+      } else {
+        if (_doubleSlashStart.test(ret.path)) {
+          throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+        }
+      }
+    }
+  }
+  function _schemeFix(scheme, _strict) {
+    if (!scheme && !_strict) {
+      return "file";
+    }
+    return scheme;
+  }
+  function _referenceResolution(scheme, path) {
+    switch (scheme) {
+      case "https":
+      case "http":
+      case "file":
+        if (!path) {
+          path = _slash;
+        } else if (path[0] !== _slash) {
+          path = _slash + path;
+        }
+        break;
+    }
+    return path;
+  }
+  var _empty = "";
+  var _slash = "/";
+  var _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
+  var URI = class _URI {
+    static isUri(thing) {
+      if (thing instanceof _URI) {
+        return true;
+      }
+      if (!thing || typeof thing !== "object") {
+        return false;
+      }
+      return typeof thing.authority === "string" && typeof thing.fragment === "string" && typeof thing.path === "string" && typeof thing.query === "string" && typeof thing.scheme === "string" && typeof thing.fsPath === "string" && typeof thing.with === "function" && typeof thing.toString === "function";
+    }
+    /**
+     * @internal
+     */
+    constructor(schemeOrData, authority, path, query, fragment, _strict = false) {
+      if (typeof schemeOrData === "object") {
+        this.scheme = schemeOrData.scheme || _empty;
+        this.authority = schemeOrData.authority || _empty;
+        this.path = schemeOrData.path || _empty;
+        this.query = schemeOrData.query || _empty;
+        this.fragment = schemeOrData.fragment || _empty;
+      } else {
+        this.scheme = _schemeFix(schemeOrData, _strict);
+        this.authority = authority || _empty;
+        this.path = _referenceResolution(this.scheme, path || _empty);
+        this.query = query || _empty;
+        this.fragment = fragment || _empty;
+        _validateUri(this, _strict);
+      }
+    }
+    // ---- filesystem path -----------------------
+    /**
+     * Returns a string representing the corresponding file system path of this URI.
+     * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
+     * platform specific path separator.
+     *
+     * * Will *not* validate the path for invalid characters and semantics.
+     * * Will *not* look at the scheme of this URI.
+     * * The result shall *not* be used for display purposes but for accessing a file on disk.
+     *
+     *
+     * The *difference* to `URI#path` is the use of the platform specific separator and the handling
+     * of UNC paths. See the below sample of a file-uri with an authority (UNC path).
+     *
+     * ```ts
+        const u = URI.parse('file://server/c$/folder/file.txt')
+        u.authority === 'server'
+        u.path === '/shares/c$/file.txt'
+        u.fsPath === '\\server\c$\folder\file.txt'
+    ```
+     *
+     * Using `URI#path` to read a file (using fs-apis) would not be enough because parts of the path,
+     * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working
+     * with URIs that represent files on disk (`file` scheme).
+     */
+    get fsPath() {
+      return uriToFsPath(this, false);
+    }
+    // ---- modify to new -------------------------
+    with(change) {
+      if (!change) {
+        return this;
+      }
+      let { scheme, authority, path, query, fragment } = change;
+      if (scheme === void 0) {
+        scheme = this.scheme;
+      } else if (scheme === null) {
+        scheme = _empty;
+      }
+      if (authority === void 0) {
+        authority = this.authority;
+      } else if (authority === null) {
+        authority = _empty;
+      }
+      if (path === void 0) {
+        path = this.path;
+      } else if (path === null) {
+        path = _empty;
+      }
+      if (query === void 0) {
+        query = this.query;
+      } else if (query === null) {
+        query = _empty;
+      }
+      if (fragment === void 0) {
+        fragment = this.fragment;
+      } else if (fragment === null) {
+        fragment = _empty;
+      }
+      if (scheme === this.scheme && authority === this.authority && path === this.path && query === this.query && fragment === this.fragment) {
+        return this;
+      }
+      return new Uri(scheme, authority, path, query, fragment);
+    }
+    // ---- parse & validate ------------------------
+    /**
+     * Creates a new URI from a string, e.g. `http://www.example.com/some/path`,
+     * `file:///usr/home`, or `scheme:with/path`.
+     *
+     * @param value A string which represents an URI (see `URI#toString`).
+     */
+    static parse(value, _strict = false) {
+      const match = _regexp.exec(value);
+      if (!match) {
+        return new Uri(_empty, _empty, _empty, _empty, _empty);
+      }
+      return new Uri(match[2] || _empty, percentDecode(match[4] || _empty), percentDecode(match[5] || _empty), percentDecode(match[7] || _empty), percentDecode(match[9] || _empty), _strict);
+    }
+    /**
+     * Creates a new URI from a file system path, e.g. `c:\my\files`,
+     * `/usr/home`, or `\\server\share\some\path`.
+     *
+     * The *difference* between `URI#parse` and `URI#file` is that the latter treats the argument
+     * as path, not as stringified-uri. E.g. `URI.file(path)` is **not the same as**
+     * `URI.parse('file://' + path)` because the path might contain characters that are
+     * interpreted (# and ?). See the following sample:
+     * ```ts
+    const good = URI.file('/coding/c#/project1');
+    good.scheme === 'file';
+    good.path === '/coding/c#/project1';
+    good.fragment === '';
+    const bad = URI.parse('file://' + '/coding/c#/project1');
+    bad.scheme === 'file';
+    bad.path === '/coding/c'; // path is now broken
+    bad.fragment === '/project1';
+    ```
+     *
+     * @param path A file system path (see `URI#fsPath`)
+     */
+    static file(path) {
+      let authority = _empty;
+      if (isWindows) {
+        path = path.replace(/\\/g, _slash);
+      }
+      if (path[0] === _slash && path[1] === _slash) {
+        const idx = path.indexOf(_slash, 2);
+        if (idx === -1) {
+          authority = path.substring(2);
+          path = _slash;
+        } else {
+          authority = path.substring(2, idx);
+          path = path.substring(idx) || _slash;
+        }
+      }
+      return new Uri("file", authority, path, _empty, _empty);
+    }
+    /**
+     * Creates new URI from uri components.
+     *
+     * Unless `strict` is `true` the scheme is defaults to be `file`. This function performs
+     * validation and should be used for untrusted uri components retrieved from storage,
+     * user input, command arguments etc
+     */
+    static from(components, strict) {
+      const result = new Uri(components.scheme, components.authority, components.path, components.query, components.fragment, strict);
+      return result;
+    }
+    /**
+     * Join a URI path with path fragments and normalizes the resulting path.
+     *
+     * @param uri The input URI.
+     * @param pathFragment The path fragment to add to the URI path.
+     * @returns The resulting URI.
+     */
+    static joinPath(uri, ...pathFragment) {
+      if (!uri.path) {
+        throw new Error(`[UriError]: cannot call joinPath on URI without path`);
+      }
+      let newPath;
+      if (isWindows && uri.scheme === "file") {
+        newPath = _URI.file(win32.join(uriToFsPath(uri, true), ...pathFragment)).path;
+      } else {
+        newPath = posix.join(uri.path, ...pathFragment);
+      }
+      return uri.with({ path: newPath });
+    }
+    // ---- printing/externalize ---------------------------
+    /**
+     * Creates a string representation for this URI. It's guaranteed that calling
+     * `URI.parse` with the result of this function creates an URI which is equal
+     * to this URI.
+     *
+     * * The result shall *not* be used for display purposes but for externalization or transport.
+     * * The result will be encoded using the percentage encoding and encoding happens mostly
+     * ignore the scheme-specific encoding rules.
+     *
+     * @param skipEncoding Do not encode the result, default is `false`
+     */
+    toString(skipEncoding = false) {
+      return _asFormatted(this, skipEncoding);
+    }
+    toJSON() {
+      return this;
+    }
+    static revive(data) {
+      if (!data) {
+        return data;
+      } else if (data instanceof _URI) {
+        return data;
+      } else {
+        const result = new Uri(data);
+        result._formatted = data.external ?? null;
+        result._fsPath = data._sep === _pathSepMarker ? data.fsPath ?? null : null;
+        return result;
+      }
+    }
+  };
+  var _pathSepMarker = isWindows ? 1 : void 0;
+  var Uri = class extends URI {
+    constructor() {
+      super(...arguments);
+      this._formatted = null;
+      this._fsPath = null;
+    }
+    get fsPath() {
+      if (!this._fsPath) {
+        this._fsPath = uriToFsPath(this, false);
+      }
+      return this._fsPath;
+    }
+    toString(skipEncoding = false) {
+      if (!skipEncoding) {
+        if (!this._formatted) {
+          this._formatted = _asFormatted(this, false);
+        }
+        return this._formatted;
+      } else {
+        return _asFormatted(this, true);
+      }
+    }
+    toJSON() {
+      const res = {
+        $mid: 1
+        /* MarshalledId.Uri */
+      };
+      if (this._fsPath) {
+        res.fsPath = this._fsPath;
+        res._sep = _pathSepMarker;
+      }
+      if (this._formatted) {
+        res.external = this._formatted;
+      }
+      if (this.path) {
+        res.path = this.path;
+      }
+      if (this.scheme) {
+        res.scheme = this.scheme;
+      }
+      if (this.authority) {
+        res.authority = this.authority;
+      }
+      if (this.query) {
+        res.query = this.query;
+      }
+      if (this.fragment) {
+        res.fragment = this.fragment;
+      }
+      return res;
+    }
+  };
+  var encodeTable = {
+    [
+      58
+      /* CharCode.Colon */
+    ]: "%3A",
+    // gen-delims
+    [
+      47
+      /* CharCode.Slash */
+    ]: "%2F",
+    [
+      63
+      /* CharCode.QuestionMark */
+    ]: "%3F",
+    [
+      35
+      /* CharCode.Hash */
+    ]: "%23",
+    [
+      91
+      /* CharCode.OpenSquareBracket */
+    ]: "%5B",
+    [
+      93
+      /* CharCode.CloseSquareBracket */
+    ]: "%5D",
+    [
+      64
+      /* CharCode.AtSign */
+    ]: "%40",
+    [
+      33
+      /* CharCode.ExclamationMark */
+    ]: "%21",
+    // sub-delims
+    [
+      36
+      /* CharCode.DollarSign */
+    ]: "%24",
+    [
+      38
+      /* CharCode.Ampersand */
+    ]: "%26",
+    [
+      39
+      /* CharCode.SingleQuote */
+    ]: "%27",
+    [
+      40
+      /* CharCode.OpenParen */
+    ]: "%28",
+    [
+      41
+      /* CharCode.CloseParen */
+    ]: "%29",
+    [
+      42
+      /* CharCode.Asterisk */
+    ]: "%2A",
+    [
+      43
+      /* CharCode.Plus */
+    ]: "%2B",
+    [
+      44
+      /* CharCode.Comma */
+    ]: "%2C",
+    [
+      59
+      /* CharCode.Semicolon */
+    ]: "%3B",
+    [
+      61
+      /* CharCode.Equals */
+    ]: "%3D",
+    [
+      32
+      /* CharCode.Space */
+    ]: "%20"
+  };
+  function encodeURIComponentFast(uriComponent, isPath, isAuthority) {
+    let res = void 0;
+    let nativeEncodePos = -1;
+    for (let pos = 0; pos < uriComponent.length; pos++) {
+      const code = uriComponent.charCodeAt(pos);
+      if (code >= 97 && code <= 122 || code >= 65 && code <= 90 || code >= 48 && code <= 57 || code === 45 || code === 46 || code === 95 || code === 126 || isPath && code === 47 || isAuthority && code === 91 || isAuthority && code === 93 || isAuthority && code === 58) {
+        if (nativeEncodePos !== -1) {
+          res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
+          nativeEncodePos = -1;
+        }
+        if (res !== void 0) {
+          res += uriComponent.charAt(pos);
+        }
+      } else {
+        if (res === void 0) {
+          res = uriComponent.substr(0, pos);
+        }
+        const escaped = encodeTable[code];
+        if (escaped !== void 0) {
+          if (nativeEncodePos !== -1) {
+            res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
+            nativeEncodePos = -1;
+          }
+          res += escaped;
+        } else if (nativeEncodePos === -1) {
+          nativeEncodePos = pos;
+        }
+      }
+    }
+    if (nativeEncodePos !== -1) {
+      res += encodeURIComponent(uriComponent.substring(nativeEncodePos));
+    }
+    return res !== void 0 ? res : uriComponent;
+  }
+  function encodeURIComponentMinimal(path) {
+    let res = void 0;
+    for (let pos = 0; pos < path.length; pos++) {
+      const code = path.charCodeAt(pos);
+      if (code === 35 || code === 63) {
+        if (res === void 0) {
+          res = path.substr(0, pos);
+        }
+        res += encodeTable[code];
+      } else {
+        if (res !== void 0) {
+          res += path[pos];
+        }
+      }
+    }
+    return res !== void 0 ? res : path;
+  }
+  function uriToFsPath(uri, keepDriveLetterCasing) {
+    let value;
+    if (uri.authority && uri.path.length > 1 && uri.scheme === "file") {
+      value = `//${uri.authority}${uri.path}`;
+    } else if (uri.path.charCodeAt(0) === 47 && (uri.path.charCodeAt(1) >= 65 && uri.path.charCodeAt(1) <= 90 || uri.path.charCodeAt(1) >= 97 && uri.path.charCodeAt(1) <= 122) && uri.path.charCodeAt(2) === 58) {
+      if (!keepDriveLetterCasing) {
+        value = uri.path[1].toLowerCase() + uri.path.substr(2);
+      } else {
+        value = uri.path.substr(1);
+      }
+    } else {
+      value = uri.path;
+    }
+    if (isWindows) {
+      value = value.replace(/\//g, "\\");
+    }
+    return value;
+  }
+  function _asFormatted(uri, skipEncoding) {
+    const encoder = !skipEncoding ? encodeURIComponentFast : encodeURIComponentMinimal;
+    let res = "";
+    let { scheme, authority, path, query, fragment } = uri;
+    if (scheme) {
+      res += scheme;
+      res += ":";
+    }
+    if (authority || scheme === "file") {
+      res += _slash;
+      res += _slash;
+    }
+    if (authority) {
+      let idx = authority.indexOf("@");
+      if (idx !== -1) {
+        const userinfo = authority.substr(0, idx);
+        authority = authority.substr(idx + 1);
+        idx = userinfo.lastIndexOf(":");
+        if (idx === -1) {
+          res += encoder(userinfo, false, false);
+        } else {
+          res += encoder(userinfo.substr(0, idx), false, false);
+          res += ":";
+          res += encoder(userinfo.substr(idx + 1), false, true);
+        }
+        res += "@";
+      }
+      authority = authority.toLowerCase();
+      idx = authority.lastIndexOf(":");
+      if (idx === -1) {
+        res += encoder(authority, false, true);
+      } else {
+        res += encoder(authority.substr(0, idx), false, true);
+        res += authority.substr(idx);
+      }
+    }
+    if (path) {
+      if (path.length >= 3 && path.charCodeAt(0) === 47 && path.charCodeAt(2) === 58) {
+        const code = path.charCodeAt(1);
+        if (code >= 65 && code <= 90) {
+          path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`;
+        }
+      } else if (path.length >= 2 && path.charCodeAt(1) === 58) {
+        const code = path.charCodeAt(0);
+        if (code >= 65 && code <= 90) {
+          path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`;
+        }
+      }
+      res += encoder(path, true, false);
+    }
+    if (query) {
+      res += "?";
+      res += encoder(query, false, false);
+    }
+    if (fragment) {
+      res += "#";
+      res += !skipEncoding ? encodeURIComponentFast(fragment, false, false) : fragment;
+    }
+    return res;
+  }
+  function decodeURIComponentGraceful(str) {
+    try {
+      return decodeURIComponent(str);
+    } catch {
+      if (str.length > 3) {
+        return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));
+      } else {
+        return str;
+      }
+    }
+  }
+  var _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
+  function percentDecode(str) {
+    if (!str.match(_rEncodedAsHex)) {
+      return str;
+    }
+    return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/selection.js
+  var Selection = class _Selection extends Range {
+    constructor(selectionStartLineNumber, selectionStartColumn, positionLineNumber, positionColumn) {
+      super(selectionStartLineNumber, selectionStartColumn, positionLineNumber, positionColumn);
+      this.selectionStartLineNumber = selectionStartLineNumber;
+      this.selectionStartColumn = selectionStartColumn;
+      this.positionLineNumber = positionLineNumber;
+      this.positionColumn = positionColumn;
+    }
+    /**
+     * Transform to a human-readable representation.
+     */
+    toString() {
+      return "[" + this.selectionStartLineNumber + "," + this.selectionStartColumn + " -> " + this.positionLineNumber + "," + this.positionColumn + "]";
+    }
+    /**
+     * Test if equals other selection.
+     */
+    equalsSelection(other) {
+      return _Selection.selectionsEqual(this, other);
+    }
+    /**
+     * Test if the two selections are equal.
+     */
+    static selectionsEqual(a, b) {
+      return a.selectionStartLineNumber === b.selectionStartLineNumber && a.selectionStartColumn === b.selectionStartColumn && a.positionLineNumber === b.positionLineNumber && a.positionColumn === b.positionColumn;
+    }
+    /**
+     * Get directions (LTR or RTL).
+     */
+    getDirection() {
+      if (this.selectionStartLineNumber === this.startLineNumber && this.selectionStartColumn === this.startColumn) {
+        return 0;
+      }
+      return 1;
+    }
+    /**
+     * Create a new selection with a different `positionLineNumber` and `positionColumn`.
+     */
+    setEndPosition(endLineNumber, endColumn) {
+      if (this.getDirection() === 0) {
+        return new _Selection(this.startLineNumber, this.startColumn, endLineNumber, endColumn);
+      }
+      return new _Selection(endLineNumber, endColumn, this.startLineNumber, this.startColumn);
+    }
+    /**
+     * Get the position at `positionLineNumber` and `positionColumn`.
+     */
+    getPosition() {
+      return new Position(this.positionLineNumber, this.positionColumn);
+    }
+    /**
+     * Get the position at the start of the selection.
+    */
+    getSelectionStart() {
+      return new Position(this.selectionStartLineNumber, this.selectionStartColumn);
+    }
+    /**
+     * Create a new selection with a different `selectionStartLineNumber` and `selectionStartColumn`.
+     */
+    setStartPosition(startLineNumber, startColumn) {
+      if (this.getDirection() === 0) {
+        return new _Selection(startLineNumber, startColumn, this.endLineNumber, this.endColumn);
+      }
+      return new _Selection(this.endLineNumber, this.endColumn, startLineNumber, startColumn);
+    }
+    // ----
+    /**
+     * Create a `Selection` from one or two positions
+     */
+    static fromPositions(start2, end = start2) {
+      return new _Selection(start2.lineNumber, start2.column, end.lineNumber, end.column);
+    }
+    /**
+     * Creates a `Selection` from a range, given a direction.
+     */
+    static fromRange(range, direction) {
+      if (direction === 0) {
+        return new _Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
+      } else {
+        return new _Selection(range.endLineNumber, range.endColumn, range.startLineNumber, range.startColumn);
+      }
+    }
+    /**
+     * Create a `Selection` from an `ISelection`.
+     */
+    static liftSelection(sel) {
+      return new _Selection(sel.selectionStartLineNumber, sel.selectionStartColumn, sel.positionLineNumber, sel.positionColumn);
+    }
+    /**
+     * `a` equals `b`.
+     */
+    static selectionsArrEqual(a, b) {
+      if (a && !b || !a && b) {
+        return false;
+      }
+      if (!a && !b) {
+        return true;
+      }
+      if (a.length !== b.length) {
+        return false;
+      }
+      for (let i = 0, len = a.length; i < len; i++) {
+        if (!this.selectionsEqual(a[i], b[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    /**
+     * Test if `obj` is an `ISelection`.
+     */
+    static isISelection(obj) {
+      return !!obj && typeof obj.selectionStartLineNumber === "number" && typeof obj.selectionStartColumn === "number" && typeof obj.positionLineNumber === "number" && typeof obj.positionColumn === "number";
+    }
+    /**
+     * Create with a direction.
+     */
+    static createWithDirection(startLineNumber, startColumn, endLineNumber, endColumn, direction) {
+      if (direction === 0) {
+        return new _Selection(startLineNumber, startColumn, endLineNumber, endColumn);
+      }
+      return new _Selection(endLineNumber, endColumn, startLineNumber, startColumn);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/codiconsUtil.js
+  var _codiconFontCharacters = /* @__PURE__ */ Object.create(null);
+  function register(id, fontCharacter) {
+    if (isString(fontCharacter)) {
+      const val = _codiconFontCharacters[fontCharacter];
+      if (val === void 0) {
+        throw new Error(`${id} references an unknown codicon: ${fontCharacter}`);
+      }
+      fontCharacter = val;
+    }
+    _codiconFontCharacters[id] = fontCharacter;
+    return { id };
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/codiconsLibrary.js
+  var codiconsLibrary = {
+    add: register("add", 6e4),
+    plus: register("plus", 6e4),
+    gistNew: register("gist-new", 6e4),
+    repoCreate: register("repo-create", 6e4),
+    lightbulb: register("lightbulb", 60001),
+    lightBulb: register("light-bulb", 60001),
+    repo: register("repo", 60002),
+    repoDelete: register("repo-delete", 60002),
+    gistFork: register("gist-fork", 60003),
+    repoForked: register("repo-forked", 60003),
+    gitPullRequest: register("git-pull-request", 60004),
+    gitPullRequestAbandoned: register("git-pull-request-abandoned", 60004),
+    recordKeys: register("record-keys", 60005),
+    keyboard: register("keyboard", 60005),
+    tag: register("tag", 60006),
+    gitPullRequestLabel: register("git-pull-request-label", 60006),
+    tagAdd: register("tag-add", 60006),
+    tagRemove: register("tag-remove", 60006),
+    person: register("person", 60007),
+    personFollow: register("person-follow", 60007),
+    personOutline: register("person-outline", 60007),
+    personFilled: register("person-filled", 60007),
+    sourceControl: register("source-control", 60008),
+    mirror: register("mirror", 60009),
+    mirrorPublic: register("mirror-public", 60009),
+    star: register("star", 60010),
+    starAdd: register("star-add", 60010),
+    starDelete: register("star-delete", 60010),
+    starEmpty: register("star-empty", 60010),
+    comment: register("comment", 60011),
+    commentAdd: register("comment-add", 60011),
+    alert: register("alert", 60012),
+    warning: register("warning", 60012),
+    search: register("search", 60013),
+    searchSave: register("search-save", 60013),
+    logOut: register("log-out", 60014),
+    signOut: register("sign-out", 60014),
+    logIn: register("log-in", 60015),
+    signIn: register("sign-in", 60015),
+    eye: register("eye", 60016),
+    eyeUnwatch: register("eye-unwatch", 60016),
+    eyeWatch: register("eye-watch", 60016),
+    circleFilled: register("circle-filled", 60017),
+    primitiveDot: register("primitive-dot", 60017),
+    closeDirty: register("close-dirty", 60017),
+    debugBreakpoint: register("debug-breakpoint", 60017),
+    debugBreakpointDisabled: register("debug-breakpoint-disabled", 60017),
+    debugHint: register("debug-hint", 60017),
+    terminalDecorationSuccess: register("terminal-decoration-success", 60017),
+    primitiveSquare: register("primitive-square", 60018),
+    edit: register("edit", 60019),
+    pencil: register("pencil", 60019),
+    info: register("info", 60020),
+    issueOpened: register("issue-opened", 60020),
+    gistPrivate: register("gist-private", 60021),
+    gitForkPrivate: register("git-fork-private", 60021),
+    lock: register("lock", 60021),
+    mirrorPrivate: register("mirror-private", 60021),
+    close: register("close", 60022),
+    removeClose: register("remove-close", 60022),
+    x: register("x", 60022),
+    repoSync: register("repo-sync", 60023),
+    sync: register("sync", 60023),
+    clone: register("clone", 60024),
+    desktopDownload: register("desktop-download", 60024),
+    beaker: register("beaker", 60025),
+    microscope: register("microscope", 60025),
+    vm: register("vm", 60026),
+    deviceDesktop: register("device-desktop", 60026),
+    file: register("file", 60027),
+    more: register("more", 60028),
+    ellipsis: register("ellipsis", 60028),
+    kebabHorizontal: register("kebab-horizontal", 60028),
+    mailReply: register("mail-reply", 60029),
+    reply: register("reply", 60029),
+    organization: register("organization", 60030),
+    organizationFilled: register("organization-filled", 60030),
+    organizationOutline: register("organization-outline", 60030),
+    newFile: register("new-file", 60031),
+    fileAdd: register("file-add", 60031),
+    newFolder: register("new-folder", 60032),
+    fileDirectoryCreate: register("file-directory-create", 60032),
+    trash: register("trash", 60033),
+    trashcan: register("trashcan", 60033),
+    history: register("history", 60034),
+    clock: register("clock", 60034),
+    folder: register("folder", 60035),
+    fileDirectory: register("file-directory", 60035),
+    symbolFolder: register("symbol-folder", 60035),
+    logoGithub: register("logo-github", 60036),
+    markGithub: register("mark-github", 60036),
+    github: register("github", 60036),
+    terminal: register("terminal", 60037),
+    console: register("console", 60037),
+    repl: register("repl", 60037),
+    zap: register("zap", 60038),
+    symbolEvent: register("symbol-event", 60038),
+    error: register("error", 60039),
+    stop: register("stop", 60039),
+    variable: register("variable", 60040),
+    symbolVariable: register("symbol-variable", 60040),
+    array: register("array", 60042),
+    symbolArray: register("symbol-array", 60042),
+    symbolModule: register("symbol-module", 60043),
+    symbolPackage: register("symbol-package", 60043),
+    symbolNamespace: register("symbol-namespace", 60043),
+    symbolObject: register("symbol-object", 60043),
+    symbolMethod: register("symbol-method", 60044),
+    symbolFunction: register("symbol-function", 60044),
+    symbolConstructor: register("symbol-constructor", 60044),
+    symbolBoolean: register("symbol-boolean", 60047),
+    symbolNull: register("symbol-null", 60047),
+    symbolNumeric: register("symbol-numeric", 60048),
+    symbolNumber: register("symbol-number", 60048),
+    symbolStructure: register("symbol-structure", 60049),
+    symbolStruct: register("symbol-struct", 60049),
+    symbolParameter: register("symbol-parameter", 60050),
+    symbolTypeParameter: register("symbol-type-parameter", 60050),
+    symbolKey: register("symbol-key", 60051),
+    symbolText: register("symbol-text", 60051),
+    symbolReference: register("symbol-reference", 60052),
+    goToFile: register("go-to-file", 60052),
+    symbolEnum: register("symbol-enum", 60053),
+    symbolValue: register("symbol-value", 60053),
+    symbolRuler: register("symbol-ruler", 60054),
+    symbolUnit: register("symbol-unit", 60054),
+    activateBreakpoints: register("activate-breakpoints", 60055),
+    archive: register("archive", 60056),
+    arrowBoth: register("arrow-both", 60057),
+    arrowDown: register("arrow-down", 60058),
+    arrowLeft: register("arrow-left", 60059),
+    arrowRight: register("arrow-right", 60060),
+    arrowSmallDown: register("arrow-small-down", 60061),
+    arrowSmallLeft: register("arrow-small-left", 60062),
+    arrowSmallRight: register("arrow-small-right", 60063),
+    arrowSmallUp: register("arrow-small-up", 60064),
+    arrowUp: register("arrow-up", 60065),
+    bell: register("bell", 60066),
+    bold: register("bold", 60067),
+    book: register("book", 60068),
+    bookmark: register("bookmark", 60069),
+    debugBreakpointConditionalUnverified: register("debug-breakpoint-conditional-unverified", 60070),
+    debugBreakpointConditional: register("debug-breakpoint-conditional", 60071),
+    debugBreakpointConditionalDisabled: register("debug-breakpoint-conditional-disabled", 60071),
+    debugBreakpointDataUnverified: register("debug-breakpoint-data-unverified", 60072),
+    debugBreakpointData: register("debug-breakpoint-data", 60073),
+    debugBreakpointDataDisabled: register("debug-breakpoint-data-disabled", 60073),
+    debugBreakpointLogUnverified: register("debug-breakpoint-log-unverified", 60074),
+    debugBreakpointLog: register("debug-breakpoint-log", 60075),
+    debugBreakpointLogDisabled: register("debug-breakpoint-log-disabled", 60075),
+    briefcase: register("briefcase", 60076),
+    broadcast: register("broadcast", 60077),
+    browser: register("browser", 60078),
+    bug: register("bug", 60079),
+    calendar: register("calendar", 60080),
+    caseSensitive: register("case-sensitive", 60081),
+    check: register("check", 60082),
+    checklist: register("checklist", 60083),
+    chevronDown: register("chevron-down", 60084),
+    chevronLeft: register("chevron-left", 60085),
+    chevronRight: register("chevron-right", 60086),
+    chevronUp: register("chevron-up", 60087),
+    chromeClose: register("chrome-close", 60088),
+    chromeMaximize: register("chrome-maximize", 60089),
+    chromeMinimize: register("chrome-minimize", 60090),
+    chromeRestore: register("chrome-restore", 60091),
+    circleOutline: register("circle-outline", 60092),
+    circle: register("circle", 60092),
+    debugBreakpointUnverified: register("debug-breakpoint-unverified", 60092),
+    terminalDecorationIncomplete: register("terminal-decoration-incomplete", 60092),
+    circleSlash: register("circle-slash", 60093),
+    circuitBoard: register("circuit-board", 60094),
+    clearAll: register("clear-all", 60095),
+    clippy: register("clippy", 60096),
+    closeAll: register("close-all", 60097),
+    cloudDownload: register("cloud-download", 60098),
+    cloudUpload: register("cloud-upload", 60099),
+    code: register("code", 60100),
+    collapseAll: register("collapse-all", 60101),
+    colorMode: register("color-mode", 60102),
+    commentDiscussion: register("comment-discussion", 60103),
+    creditCard: register("credit-card", 60105),
+    dash: register("dash", 60108),
+    dashboard: register("dashboard", 60109),
+    database: register("database", 60110),
+    debugContinue: register("debug-continue", 60111),
+    debugDisconnect: register("debug-disconnect", 60112),
+    debugPause: register("debug-pause", 60113),
+    debugRestart: register("debug-restart", 60114),
+    debugStart: register("debug-start", 60115),
+    debugStepInto: register("debug-step-into", 60116),
+    debugStepOut: register("debug-step-out", 60117),
+    debugStepOver: register("debug-step-over", 60118),
+    debugStop: register("debug-stop", 60119),
+    debug: register("debug", 60120),
+    deviceCameraVideo: register("device-camera-video", 60121),
+    deviceCamera: register("device-camera", 60122),
+    deviceMobile: register("device-mobile", 60123),
+    diffAdded: register("diff-added", 60124),
+    diffIgnored: register("diff-ignored", 60125),
+    diffModified: register("diff-modified", 60126),
+    diffRemoved: register("diff-removed", 60127),
+    diffRenamed: register("diff-renamed", 60128),
+    diff: register("diff", 60129),
+    diffSidebyside: register("diff-sidebyside", 60129),
+    discard: register("discard", 60130),
+    editorLayout: register("editor-layout", 60131),
+    emptyWindow: register("empty-window", 60132),
+    exclude: register("exclude", 60133),
+    extensions: register("extensions", 60134),
+    eyeClosed: register("eye-closed", 60135),
+    fileBinary: register("file-binary", 60136),
+    fileCode: register("file-code", 60137),
+    fileMedia: register("file-media", 60138),
+    filePdf: register("file-pdf", 60139),
+    fileSubmodule: register("file-submodule", 60140),
+    fileSymlinkDirectory: register("file-symlink-directory", 60141),
+    fileSymlinkFile: register("file-symlink-file", 60142),
+    fileZip: register("file-zip", 60143),
+    files: register("files", 60144),
+    filter: register("filter", 60145),
+    flame: register("flame", 60146),
+    foldDown: register("fold-down", 60147),
+    foldUp: register("fold-up", 60148),
+    fold: register("fold", 60149),
+    folderActive: register("folder-active", 60150),
+    folderOpened: register("folder-opened", 60151),
+    gear: register("gear", 60152),
+    gift: register("gift", 60153),
+    gistSecret: register("gist-secret", 60154),
+    gist: register("gist", 60155),
+    gitCommit: register("git-commit", 60156),
+    gitCompare: register("git-compare", 60157),
+    compareChanges: register("compare-changes", 60157),
+    gitMerge: register("git-merge", 60158),
+    githubAction: register("github-action", 60159),
+    githubAlt: register("github-alt", 60160),
+    globe: register("globe", 60161),
+    grabber: register("grabber", 60162),
+    graph: register("graph", 60163),
+    gripper: register("gripper", 60164),
+    heart: register("heart", 60165),
+    home: register("home", 60166),
+    horizontalRule: register("horizontal-rule", 60167),
+    hubot: register("hubot", 60168),
+    inbox: register("inbox", 60169),
+    issueReopened: register("issue-reopened", 60171),
+    issues: register("issues", 60172),
+    italic: register("italic", 60173),
+    jersey: register("jersey", 60174),
+    json: register("json", 60175),
+    kebabVertical: register("kebab-vertical", 60176),
+    key: register("key", 60177),
+    law: register("law", 60178),
+    lightbulbAutofix: register("lightbulb-autofix", 60179),
+    linkExternal: register("link-external", 60180),
+    link: register("link", 60181),
+    listOrdered: register("list-ordered", 60182),
+    listUnordered: register("list-unordered", 60183),
+    liveShare: register("live-share", 60184),
+    loading: register("loading", 60185),
+    location: register("location", 60186),
+    mailRead: register("mail-read", 60187),
+    mail: register("mail", 60188),
+    markdown: register("markdown", 60189),
+    megaphone: register("megaphone", 60190),
+    mention: register("mention", 60191),
+    milestone: register("milestone", 60192),
+    gitPullRequestMilestone: register("git-pull-request-milestone", 60192),
+    mortarBoard: register("mortar-board", 60193),
+    move: register("move", 60194),
+    multipleWindows: register("multiple-windows", 60195),
+    mute: register("mute", 60196),
+    noNewline: register("no-newline", 60197),
+    note: register("note", 60198),
+    octoface: register("octoface", 60199),
+    openPreview: register("open-preview", 60200),
+    package: register("package", 60201),
+    paintcan: register("paintcan", 60202),
+    pin: register("pin", 60203),
+    play: register("play", 60204),
+    run: register("run", 60204),
+    plug: register("plug", 60205),
+    preserveCase: register("preserve-case", 60206),
+    preview: register("preview", 60207),
+    project: register("project", 60208),
+    pulse: register("pulse", 60209),
+    question: register("question", 60210),
+    quote: register("quote", 60211),
+    radioTower: register("radio-tower", 60212),
+    reactions: register("reactions", 60213),
+    references: register("references", 60214),
+    refresh: register("refresh", 60215),
+    regex: register("regex", 60216),
+    remoteExplorer: register("remote-explorer", 60217),
+    remote: register("remote", 60218),
+    remove: register("remove", 60219),
+    replaceAll: register("replace-all", 60220),
+    replace: register("replace", 60221),
+    repoClone: register("repo-clone", 60222),
+    repoForcePush: register("repo-force-push", 60223),
+    repoPull: register("repo-pull", 60224),
+    repoPush: register("repo-push", 60225),
+    report: register("report", 60226),
+    requestChanges: register("request-changes", 60227),
+    rocket: register("rocket", 60228),
+    rootFolderOpened: register("root-folder-opened", 60229),
+    rootFolder: register("root-folder", 60230),
+    rss: register("rss", 60231),
+    ruby: register("ruby", 60232),
+    saveAll: register("save-all", 60233),
+    saveAs: register("save-as", 60234),
+    save: register("save", 60235),
+    screenFull: register("screen-full", 60236),
+    screenNormal: register("screen-normal", 60237),
+    searchStop: register("search-stop", 60238),
+    server: register("server", 60240),
+    settingsGear: register("settings-gear", 60241),
+    settings: register("settings", 60242),
+    shield: register("shield", 60243),
+    smiley: register("smiley", 60244),
+    sortPrecedence: register("sort-precedence", 60245),
+    splitHorizontal: register("split-horizontal", 60246),
+    splitVertical: register("split-vertical", 60247),
+    squirrel: register("squirrel", 60248),
+    starFull: register("star-full", 60249),
+    starHalf: register("star-half", 60250),
+    symbolClass: register("symbol-class", 60251),
+    symbolColor: register("symbol-color", 60252),
+    symbolConstant: register("symbol-constant", 60253),
+    symbolEnumMember: register("symbol-enum-member", 60254),
+    symbolField: register("symbol-field", 60255),
+    symbolFile: register("symbol-file", 60256),
+    symbolInterface: register("symbol-interface", 60257),
+    symbolKeyword: register("symbol-keyword", 60258),
+    symbolMisc: register("symbol-misc", 60259),
+    symbolOperator: register("symbol-operator", 60260),
+    symbolProperty: register("symbol-property", 60261),
+    wrench: register("wrench", 60261),
+    wrenchSubaction: register("wrench-subaction", 60261),
+    symbolSnippet: register("symbol-snippet", 60262),
+    tasklist: register("tasklist", 60263),
+    telescope: register("telescope", 60264),
+    textSize: register("text-size", 60265),
+    threeBars: register("three-bars", 60266),
+    thumbsdown: register("thumbsdown", 60267),
+    thumbsup: register("thumbsup", 60268),
+    tools: register("tools", 60269),
+    triangleDown: register("triangle-down", 60270),
+    triangleLeft: register("triangle-left", 60271),
+    triangleRight: register("triangle-right", 60272),
+    triangleUp: register("triangle-up", 60273),
+    twitter: register("twitter", 60274),
+    unfold: register("unfold", 60275),
+    unlock: register("unlock", 60276),
+    unmute: register("unmute", 60277),
+    unverified: register("unverified", 60278),
+    verified: register("verified", 60279),
+    versions: register("versions", 60280),
+    vmActive: register("vm-active", 60281),
+    vmOutline: register("vm-outline", 60282),
+    vmRunning: register("vm-running", 60283),
+    watch: register("watch", 60284),
+    whitespace: register("whitespace", 60285),
+    wholeWord: register("whole-word", 60286),
+    window: register("window", 60287),
+    wordWrap: register("word-wrap", 60288),
+    zoomIn: register("zoom-in", 60289),
+    zoomOut: register("zoom-out", 60290),
+    listFilter: register("list-filter", 60291),
+    listFlat: register("list-flat", 60292),
+    listSelection: register("list-selection", 60293),
+    selection: register("selection", 60293),
+    listTree: register("list-tree", 60294),
+    debugBreakpointFunctionUnverified: register("debug-breakpoint-function-unverified", 60295),
+    debugBreakpointFunction: register("debug-breakpoint-function", 60296),
+    debugBreakpointFunctionDisabled: register("debug-breakpoint-function-disabled", 60296),
+    debugStackframeActive: register("debug-stackframe-active", 60297),
+    circleSmallFilled: register("circle-small-filled", 60298),
+    debugStackframeDot: register("debug-stackframe-dot", 60298),
+    terminalDecorationMark: register("terminal-decoration-mark", 60298),
+    debugStackframe: register("debug-stackframe", 60299),
+    debugStackframeFocused: register("debug-stackframe-focused", 60299),
+    debugBreakpointUnsupported: register("debug-breakpoint-unsupported", 60300),
+    symbolString: register("symbol-string", 60301),
+    debugReverseContinue: register("debug-reverse-continue", 60302),
+    debugStepBack: register("debug-step-back", 60303),
+    debugRestartFrame: register("debug-restart-frame", 60304),
+    debugAlt: register("debug-alt", 60305),
+    callIncoming: register("call-incoming", 60306),
+    callOutgoing: register("call-outgoing", 60307),
+    menu: register("menu", 60308),
+    expandAll: register("expand-all", 60309),
+    feedback: register("feedback", 60310),
+    gitPullRequestReviewer: register("git-pull-request-reviewer", 60310),
+    groupByRefType: register("group-by-ref-type", 60311),
+    ungroupByRefType: register("ungroup-by-ref-type", 60312),
+    account: register("account", 60313),
+    gitPullRequestAssignee: register("git-pull-request-assignee", 60313),
+    bellDot: register("bell-dot", 60314),
+    debugConsole: register("debug-console", 60315),
+    library: register("library", 60316),
+    output: register("output", 60317),
+    runAll: register("run-all", 60318),
+    syncIgnored: register("sync-ignored", 60319),
+    pinned: register("pinned", 60320),
+    githubInverted: register("github-inverted", 60321),
+    serverProcess: register("server-process", 60322),
+    serverEnvironment: register("server-environment", 60323),
+    pass: register("pass", 60324),
+    issueClosed: register("issue-closed", 60324),
+    stopCircle: register("stop-circle", 60325),
+    playCircle: register("play-circle", 60326),
+    record: register("record", 60327),
+    debugAltSmall: register("debug-alt-small", 60328),
+    vmConnect: register("vm-connect", 60329),
+    cloud: register("cloud", 60330),
+    merge: register("merge", 60331),
+    export: register("export", 60332),
+    graphLeft: register("graph-left", 60333),
+    magnet: register("magnet", 60334),
+    notebook: register("notebook", 60335),
+    redo: register("redo", 60336),
+    checkAll: register("check-all", 60337),
+    pinnedDirty: register("pinned-dirty", 60338),
+    passFilled: register("pass-filled", 60339),
+    circleLargeFilled: register("circle-large-filled", 60340),
+    circleLarge: register("circle-large", 60341),
+    circleLargeOutline: register("circle-large-outline", 60341),
+    combine: register("combine", 60342),
+    gather: register("gather", 60342),
+    table: register("table", 60343),
+    variableGroup: register("variable-group", 60344),
+    typeHierarchy: register("type-hierarchy", 60345),
+    typeHierarchySub: register("type-hierarchy-sub", 60346),
+    typeHierarchySuper: register("type-hierarchy-super", 60347),
+    gitPullRequestCreate: register("git-pull-request-create", 60348),
+    runAbove: register("run-above", 60349),
+    runBelow: register("run-below", 60350),
+    notebookTemplate: register("notebook-template", 60351),
+    debugRerun: register("debug-rerun", 60352),
+    workspaceTrusted: register("workspace-trusted", 60353),
+    workspaceUntrusted: register("workspace-untrusted", 60354),
+    workspaceUnknown: register("workspace-unknown", 60355),
+    terminalCmd: register("terminal-cmd", 60356),
+    terminalDebian: register("terminal-debian", 60357),
+    terminalLinux: register("terminal-linux", 60358),
+    terminalPowershell: register("terminal-powershell", 60359),
+    terminalTmux: register("terminal-tmux", 60360),
+    terminalUbuntu: register("terminal-ubuntu", 60361),
+    terminalBash: register("terminal-bash", 60362),
+    arrowSwap: register("arrow-swap", 60363),
+    copy: register("copy", 60364),
+    personAdd: register("person-add", 60365),
+    filterFilled: register("filter-filled", 60366),
+    wand: register("wand", 60367),
+    debugLineByLine: register("debug-line-by-line", 60368),
+    inspect: register("inspect", 60369),
+    layers: register("layers", 60370),
+    layersDot: register("layers-dot", 60371),
+    layersActive: register("layers-active", 60372),
+    compass: register("compass", 60373),
+    compassDot: register("compass-dot", 60374),
+    compassActive: register("compass-active", 60375),
+    azure: register("azure", 60376),
+    issueDraft: register("issue-draft", 60377),
+    gitPullRequestClosed: register("git-pull-request-closed", 60378),
+    gitPullRequestDraft: register("git-pull-request-draft", 60379),
+    debugAll: register("debug-all", 60380),
+    debugCoverage: register("debug-coverage", 60381),
+    runErrors: register("run-errors", 60382),
+    folderLibrary: register("folder-library", 60383),
+    debugContinueSmall: register("debug-continue-small", 60384),
+    beakerStop: register("beaker-stop", 60385),
+    graphLine: register("graph-line", 60386),
+    graphScatter: register("graph-scatter", 60387),
+    pieChart: register("pie-chart", 60388),
+    bracket: register("bracket", 60175),
+    bracketDot: register("bracket-dot", 60389),
+    bracketError: register("bracket-error", 60390),
+    lockSmall: register("lock-small", 60391),
+    azureDevops: register("azure-devops", 60392),
+    verifiedFilled: register("verified-filled", 60393),
+    newline: register("newline", 60394),
+    layout: register("layout", 60395),
+    layoutActivitybarLeft: register("layout-activitybar-left", 60396),
+    layoutActivitybarRight: register("layout-activitybar-right", 60397),
+    layoutPanelLeft: register("layout-panel-left", 60398),
+    layoutPanelCenter: register("layout-panel-center", 60399),
+    layoutPanelJustify: register("layout-panel-justify", 60400),
+    layoutPanelRight: register("layout-panel-right", 60401),
+    layoutPanel: register("layout-panel", 60402),
+    layoutSidebarLeft: register("layout-sidebar-left", 60403),
+    layoutSidebarRight: register("layout-sidebar-right", 60404),
+    layoutStatusbar: register("layout-statusbar", 60405),
+    layoutMenubar: register("layout-menubar", 60406),
+    layoutCentered: register("layout-centered", 60407),
+    target: register("target", 60408),
+    indent: register("indent", 60409),
+    recordSmall: register("record-small", 60410),
+    errorSmall: register("error-small", 60411),
+    terminalDecorationError: register("terminal-decoration-error", 60411),
+    arrowCircleDown: register("arrow-circle-down", 60412),
+    arrowCircleLeft: register("arrow-circle-left", 60413),
+    arrowCircleRight: register("arrow-circle-right", 60414),
+    arrowCircleUp: register("arrow-circle-up", 60415),
+    layoutSidebarRightOff: register("layout-sidebar-right-off", 60416),
+    layoutPanelOff: register("layout-panel-off", 60417),
+    layoutSidebarLeftOff: register("layout-sidebar-left-off", 60418),
+    blank: register("blank", 60419),
+    heartFilled: register("heart-filled", 60420),
+    map: register("map", 60421),
+    mapHorizontal: register("map-horizontal", 60421),
+    foldHorizontal: register("fold-horizontal", 60421),
+    mapFilled: register("map-filled", 60422),
+    mapHorizontalFilled: register("map-horizontal-filled", 60422),
+    foldHorizontalFilled: register("fold-horizontal-filled", 60422),
+    circleSmall: register("circle-small", 60423),
+    bellSlash: register("bell-slash", 60424),
+    bellSlashDot: register("bell-slash-dot", 60425),
+    commentUnresolved: register("comment-unresolved", 60426),
+    gitPullRequestGoToChanges: register("git-pull-request-go-to-changes", 60427),
+    gitPullRequestNewChanges: register("git-pull-request-new-changes", 60428),
+    searchFuzzy: register("search-fuzzy", 60429),
+    commentDraft: register("comment-draft", 60430),
+    send: register("send", 60431),
+    sparkle: register("sparkle", 60432),
+    insert: register("insert", 60433),
+    mic: register("mic", 60434),
+    thumbsdownFilled: register("thumbsdown-filled", 60435),
+    thumbsupFilled: register("thumbsup-filled", 60436),
+    coffee: register("coffee", 60437),
+    snake: register("snake", 60438),
+    game: register("game", 60439),
+    vr: register("vr", 60440),
+    chip: register("chip", 60441),
+    piano: register("piano", 60442),
+    music: register("music", 60443),
+    micFilled: register("mic-filled", 60444),
+    repoFetch: register("repo-fetch", 60445),
+    copilot: register("copilot", 60446),
+    lightbulbSparkle: register("lightbulb-sparkle", 60447),
+    robot: register("robot", 60448),
+    sparkleFilled: register("sparkle-filled", 60449),
+    diffSingle: register("diff-single", 60450),
+    diffMultiple: register("diff-multiple", 60451),
+    surroundWith: register("surround-with", 60452),
+    share: register("share", 60453),
+    gitStash: register("git-stash", 60454),
+    gitStashApply: register("git-stash-apply", 60455),
+    gitStashPop: register("git-stash-pop", 60456),
+    vscode: register("vscode", 60457),
+    vscodeInsiders: register("vscode-insiders", 60458),
+    codeOss: register("code-oss", 60459),
+    runCoverage: register("run-coverage", 60460),
+    runAllCoverage: register("run-all-coverage", 60461),
+    coverage: register("coverage", 60462),
+    githubProject: register("github-project", 60463),
+    mapVertical: register("map-vertical", 60464),
+    foldVertical: register("fold-vertical", 60464),
+    mapVerticalFilled: register("map-vertical-filled", 60465),
+    foldVerticalFilled: register("fold-vertical-filled", 60465),
+    goToSearch: register("go-to-search", 60466),
+    percentage: register("percentage", 60467),
+    sortPercentage: register("sort-percentage", 60467),
+    attach: register("attach", 60468),
+    goToEditingSession: register("go-to-editing-session", 60469),
+    editSession: register("edit-session", 60470),
+    codeReview: register("code-review", 60471),
+    copilotWarning: register("copilot-warning", 60472),
+    python: register("python", 60473),
+    copilotLarge: register("copilot-large", 60474),
+    copilotWarningLarge: register("copilot-warning-large", 60475),
+    keyboardTab: register("keyboard-tab", 60476),
+    copilotBlocked: register("copilot-blocked", 60477),
+    copilotNotConnected: register("copilot-not-connected", 60478),
+    flag: register("flag", 60479),
+    lightbulbEmpty: register("lightbulb-empty", 60480),
+    symbolMethodArrow: register("symbol-method-arrow", 60481),
+    copilotUnavailable: register("copilot-unavailable", 60482),
+    repoPinned: register("repo-pinned", 60483),
+    keyboardTabAbove: register("keyboard-tab-above", 60484),
+    keyboardTabBelow: register("keyboard-tab-below", 60485),
+    gitPullRequestDone: register("git-pull-request-done", 60486),
+    mcp: register("mcp", 60487),
+    extensionsLarge: register("extensions-large", 60488),
+    layoutPanelDock: register("layout-panel-dock", 60489),
+    layoutSidebarLeftDock: register("layout-sidebar-left-dock", 60490),
+    layoutSidebarRightDock: register("layout-sidebar-right-dock", 60491),
+    copilotInProgress: register("copilot-in-progress", 60492),
+    copilotError: register("copilot-error", 60493),
+    copilotSuccess: register("copilot-success", 60494),
+    chatSparkle: register("chat-sparkle", 60495),
+    searchSparkle: register("search-sparkle", 60496),
+    editSparkle: register("edit-sparkle", 60497),
+    copilotSnooze: register("copilot-snooze", 60498),
+    sendToRemoteAgent: register("send-to-remote-agent", 60499),
+    commentDiscussionSparkle: register("comment-discussion-sparkle", 60500),
+    chatSparkleWarning: register("chat-sparkle-warning", 60501),
+    chatSparkleError: register("chat-sparkle-error", 60502),
+    collection: register("collection", 60503),
+    newCollection: register("new-collection", 60504),
+    thinking: register("thinking", 60505),
+    build: register("build", 60506),
+    commentDiscussionQuote: register("comment-discussion-quote", 60507),
+    cursor: register("cursor", 60508),
+    eraser: register("eraser", 60509),
+    fileText: register("file-text", 60510),
+    gitLens: register("git-lens", 60511),
+    quotes: register("quotes", 60512),
+    rename: register("rename", 60513),
+    runWithDeps: register("run-with-deps", 60514),
+    debugConnected: register("debug-connected", 60515),
+    strikethrough: register("strikethrough", 60516),
+    openInProduct: register("open-in-product", 60517),
+    indexZero: register("index-zero", 60518),
+    agent: register("agent", 60519),
+    editCode: register("edit-code", 60520),
+    repoSelected: register("repo-selected", 60521),
+    skip: register("skip", 60522),
+    mergeInto: register("merge-into", 60523),
+    gitBranchChanges: register("git-branch-changes", 60524),
+    gitBranchStagedChanges: register("git-branch-staged-changes", 60525),
+    gitBranchConflicts: register("git-branch-conflicts", 60526),
+    gitBranch: register("git-branch", 60527),
+    gitBranchCreate: register("git-branch-create", 60527),
+    gitBranchDelete: register("git-branch-delete", 60527),
+    searchLarge: register("search-large", 60528),
+    terminalGitBash: register("terminal-git-bash", 60529)
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/codicons.js
+  var codiconsDerived = {
+    dialogError: register("dialog-error", "error"),
+    dialogWarning: register("dialog-warning", "warning"),
+    dialogInfo: register("dialog-info", "info"),
+    dialogClose: register("dialog-close", "close"),
+    treeItemExpanded: register("tree-item-expanded", "chevron-down"),
+    // collapsed is done with rotation
+    treeFilterOnTypeOn: register("tree-filter-on-type-on", "list-filter"),
+    treeFilterOnTypeOff: register("tree-filter-on-type-off", "list-selection"),
+    treeFilterClear: register("tree-filter-clear", "close"),
+    treeItemLoading: register("tree-item-loading", "loading"),
+    menuSelection: register("menu-selection", "check"),
+    menuSubmenu: register("menu-submenu", "chevron-right"),
+    menuBarMore: register("menubar-more", "more"),
+    scrollbarButtonLeft: register("scrollbar-button-left", "triangle-left"),
+    scrollbarButtonRight: register("scrollbar-button-right", "triangle-right"),
+    scrollbarButtonUp: register("scrollbar-button-up", "triangle-up"),
+    scrollbarButtonDown: register("scrollbar-button-down", "triangle-down"),
+    toolBarMore: register("toolbar-more", "more"),
+    quickInputBack: register("quick-input-back", "arrow-left"),
+    dropDownButton: register("drop-down-button", 60084),
+    symbolCustomColor: register("symbol-customcolor", 60252),
+    exportIcon: register("export", 60332),
+    workspaceUnspecified: register("workspace-unspecified", 60355),
+    newLine: register("newline", 60394),
+    thumbsDownFilled: register("thumbsdown-filled", 60435),
+    thumbsUpFilled: register("thumbsup-filled", 60436),
+    gitFetch: register("git-fetch", 60445),
+    lightbulbSparkleAutofix: register("lightbulb-sparkle-autofix", 60447),
+    debugBreakpointPending: register("debug-breakpoint-pending", 60377)
+  };
+  var Codicon = {
+    ...codiconsLibrary,
+    ...codiconsDerived
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/tokenizationRegistry.js
+  var TokenizationRegistry = class {
+    constructor() {
+      this._tokenizationSupports = /* @__PURE__ */ new Map();
+      this._factories = /* @__PURE__ */ new Map();
+      this._onDidChange = new Emitter();
+      this.onDidChange = this._onDidChange.event;
+      this._colorMap = null;
+    }
+    handleChange(languageIds) {
+      this._onDidChange.fire({
+        changedLanguages: languageIds,
+        changedColorMap: false
+      });
+    }
+    register(languageId, support) {
+      this._tokenizationSupports.set(languageId, support);
+      this.handleChange([languageId]);
+      return toDisposable(() => {
+        if (this._tokenizationSupports.get(languageId) !== support) {
+          return;
+        }
+        this._tokenizationSupports.delete(languageId);
+        this.handleChange([languageId]);
+      });
+    }
+    get(languageId) {
+      return this._tokenizationSupports.get(languageId) || null;
+    }
+    registerFactory(languageId, factory) {
+      this._factories.get(languageId)?.dispose();
+      const myData = new TokenizationSupportFactoryData(this, languageId, factory);
+      this._factories.set(languageId, myData);
+      return toDisposable(() => {
+        const v = this._factories.get(languageId);
+        if (!v || v !== myData) {
+          return;
+        }
+        this._factories.delete(languageId);
+        v.dispose();
+      });
+    }
+    async getOrCreate(languageId) {
+      const tokenizationSupport = this.get(languageId);
+      if (tokenizationSupport) {
+        return tokenizationSupport;
+      }
+      const factory = this._factories.get(languageId);
+      if (!factory || factory.isResolved) {
+        return null;
+      }
+      await factory.resolve();
+      return this.get(languageId);
+    }
+    isResolved(languageId) {
+      const tokenizationSupport = this.get(languageId);
+      if (tokenizationSupport) {
+        return true;
+      }
+      const factory = this._factories.get(languageId);
+      if (!factory || factory.isResolved) {
+        return true;
+      }
+      return false;
+    }
+    setColorMap(colorMap) {
+      this._colorMap = colorMap;
+      this._onDidChange.fire({
+        changedLanguages: Array.from(this._tokenizationSupports.keys()),
+        changedColorMap: true
+      });
+    }
+    getColorMap() {
+      return this._colorMap;
+    }
+    getDefaultBackground() {
+      if (this._colorMap && this._colorMap.length > 2) {
+        return this._colorMap[
+          2
+          /* ColorId.DefaultBackground */
+        ];
+      }
+      return null;
+    }
+  };
+  var TokenizationSupportFactoryData = class extends Disposable {
+    get isResolved() {
+      return this._isResolved;
+    }
+    constructor(_registry, _languageId, _factory) {
+      super();
+      this._registry = _registry;
+      this._languageId = _languageId;
+      this._factory = _factory;
+      this._isDisposed = false;
+      this._resolvePromise = null;
+      this._isResolved = false;
+    }
+    dispose() {
+      this._isDisposed = true;
+      super.dispose();
+    }
+    async resolve() {
+      if (!this._resolvePromise) {
+        this._resolvePromise = this._create();
+      }
+      return this._resolvePromise;
+    }
+    async _create() {
+      const value = await this._factory.tokenizationSupport;
+      this._isResolved = true;
+      if (value && !this._isDisposed) {
+        this._register(this._registry.register(this._languageId, value));
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/languages.js
+  var Token = class {
+    constructor(offset, type, language) {
+      this.offset = offset;
+      this.type = type;
+      this.language = language;
+      this._tokenBrand = void 0;
+    }
+    toString() {
+      return "(" + this.offset + ", " + this.type + ")";
+    }
+  };
+  var HoverVerbosityAction;
+  (function(HoverVerbosityAction3) {
+    HoverVerbosityAction3[HoverVerbosityAction3["Increase"] = 0] = "Increase";
+    HoverVerbosityAction3[HoverVerbosityAction3["Decrease"] = 1] = "Decrease";
+  })(HoverVerbosityAction || (HoverVerbosityAction = {}));
+  var CompletionItemKinds;
+  (function(CompletionItemKinds2) {
+    const byKind = /* @__PURE__ */ new Map();
+    byKind.set(0, Codicon.symbolMethod);
+    byKind.set(1, Codicon.symbolFunction);
+    byKind.set(2, Codicon.symbolConstructor);
+    byKind.set(3, Codicon.symbolField);
+    byKind.set(4, Codicon.symbolVariable);
+    byKind.set(5, Codicon.symbolClass);
+    byKind.set(6, Codicon.symbolStruct);
+    byKind.set(7, Codicon.symbolInterface);
+    byKind.set(8, Codicon.symbolModule);
+    byKind.set(9, Codicon.symbolProperty);
+    byKind.set(10, Codicon.symbolEvent);
+    byKind.set(11, Codicon.symbolOperator);
+    byKind.set(12, Codicon.symbolUnit);
+    byKind.set(13, Codicon.symbolValue);
+    byKind.set(15, Codicon.symbolEnum);
+    byKind.set(14, Codicon.symbolConstant);
+    byKind.set(15, Codicon.symbolEnum);
+    byKind.set(16, Codicon.symbolEnumMember);
+    byKind.set(17, Codicon.symbolKeyword);
+    byKind.set(28, Codicon.symbolSnippet);
+    byKind.set(18, Codicon.symbolText);
+    byKind.set(19, Codicon.symbolColor);
+    byKind.set(20, Codicon.symbolFile);
+    byKind.set(21, Codicon.symbolReference);
+    byKind.set(22, Codicon.symbolCustomColor);
+    byKind.set(23, Codicon.symbolFolder);
+    byKind.set(24, Codicon.symbolTypeParameter);
+    byKind.set(25, Codicon.account);
+    byKind.set(26, Codicon.issues);
+    byKind.set(27, Codicon.tools);
+    function toIcon(kind) {
+      let codicon = byKind.get(kind);
+      if (!codicon) {
+        console.info("No codicon found for CompletionItemKind " + kind);
+        codicon = Codicon.symbolProperty;
+      }
+      return codicon;
+    }
+    CompletionItemKinds2.toIcon = toIcon;
+    function toLabel(kind) {
+      switch (kind) {
+        case 0:
+          return localize(728, "Method");
+        case 1:
+          return localize(729, "Function");
+        case 2:
+          return localize(730, "Constructor");
+        case 3:
+          return localize(731, "Field");
+        case 4:
+          return localize(732, "Variable");
+        case 5:
+          return localize(733, "Class");
+        case 6:
+          return localize(734, "Struct");
+        case 7:
+          return localize(735, "Interface");
+        case 8:
+          return localize(736, "Module");
+        case 9:
+          return localize(737, "Property");
+        case 10:
+          return localize(738, "Event");
+        case 11:
+          return localize(739, "Operator");
+        case 12:
+          return localize(740, "Unit");
+        case 13:
+          return localize(741, "Value");
+        case 14:
+          return localize(742, "Constant");
+        case 15:
+          return localize(743, "Enum");
+        case 16:
+          return localize(744, "Enum Member");
+        case 17:
+          return localize(745, "Keyword");
+        case 18:
+          return localize(746, "Text");
+        case 19:
+          return localize(747, "Color");
+        case 20:
+          return localize(748, "File");
+        case 21:
+          return localize(749, "Reference");
+        case 22:
+          return localize(750, "Custom Color");
+        case 23:
+          return localize(751, "Folder");
+        case 24:
+          return localize(752, "Type Parameter");
+        case 25:
+          return localize(753, "User");
+        case 26:
+          return localize(754, "Issue");
+        case 27:
+          return localize(755, "Tool");
+        case 28:
+          return localize(756, "Snippet");
+        default:
+          return "";
+      }
+    }
+    CompletionItemKinds2.toLabel = toLabel;
+    const data = /* @__PURE__ */ new Map();
+    data.set(
+      "method",
+      0
+      /* CompletionItemKind.Method */
+    );
+    data.set(
+      "function",
+      1
+      /* CompletionItemKind.Function */
+    );
+    data.set(
+      "constructor",
+      2
+      /* CompletionItemKind.Constructor */
+    );
+    data.set(
+      "field",
+      3
+      /* CompletionItemKind.Field */
+    );
+    data.set(
+      "variable",
+      4
+      /* CompletionItemKind.Variable */
+    );
+    data.set(
+      "class",
+      5
+      /* CompletionItemKind.Class */
+    );
+    data.set(
+      "struct",
+      6
+      /* CompletionItemKind.Struct */
+    );
+    data.set(
+      "interface",
+      7
+      /* CompletionItemKind.Interface */
+    );
+    data.set(
+      "module",
+      8
+      /* CompletionItemKind.Module */
+    );
+    data.set(
+      "property",
+      9
+      /* CompletionItemKind.Property */
+    );
+    data.set(
+      "event",
+      10
+      /* CompletionItemKind.Event */
+    );
+    data.set(
+      "operator",
+      11
+      /* CompletionItemKind.Operator */
+    );
+    data.set(
+      "unit",
+      12
+      /* CompletionItemKind.Unit */
+    );
+    data.set(
+      "value",
+      13
+      /* CompletionItemKind.Value */
+    );
+    data.set(
+      "constant",
+      14
+      /* CompletionItemKind.Constant */
+    );
+    data.set(
+      "enum",
+      15
+      /* CompletionItemKind.Enum */
+    );
+    data.set(
+      "enum-member",
+      16
+      /* CompletionItemKind.EnumMember */
+    );
+    data.set(
+      "enumMember",
+      16
+      /* CompletionItemKind.EnumMember */
+    );
+    data.set(
+      "keyword",
+      17
+      /* CompletionItemKind.Keyword */
+    );
+    data.set(
+      "snippet",
+      28
+      /* CompletionItemKind.Snippet */
+    );
+    data.set(
+      "text",
+      18
+      /* CompletionItemKind.Text */
+    );
+    data.set(
+      "color",
+      19
+      /* CompletionItemKind.Color */
+    );
+    data.set(
+      "file",
+      20
+      /* CompletionItemKind.File */
+    );
+    data.set(
+      "reference",
+      21
+      /* CompletionItemKind.Reference */
+    );
+    data.set(
+      "customcolor",
+      22
+      /* CompletionItemKind.Customcolor */
+    );
+    data.set(
+      "folder",
+      23
+      /* CompletionItemKind.Folder */
+    );
+    data.set(
+      "type-parameter",
+      24
+      /* CompletionItemKind.TypeParameter */
+    );
+    data.set(
+      "typeParameter",
+      24
+      /* CompletionItemKind.TypeParameter */
+    );
+    data.set(
+      "account",
+      25
+      /* CompletionItemKind.User */
+    );
+    data.set(
+      "issue",
+      26
+      /* CompletionItemKind.Issue */
+    );
+    data.set(
+      "tool",
+      27
+      /* CompletionItemKind.Tool */
+    );
+    function fromString(value, strict) {
+      let res = data.get(value);
+      if (typeof res === "undefined" && !strict) {
+        res = 9;
+      }
+      return res;
+    }
+    CompletionItemKinds2.fromString = fromString;
+  })(CompletionItemKinds || (CompletionItemKinds = {}));
+  var InlineCompletionTriggerKind;
+  (function(InlineCompletionTriggerKind3) {
+    InlineCompletionTriggerKind3[InlineCompletionTriggerKind3["Automatic"] = 0] = "Automatic";
+    InlineCompletionTriggerKind3[InlineCompletionTriggerKind3["Explicit"] = 1] = "Explicit";
+  })(InlineCompletionTriggerKind || (InlineCompletionTriggerKind = {}));
+  var InlineCompletionHintStyle;
+  (function(InlineCompletionHintStyle3) {
+    InlineCompletionHintStyle3[InlineCompletionHintStyle3["Code"] = 1] = "Code";
+    InlineCompletionHintStyle3[InlineCompletionHintStyle3["Label"] = 2] = "Label";
+  })(InlineCompletionHintStyle || (InlineCompletionHintStyle = {}));
+  var InlineCompletionEndOfLifeReasonKind;
+  (function(InlineCompletionEndOfLifeReasonKind3) {
+    InlineCompletionEndOfLifeReasonKind3[InlineCompletionEndOfLifeReasonKind3["Accepted"] = 0] = "Accepted";
+    InlineCompletionEndOfLifeReasonKind3[InlineCompletionEndOfLifeReasonKind3["Rejected"] = 1] = "Rejected";
+    InlineCompletionEndOfLifeReasonKind3[InlineCompletionEndOfLifeReasonKind3["Ignored"] = 2] = "Ignored";
+  })(InlineCompletionEndOfLifeReasonKind || (InlineCompletionEndOfLifeReasonKind = {}));
+  var DocumentPasteTriggerKind;
+  (function(DocumentPasteTriggerKind2) {
+    DocumentPasteTriggerKind2[DocumentPasteTriggerKind2["Automatic"] = 0] = "Automatic";
+    DocumentPasteTriggerKind2[DocumentPasteTriggerKind2["PasteAs"] = 1] = "PasteAs";
+  })(DocumentPasteTriggerKind || (DocumentPasteTriggerKind = {}));
+  var SignatureHelpTriggerKind;
+  (function(SignatureHelpTriggerKind3) {
+    SignatureHelpTriggerKind3[SignatureHelpTriggerKind3["Invoke"] = 1] = "Invoke";
+    SignatureHelpTriggerKind3[SignatureHelpTriggerKind3["TriggerCharacter"] = 2] = "TriggerCharacter";
+    SignatureHelpTriggerKind3[SignatureHelpTriggerKind3["ContentChange"] = 3] = "ContentChange";
+  })(SignatureHelpTriggerKind || (SignatureHelpTriggerKind = {}));
+  var DocumentHighlightKind;
+  (function(DocumentHighlightKind3) {
+    DocumentHighlightKind3[DocumentHighlightKind3["Text"] = 0] = "Text";
+    DocumentHighlightKind3[DocumentHighlightKind3["Read"] = 1] = "Read";
+    DocumentHighlightKind3[DocumentHighlightKind3["Write"] = 2] = "Write";
+  })(DocumentHighlightKind || (DocumentHighlightKind = {}));
+  var symbolKindNames = {
+    [
+      17
+      /* SymbolKind.Array */
+    ]: localize(757, "array"),
+    [
+      16
+      /* SymbolKind.Boolean */
+    ]: localize(758, "boolean"),
+    [
+      4
+      /* SymbolKind.Class */
+    ]: localize(759, "class"),
+    [
+      13
+      /* SymbolKind.Constant */
+    ]: localize(760, "constant"),
+    [
+      8
+      /* SymbolKind.Constructor */
+    ]: localize(761, "constructor"),
+    [
+      9
+      /* SymbolKind.Enum */
+    ]: localize(762, "enumeration"),
+    [
+      21
+      /* SymbolKind.EnumMember */
+    ]: localize(763, "enumeration member"),
+    [
+      23
+      /* SymbolKind.Event */
+    ]: localize(764, "event"),
+    [
+      7
+      /* SymbolKind.Field */
+    ]: localize(765, "field"),
+    [
+      0
+      /* SymbolKind.File */
+    ]: localize(766, "file"),
+    [
+      11
+      /* SymbolKind.Function */
+    ]: localize(767, "function"),
+    [
+      10
+      /* SymbolKind.Interface */
+    ]: localize(768, "interface"),
+    [
+      19
+      /* SymbolKind.Key */
+    ]: localize(769, "key"),
+    [
+      5
+      /* SymbolKind.Method */
+    ]: localize(770, "method"),
+    [
+      1
+      /* SymbolKind.Module */
+    ]: localize(771, "module"),
+    [
+      2
+      /* SymbolKind.Namespace */
+    ]: localize(772, "namespace"),
+    [
+      20
+      /* SymbolKind.Null */
+    ]: localize(773, "null"),
+    [
+      15
+      /* SymbolKind.Number */
+    ]: localize(774, "number"),
+    [
+      18
+      /* SymbolKind.Object */
+    ]: localize(775, "object"),
+    [
+      24
+      /* SymbolKind.Operator */
+    ]: localize(776, "operator"),
+    [
+      3
+      /* SymbolKind.Package */
+    ]: localize(777, "package"),
+    [
+      6
+      /* SymbolKind.Property */
+    ]: localize(778, "property"),
+    [
+      14
+      /* SymbolKind.String */
+    ]: localize(779, "string"),
+    [
+      22
+      /* SymbolKind.Struct */
+    ]: localize(780, "struct"),
+    [
+      25
+      /* SymbolKind.TypeParameter */
+    ]: localize(781, "type parameter"),
+    [
+      12
+      /* SymbolKind.Variable */
+    ]: localize(782, "variable")
+  };
+  var SymbolKinds;
+  (function(SymbolKinds2) {
+    const byKind = /* @__PURE__ */ new Map();
+    byKind.set(0, Codicon.symbolFile);
+    byKind.set(1, Codicon.symbolModule);
+    byKind.set(2, Codicon.symbolNamespace);
+    byKind.set(3, Codicon.symbolPackage);
+    byKind.set(4, Codicon.symbolClass);
+    byKind.set(5, Codicon.symbolMethod);
+    byKind.set(6, Codicon.symbolProperty);
+    byKind.set(7, Codicon.symbolField);
+    byKind.set(8, Codicon.symbolConstructor);
+    byKind.set(9, Codicon.symbolEnum);
+    byKind.set(10, Codicon.symbolInterface);
+    byKind.set(11, Codicon.symbolFunction);
+    byKind.set(12, Codicon.symbolVariable);
+    byKind.set(13, Codicon.symbolConstant);
+    byKind.set(14, Codicon.symbolString);
+    byKind.set(15, Codicon.symbolNumber);
+    byKind.set(16, Codicon.symbolBoolean);
+    byKind.set(17, Codicon.symbolArray);
+    byKind.set(18, Codicon.symbolObject);
+    byKind.set(19, Codicon.symbolKey);
+    byKind.set(20, Codicon.symbolNull);
+    byKind.set(21, Codicon.symbolEnumMember);
+    byKind.set(22, Codicon.symbolStruct);
+    byKind.set(23, Codicon.symbolEvent);
+    byKind.set(24, Codicon.symbolOperator);
+    byKind.set(25, Codicon.symbolTypeParameter);
+    function toIcon(kind) {
+      let icon = byKind.get(kind);
+      if (!icon) {
+        console.info("No codicon found for SymbolKind " + kind);
+        icon = Codicon.symbolProperty;
+      }
+      return icon;
+    }
+    SymbolKinds2.toIcon = toIcon;
+    const byCompletionKind = /* @__PURE__ */ new Map();
+    byCompletionKind.set(
+      0,
+      20
+      /* CompletionItemKind.File */
+    );
+    byCompletionKind.set(
+      1,
+      8
+      /* CompletionItemKind.Module */
+    );
+    byCompletionKind.set(
+      2,
+      8
+      /* CompletionItemKind.Module */
+    );
+    byCompletionKind.set(
+      3,
+      8
+      /* CompletionItemKind.Module */
+    );
+    byCompletionKind.set(
+      4,
+      5
+      /* CompletionItemKind.Class */
+    );
+    byCompletionKind.set(
+      5,
+      0
+      /* CompletionItemKind.Method */
+    );
+    byCompletionKind.set(
+      6,
+      9
+      /* CompletionItemKind.Property */
+    );
+    byCompletionKind.set(
+      7,
+      3
+      /* CompletionItemKind.Field */
+    );
+    byCompletionKind.set(
+      8,
+      2
+      /* CompletionItemKind.Constructor */
+    );
+    byCompletionKind.set(
+      9,
+      15
+      /* CompletionItemKind.Enum */
+    );
+    byCompletionKind.set(
+      10,
+      7
+      /* CompletionItemKind.Interface */
+    );
+    byCompletionKind.set(
+      11,
+      1
+      /* CompletionItemKind.Function */
+    );
+    byCompletionKind.set(
+      12,
+      4
+      /* CompletionItemKind.Variable */
+    );
+    byCompletionKind.set(
+      13,
+      14
+      /* CompletionItemKind.Constant */
+    );
+    byCompletionKind.set(
+      14,
+      18
+      /* CompletionItemKind.Text */
+    );
+    byCompletionKind.set(
+      15,
+      13
+      /* CompletionItemKind.Value */
+    );
+    byCompletionKind.set(
+      16,
+      13
+      /* CompletionItemKind.Value */
+    );
+    byCompletionKind.set(
+      17,
+      13
+      /* CompletionItemKind.Value */
+    );
+    byCompletionKind.set(
+      18,
+      13
+      /* CompletionItemKind.Value */
+    );
+    byCompletionKind.set(
+      19,
+      17
+      /* CompletionItemKind.Keyword */
+    );
+    byCompletionKind.set(
+      20,
+      13
+      /* CompletionItemKind.Value */
+    );
+    byCompletionKind.set(
+      21,
+      16
+      /* CompletionItemKind.EnumMember */
+    );
+    byCompletionKind.set(
+      22,
+      6
+      /* CompletionItemKind.Struct */
+    );
+    byCompletionKind.set(
+      23,
+      10
+      /* CompletionItemKind.Event */
+    );
+    byCompletionKind.set(
+      24,
+      11
+      /* CompletionItemKind.Operator */
+    );
+    byCompletionKind.set(
+      25,
+      24
+      /* CompletionItemKind.TypeParameter */
+    );
+    function toCompletionKind(kind) {
+      let completionKind = byCompletionKind.get(kind);
+      if (completionKind === void 0) {
+        console.info("No completion kind found for SymbolKind " + kind);
+        completionKind = 20;
+      }
+      return completionKind;
+    }
+    SymbolKinds2.toCompletionKind = toCompletionKind;
+  })(SymbolKinds || (SymbolKinds = {}));
+  var FoldingRangeKind = class _FoldingRangeKind {
+    static {
+      this.Comment = new _FoldingRangeKind("comment");
+    }
+    static {
+      this.Imports = new _FoldingRangeKind("imports");
+    }
+    static {
+      this.Region = new _FoldingRangeKind("region");
+    }
+    /**
+     * Returns a {@link FoldingRangeKind} for the given value.
+     *
+     * @param value of the kind.
+     */
+    static fromValue(value) {
+      switch (value) {
+        case "comment":
+          return _FoldingRangeKind.Comment;
+        case "imports":
+          return _FoldingRangeKind.Imports;
+        case "region":
+          return _FoldingRangeKind.Region;
+      }
+      return new _FoldingRangeKind(value);
+    }
+    /**
+     * Creates a new {@link FoldingRangeKind}.
+     *
+     * @param value of the kind.
+     */
+    constructor(value) {
+      this.value = value;
+    }
+  };
+  var NewSymbolNameTag;
+  (function(NewSymbolNameTag3) {
+    NewSymbolNameTag3[NewSymbolNameTag3["AIGenerated"] = 1] = "AIGenerated";
+  })(NewSymbolNameTag || (NewSymbolNameTag = {}));
+  var NewSymbolNameTriggerKind;
+  (function(NewSymbolNameTriggerKind3) {
+    NewSymbolNameTriggerKind3[NewSymbolNameTriggerKind3["Invoke"] = 0] = "Invoke";
+    NewSymbolNameTriggerKind3[NewSymbolNameTriggerKind3["Automatic"] = 1] = "Automatic";
+  })(NewSymbolNameTriggerKind || (NewSymbolNameTriggerKind = {}));
+  var Command;
+  (function(Command2) {
+    function is(obj) {
+      if (!obj || typeof obj !== "object") {
+        return false;
+      }
+      return typeof obj.id === "string" && typeof obj.title === "string";
+    }
+    Command2.is = is;
+  })(Command || (Command = {}));
+  var InlayHintKind;
+  (function(InlayHintKind3) {
+    InlayHintKind3[InlayHintKind3["Type"] = 1] = "Type";
+    InlayHintKind3[InlayHintKind3["Parameter"] = 2] = "Parameter";
+  })(InlayHintKind || (InlayHintKind = {}));
+  var TokenizationRegistry2 = new TokenizationRegistry();
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/standalone/standaloneEnums.js
+  var AccessibilitySupport;
+  (function(AccessibilitySupport2) {
+    AccessibilitySupport2[AccessibilitySupport2["Unknown"] = 0] = "Unknown";
+    AccessibilitySupport2[AccessibilitySupport2["Disabled"] = 1] = "Disabled";
+    AccessibilitySupport2[AccessibilitySupport2["Enabled"] = 2] = "Enabled";
+  })(AccessibilitySupport || (AccessibilitySupport = {}));
+  var CodeActionTriggerType;
+  (function(CodeActionTriggerType2) {
+    CodeActionTriggerType2[CodeActionTriggerType2["Invoke"] = 1] = "Invoke";
+    CodeActionTriggerType2[CodeActionTriggerType2["Auto"] = 2] = "Auto";
+  })(CodeActionTriggerType || (CodeActionTriggerType = {}));
+  var CompletionItemInsertTextRule;
+  (function(CompletionItemInsertTextRule2) {
+    CompletionItemInsertTextRule2[CompletionItemInsertTextRule2["None"] = 0] = "None";
+    CompletionItemInsertTextRule2[CompletionItemInsertTextRule2["KeepWhitespace"] = 1] = "KeepWhitespace";
+    CompletionItemInsertTextRule2[CompletionItemInsertTextRule2["InsertAsSnippet"] = 4] = "InsertAsSnippet";
+  })(CompletionItemInsertTextRule || (CompletionItemInsertTextRule = {}));
+  var CompletionItemKind;
+  (function(CompletionItemKind2) {
+    CompletionItemKind2[CompletionItemKind2["Method"] = 0] = "Method";
+    CompletionItemKind2[CompletionItemKind2["Function"] = 1] = "Function";
+    CompletionItemKind2[CompletionItemKind2["Constructor"] = 2] = "Constructor";
+    CompletionItemKind2[CompletionItemKind2["Field"] = 3] = "Field";
+    CompletionItemKind2[CompletionItemKind2["Variable"] = 4] = "Variable";
+    CompletionItemKind2[CompletionItemKind2["Class"] = 5] = "Class";
+    CompletionItemKind2[CompletionItemKind2["Struct"] = 6] = "Struct";
+    CompletionItemKind2[CompletionItemKind2["Interface"] = 7] = "Interface";
+    CompletionItemKind2[CompletionItemKind2["Module"] = 8] = "Module";
+    CompletionItemKind2[CompletionItemKind2["Property"] = 9] = "Property";
+    CompletionItemKind2[CompletionItemKind2["Event"] = 10] = "Event";
+    CompletionItemKind2[CompletionItemKind2["Operator"] = 11] = "Operator";
+    CompletionItemKind2[CompletionItemKind2["Unit"] = 12] = "Unit";
+    CompletionItemKind2[CompletionItemKind2["Value"] = 13] = "Value";
+    CompletionItemKind2[CompletionItemKind2["Constant"] = 14] = "Constant";
+    CompletionItemKind2[CompletionItemKind2["Enum"] = 15] = "Enum";
+    CompletionItemKind2[CompletionItemKind2["EnumMember"] = 16] = "EnumMember";
+    CompletionItemKind2[CompletionItemKind2["Keyword"] = 17] = "Keyword";
+    CompletionItemKind2[CompletionItemKind2["Text"] = 18] = "Text";
+    CompletionItemKind2[CompletionItemKind2["Color"] = 19] = "Color";
+    CompletionItemKind2[CompletionItemKind2["File"] = 20] = "File";
+    CompletionItemKind2[CompletionItemKind2["Reference"] = 21] = "Reference";
+    CompletionItemKind2[CompletionItemKind2["Customcolor"] = 22] = "Customcolor";
+    CompletionItemKind2[CompletionItemKind2["Folder"] = 23] = "Folder";
+    CompletionItemKind2[CompletionItemKind2["TypeParameter"] = 24] = "TypeParameter";
+    CompletionItemKind2[CompletionItemKind2["User"] = 25] = "User";
+    CompletionItemKind2[CompletionItemKind2["Issue"] = 26] = "Issue";
+    CompletionItemKind2[CompletionItemKind2["Tool"] = 27] = "Tool";
+    CompletionItemKind2[CompletionItemKind2["Snippet"] = 28] = "Snippet";
+  })(CompletionItemKind || (CompletionItemKind = {}));
+  var CompletionItemTag;
+  (function(CompletionItemTag2) {
+    CompletionItemTag2[CompletionItemTag2["Deprecated"] = 1] = "Deprecated";
+  })(CompletionItemTag || (CompletionItemTag = {}));
+  var CompletionTriggerKind;
+  (function(CompletionTriggerKind2) {
+    CompletionTriggerKind2[CompletionTriggerKind2["Invoke"] = 0] = "Invoke";
+    CompletionTriggerKind2[CompletionTriggerKind2["TriggerCharacter"] = 1] = "TriggerCharacter";
+    CompletionTriggerKind2[CompletionTriggerKind2["TriggerForIncompleteCompletions"] = 2] = "TriggerForIncompleteCompletions";
+  })(CompletionTriggerKind || (CompletionTriggerKind = {}));
+  var ContentWidgetPositionPreference;
+  (function(ContentWidgetPositionPreference2) {
+    ContentWidgetPositionPreference2[ContentWidgetPositionPreference2["EXACT"] = 0] = "EXACT";
+    ContentWidgetPositionPreference2[ContentWidgetPositionPreference2["ABOVE"] = 1] = "ABOVE";
+    ContentWidgetPositionPreference2[ContentWidgetPositionPreference2["BELOW"] = 2] = "BELOW";
+  })(ContentWidgetPositionPreference || (ContentWidgetPositionPreference = {}));
+  var CursorChangeReason;
+  (function(CursorChangeReason2) {
+    CursorChangeReason2[CursorChangeReason2["NotSet"] = 0] = "NotSet";
+    CursorChangeReason2[CursorChangeReason2["ContentFlush"] = 1] = "ContentFlush";
+    CursorChangeReason2[CursorChangeReason2["RecoverFromMarkers"] = 2] = "RecoverFromMarkers";
+    CursorChangeReason2[CursorChangeReason2["Explicit"] = 3] = "Explicit";
+    CursorChangeReason2[CursorChangeReason2["Paste"] = 4] = "Paste";
+    CursorChangeReason2[CursorChangeReason2["Undo"] = 5] = "Undo";
+    CursorChangeReason2[CursorChangeReason2["Redo"] = 6] = "Redo";
+  })(CursorChangeReason || (CursorChangeReason = {}));
+  var DefaultEndOfLine;
+  (function(DefaultEndOfLine2) {
+    DefaultEndOfLine2[DefaultEndOfLine2["LF"] = 1] = "LF";
+    DefaultEndOfLine2[DefaultEndOfLine2["CRLF"] = 2] = "CRLF";
+  })(DefaultEndOfLine || (DefaultEndOfLine = {}));
+  var DocumentHighlightKind2;
+  (function(DocumentHighlightKind3) {
+    DocumentHighlightKind3[DocumentHighlightKind3["Text"] = 0] = "Text";
+    DocumentHighlightKind3[DocumentHighlightKind3["Read"] = 1] = "Read";
+    DocumentHighlightKind3[DocumentHighlightKind3["Write"] = 2] = "Write";
+  })(DocumentHighlightKind2 || (DocumentHighlightKind2 = {}));
+  var EditorAutoIndentStrategy;
+  (function(EditorAutoIndentStrategy2) {
+    EditorAutoIndentStrategy2[EditorAutoIndentStrategy2["None"] = 0] = "None";
+    EditorAutoIndentStrategy2[EditorAutoIndentStrategy2["Keep"] = 1] = "Keep";
+    EditorAutoIndentStrategy2[EditorAutoIndentStrategy2["Brackets"] = 2] = "Brackets";
+    EditorAutoIndentStrategy2[EditorAutoIndentStrategy2["Advanced"] = 3] = "Advanced";
+    EditorAutoIndentStrategy2[EditorAutoIndentStrategy2["Full"] = 4] = "Full";
+  })(EditorAutoIndentStrategy || (EditorAutoIndentStrategy = {}));
+  var EditorOption;
+  (function(EditorOption2) {
+    EditorOption2[EditorOption2["acceptSuggestionOnCommitCharacter"] = 0] = "acceptSuggestionOnCommitCharacter";
+    EditorOption2[EditorOption2["acceptSuggestionOnEnter"] = 1] = "acceptSuggestionOnEnter";
+    EditorOption2[EditorOption2["accessibilitySupport"] = 2] = "accessibilitySupport";
+    EditorOption2[EditorOption2["accessibilityPageSize"] = 3] = "accessibilityPageSize";
+    EditorOption2[EditorOption2["allowOverflow"] = 4] = "allowOverflow";
+    EditorOption2[EditorOption2["allowVariableLineHeights"] = 5] = "allowVariableLineHeights";
+    EditorOption2[EditorOption2["allowVariableFonts"] = 6] = "allowVariableFonts";
+    EditorOption2[EditorOption2["allowVariableFontsInAccessibilityMode"] = 7] = "allowVariableFontsInAccessibilityMode";
+    EditorOption2[EditorOption2["ariaLabel"] = 8] = "ariaLabel";
+    EditorOption2[EditorOption2["ariaRequired"] = 9] = "ariaRequired";
+    EditorOption2[EditorOption2["autoClosingBrackets"] = 10] = "autoClosingBrackets";
+    EditorOption2[EditorOption2["autoClosingComments"] = 11] = "autoClosingComments";
+    EditorOption2[EditorOption2["screenReaderAnnounceInlineSuggestion"] = 12] = "screenReaderAnnounceInlineSuggestion";
+    EditorOption2[EditorOption2["autoClosingDelete"] = 13] = "autoClosingDelete";
+    EditorOption2[EditorOption2["autoClosingOvertype"] = 14] = "autoClosingOvertype";
+    EditorOption2[EditorOption2["autoClosingQuotes"] = 15] = "autoClosingQuotes";
+    EditorOption2[EditorOption2["autoIndent"] = 16] = "autoIndent";
+    EditorOption2[EditorOption2["autoIndentOnPaste"] = 17] = "autoIndentOnPaste";
+    EditorOption2[EditorOption2["autoIndentOnPasteWithinString"] = 18] = "autoIndentOnPasteWithinString";
+    EditorOption2[EditorOption2["automaticLayout"] = 19] = "automaticLayout";
+    EditorOption2[EditorOption2["autoSurround"] = 20] = "autoSurround";
+    EditorOption2[EditorOption2["bracketPairColorization"] = 21] = "bracketPairColorization";
+    EditorOption2[EditorOption2["guides"] = 22] = "guides";
+    EditorOption2[EditorOption2["codeLens"] = 23] = "codeLens";
+    EditorOption2[EditorOption2["codeLensFontFamily"] = 24] = "codeLensFontFamily";
+    EditorOption2[EditorOption2["codeLensFontSize"] = 25] = "codeLensFontSize";
+    EditorOption2[EditorOption2["colorDecorators"] = 26] = "colorDecorators";
+    EditorOption2[EditorOption2["colorDecoratorsLimit"] = 27] = "colorDecoratorsLimit";
+    EditorOption2[EditorOption2["columnSelection"] = 28] = "columnSelection";
+    EditorOption2[EditorOption2["comments"] = 29] = "comments";
+    EditorOption2[EditorOption2["contextmenu"] = 30] = "contextmenu";
+    EditorOption2[EditorOption2["copyWithSyntaxHighlighting"] = 31] = "copyWithSyntaxHighlighting";
+    EditorOption2[EditorOption2["cursorBlinking"] = 32] = "cursorBlinking";
+    EditorOption2[EditorOption2["cursorSmoothCaretAnimation"] = 33] = "cursorSmoothCaretAnimation";
+    EditorOption2[EditorOption2["cursorStyle"] = 34] = "cursorStyle";
+    EditorOption2[EditorOption2["cursorSurroundingLines"] = 35] = "cursorSurroundingLines";
+    EditorOption2[EditorOption2["cursorSurroundingLinesStyle"] = 36] = "cursorSurroundingLinesStyle";
+    EditorOption2[EditorOption2["cursorWidth"] = 37] = "cursorWidth";
+    EditorOption2[EditorOption2["cursorHeight"] = 38] = "cursorHeight";
+    EditorOption2[EditorOption2["disableLayerHinting"] = 39] = "disableLayerHinting";
+    EditorOption2[EditorOption2["disableMonospaceOptimizations"] = 40] = "disableMonospaceOptimizations";
+    EditorOption2[EditorOption2["domReadOnly"] = 41] = "domReadOnly";
+    EditorOption2[EditorOption2["dragAndDrop"] = 42] = "dragAndDrop";
+    EditorOption2[EditorOption2["dropIntoEditor"] = 43] = "dropIntoEditor";
+    EditorOption2[EditorOption2["editContext"] = 44] = "editContext";
+    EditorOption2[EditorOption2["emptySelectionClipboard"] = 45] = "emptySelectionClipboard";
+    EditorOption2[EditorOption2["experimentalGpuAcceleration"] = 46] = "experimentalGpuAcceleration";
+    EditorOption2[EditorOption2["experimentalWhitespaceRendering"] = 47] = "experimentalWhitespaceRendering";
+    EditorOption2[EditorOption2["extraEditorClassName"] = 48] = "extraEditorClassName";
+    EditorOption2[EditorOption2["fastScrollSensitivity"] = 49] = "fastScrollSensitivity";
+    EditorOption2[EditorOption2["find"] = 50] = "find";
+    EditorOption2[EditorOption2["fixedOverflowWidgets"] = 51] = "fixedOverflowWidgets";
+    EditorOption2[EditorOption2["folding"] = 52] = "folding";
+    EditorOption2[EditorOption2["foldingStrategy"] = 53] = "foldingStrategy";
+    EditorOption2[EditorOption2["foldingHighlight"] = 54] = "foldingHighlight";
+    EditorOption2[EditorOption2["foldingImportsByDefault"] = 55] = "foldingImportsByDefault";
+    EditorOption2[EditorOption2["foldingMaximumRegions"] = 56] = "foldingMaximumRegions";
+    EditorOption2[EditorOption2["unfoldOnClickAfterEndOfLine"] = 57] = "unfoldOnClickAfterEndOfLine";
+    EditorOption2[EditorOption2["fontFamily"] = 58] = "fontFamily";
+    EditorOption2[EditorOption2["fontInfo"] = 59] = "fontInfo";
+    EditorOption2[EditorOption2["fontLigatures"] = 60] = "fontLigatures";
+    EditorOption2[EditorOption2["fontSize"] = 61] = "fontSize";
+    EditorOption2[EditorOption2["fontWeight"] = 62] = "fontWeight";
+    EditorOption2[EditorOption2["fontVariations"] = 63] = "fontVariations";
+    EditorOption2[EditorOption2["formatOnPaste"] = 64] = "formatOnPaste";
+    EditorOption2[EditorOption2["formatOnType"] = 65] = "formatOnType";
+    EditorOption2[EditorOption2["glyphMargin"] = 66] = "glyphMargin";
+    EditorOption2[EditorOption2["gotoLocation"] = 67] = "gotoLocation";
+    EditorOption2[EditorOption2["hideCursorInOverviewRuler"] = 68] = "hideCursorInOverviewRuler";
+    EditorOption2[EditorOption2["hover"] = 69] = "hover";
+    EditorOption2[EditorOption2["inDiffEditor"] = 70] = "inDiffEditor";
+    EditorOption2[EditorOption2["inlineSuggest"] = 71] = "inlineSuggest";
+    EditorOption2[EditorOption2["letterSpacing"] = 72] = "letterSpacing";
+    EditorOption2[EditorOption2["lightbulb"] = 73] = "lightbulb";
+    EditorOption2[EditorOption2["lineDecorationsWidth"] = 74] = "lineDecorationsWidth";
+    EditorOption2[EditorOption2["lineHeight"] = 75] = "lineHeight";
+    EditorOption2[EditorOption2["lineNumbers"] = 76] = "lineNumbers";
+    EditorOption2[EditorOption2["lineNumbersMinChars"] = 77] = "lineNumbersMinChars";
+    EditorOption2[EditorOption2["linkedEditing"] = 78] = "linkedEditing";
+    EditorOption2[EditorOption2["links"] = 79] = "links";
+    EditorOption2[EditorOption2["matchBrackets"] = 80] = "matchBrackets";
+    EditorOption2[EditorOption2["minimap"] = 81] = "minimap";
+    EditorOption2[EditorOption2["mouseStyle"] = 82] = "mouseStyle";
+    EditorOption2[EditorOption2["mouseWheelScrollSensitivity"] = 83] = "mouseWheelScrollSensitivity";
+    EditorOption2[EditorOption2["mouseWheelZoom"] = 84] = "mouseWheelZoom";
+    EditorOption2[EditorOption2["multiCursorMergeOverlapping"] = 85] = "multiCursorMergeOverlapping";
+    EditorOption2[EditorOption2["multiCursorModifier"] = 86] = "multiCursorModifier";
+    EditorOption2[EditorOption2["mouseMiddleClickAction"] = 87] = "mouseMiddleClickAction";
+    EditorOption2[EditorOption2["multiCursorPaste"] = 88] = "multiCursorPaste";
+    EditorOption2[EditorOption2["multiCursorLimit"] = 89] = "multiCursorLimit";
+    EditorOption2[EditorOption2["occurrencesHighlight"] = 90] = "occurrencesHighlight";
+    EditorOption2[EditorOption2["occurrencesHighlightDelay"] = 91] = "occurrencesHighlightDelay";
+    EditorOption2[EditorOption2["overtypeCursorStyle"] = 92] = "overtypeCursorStyle";
+    EditorOption2[EditorOption2["overtypeOnPaste"] = 93] = "overtypeOnPaste";
+    EditorOption2[EditorOption2["overviewRulerBorder"] = 94] = "overviewRulerBorder";
+    EditorOption2[EditorOption2["overviewRulerLanes"] = 95] = "overviewRulerLanes";
+    EditorOption2[EditorOption2["padding"] = 96] = "padding";
+    EditorOption2[EditorOption2["pasteAs"] = 97] = "pasteAs";
+    EditorOption2[EditorOption2["parameterHints"] = 98] = "parameterHints";
+    EditorOption2[EditorOption2["peekWidgetDefaultFocus"] = 99] = "peekWidgetDefaultFocus";
+    EditorOption2[EditorOption2["placeholder"] = 100] = "placeholder";
+    EditorOption2[EditorOption2["definitionLinkOpensInPeek"] = 101] = "definitionLinkOpensInPeek";
+    EditorOption2[EditorOption2["quickSuggestions"] = 102] = "quickSuggestions";
+    EditorOption2[EditorOption2["quickSuggestionsDelay"] = 103] = "quickSuggestionsDelay";
+    EditorOption2[EditorOption2["readOnly"] = 104] = "readOnly";
+    EditorOption2[EditorOption2["readOnlyMessage"] = 105] = "readOnlyMessage";
+    EditorOption2[EditorOption2["renameOnType"] = 106] = "renameOnType";
+    EditorOption2[EditorOption2["renderRichScreenReaderContent"] = 107] = "renderRichScreenReaderContent";
+    EditorOption2[EditorOption2["renderControlCharacters"] = 108] = "renderControlCharacters";
+    EditorOption2[EditorOption2["renderFinalNewline"] = 109] = "renderFinalNewline";
+    EditorOption2[EditorOption2["renderLineHighlight"] = 110] = "renderLineHighlight";
+    EditorOption2[EditorOption2["renderLineHighlightOnlyWhenFocus"] = 111] = "renderLineHighlightOnlyWhenFocus";
+    EditorOption2[EditorOption2["renderValidationDecorations"] = 112] = "renderValidationDecorations";
+    EditorOption2[EditorOption2["renderWhitespace"] = 113] = "renderWhitespace";
+    EditorOption2[EditorOption2["revealHorizontalRightPadding"] = 114] = "revealHorizontalRightPadding";
+    EditorOption2[EditorOption2["roundedSelection"] = 115] = "roundedSelection";
+    EditorOption2[EditorOption2["rulers"] = 116] = "rulers";
+    EditorOption2[EditorOption2["scrollbar"] = 117] = "scrollbar";
+    EditorOption2[EditorOption2["scrollBeyondLastColumn"] = 118] = "scrollBeyondLastColumn";
+    EditorOption2[EditorOption2["scrollBeyondLastLine"] = 119] = "scrollBeyondLastLine";
+    EditorOption2[EditorOption2["scrollPredominantAxis"] = 120] = "scrollPredominantAxis";
+    EditorOption2[EditorOption2["selectionClipboard"] = 121] = "selectionClipboard";
+    EditorOption2[EditorOption2["selectionHighlight"] = 122] = "selectionHighlight";
+    EditorOption2[EditorOption2["selectionHighlightMaxLength"] = 123] = "selectionHighlightMaxLength";
+    EditorOption2[EditorOption2["selectionHighlightMultiline"] = 124] = "selectionHighlightMultiline";
+    EditorOption2[EditorOption2["selectOnLineNumbers"] = 125] = "selectOnLineNumbers";
+    EditorOption2[EditorOption2["showFoldingControls"] = 126] = "showFoldingControls";
+    EditorOption2[EditorOption2["showUnused"] = 127] = "showUnused";
+    EditorOption2[EditorOption2["snippetSuggestions"] = 128] = "snippetSuggestions";
+    EditorOption2[EditorOption2["smartSelect"] = 129] = "smartSelect";
+    EditorOption2[EditorOption2["smoothScrolling"] = 130] = "smoothScrolling";
+    EditorOption2[EditorOption2["stickyScroll"] = 131] = "stickyScroll";
+    EditorOption2[EditorOption2["stickyTabStops"] = 132] = "stickyTabStops";
+    EditorOption2[EditorOption2["stopRenderingLineAfter"] = 133] = "stopRenderingLineAfter";
+    EditorOption2[EditorOption2["suggest"] = 134] = "suggest";
+    EditorOption2[EditorOption2["suggestFontSize"] = 135] = "suggestFontSize";
+    EditorOption2[EditorOption2["suggestLineHeight"] = 136] = "suggestLineHeight";
+    EditorOption2[EditorOption2["suggestOnTriggerCharacters"] = 137] = "suggestOnTriggerCharacters";
+    EditorOption2[EditorOption2["suggestSelection"] = 138] = "suggestSelection";
+    EditorOption2[EditorOption2["tabCompletion"] = 139] = "tabCompletion";
+    EditorOption2[EditorOption2["tabIndex"] = 140] = "tabIndex";
+    EditorOption2[EditorOption2["trimWhitespaceOnDelete"] = 141] = "trimWhitespaceOnDelete";
+    EditorOption2[EditorOption2["unicodeHighlighting"] = 142] = "unicodeHighlighting";
+    EditorOption2[EditorOption2["unusualLineTerminators"] = 143] = "unusualLineTerminators";
+    EditorOption2[EditorOption2["useShadowDOM"] = 144] = "useShadowDOM";
+    EditorOption2[EditorOption2["useTabStops"] = 145] = "useTabStops";
+    EditorOption2[EditorOption2["wordBreak"] = 146] = "wordBreak";
+    EditorOption2[EditorOption2["wordSegmenterLocales"] = 147] = "wordSegmenterLocales";
+    EditorOption2[EditorOption2["wordSeparators"] = 148] = "wordSeparators";
+    EditorOption2[EditorOption2["wordWrap"] = 149] = "wordWrap";
+    EditorOption2[EditorOption2["wordWrapBreakAfterCharacters"] = 150] = "wordWrapBreakAfterCharacters";
+    EditorOption2[EditorOption2["wordWrapBreakBeforeCharacters"] = 151] = "wordWrapBreakBeforeCharacters";
+    EditorOption2[EditorOption2["wordWrapColumn"] = 152] = "wordWrapColumn";
+    EditorOption2[EditorOption2["wordWrapOverride1"] = 153] = "wordWrapOverride1";
+    EditorOption2[EditorOption2["wordWrapOverride2"] = 154] = "wordWrapOverride2";
+    EditorOption2[EditorOption2["wrappingIndent"] = 155] = "wrappingIndent";
+    EditorOption2[EditorOption2["wrappingStrategy"] = 156] = "wrappingStrategy";
+    EditorOption2[EditorOption2["showDeprecated"] = 157] = "showDeprecated";
+    EditorOption2[EditorOption2["inertialScroll"] = 158] = "inertialScroll";
+    EditorOption2[EditorOption2["inlayHints"] = 159] = "inlayHints";
+    EditorOption2[EditorOption2["wrapOnEscapedLineFeeds"] = 160] = "wrapOnEscapedLineFeeds";
+    EditorOption2[EditorOption2["effectiveCursorStyle"] = 161] = "effectiveCursorStyle";
+    EditorOption2[EditorOption2["editorClassName"] = 162] = "editorClassName";
+    EditorOption2[EditorOption2["pixelRatio"] = 163] = "pixelRatio";
+    EditorOption2[EditorOption2["tabFocusMode"] = 164] = "tabFocusMode";
+    EditorOption2[EditorOption2["layoutInfo"] = 165] = "layoutInfo";
+    EditorOption2[EditorOption2["wrappingInfo"] = 166] = "wrappingInfo";
+    EditorOption2[EditorOption2["defaultColorDecorators"] = 167] = "defaultColorDecorators";
+    EditorOption2[EditorOption2["colorDecoratorsActivatedOn"] = 168] = "colorDecoratorsActivatedOn";
+    EditorOption2[EditorOption2["inlineCompletionsAccessibilityVerbose"] = 169] = "inlineCompletionsAccessibilityVerbose";
+    EditorOption2[EditorOption2["effectiveEditContext"] = 170] = "effectiveEditContext";
+    EditorOption2[EditorOption2["scrollOnMiddleClick"] = 171] = "scrollOnMiddleClick";
+    EditorOption2[EditorOption2["effectiveAllowVariableFonts"] = 172] = "effectiveAllowVariableFonts";
+  })(EditorOption || (EditorOption = {}));
+  var EndOfLinePreference;
+  (function(EndOfLinePreference2) {
+    EndOfLinePreference2[EndOfLinePreference2["TextDefined"] = 0] = "TextDefined";
+    EndOfLinePreference2[EndOfLinePreference2["LF"] = 1] = "LF";
+    EndOfLinePreference2[EndOfLinePreference2["CRLF"] = 2] = "CRLF";
+  })(EndOfLinePreference || (EndOfLinePreference = {}));
+  var EndOfLineSequence;
+  (function(EndOfLineSequence2) {
+    EndOfLineSequence2[EndOfLineSequence2["LF"] = 0] = "LF";
+    EndOfLineSequence2[EndOfLineSequence2["CRLF"] = 1] = "CRLF";
+  })(EndOfLineSequence || (EndOfLineSequence = {}));
+  var GlyphMarginLane;
+  (function(GlyphMarginLane3) {
+    GlyphMarginLane3[GlyphMarginLane3["Left"] = 1] = "Left";
+    GlyphMarginLane3[GlyphMarginLane3["Center"] = 2] = "Center";
+    GlyphMarginLane3[GlyphMarginLane3["Right"] = 3] = "Right";
+  })(GlyphMarginLane || (GlyphMarginLane = {}));
+  var HoverVerbosityAction2;
+  (function(HoverVerbosityAction3) {
+    HoverVerbosityAction3[HoverVerbosityAction3["Increase"] = 0] = "Increase";
+    HoverVerbosityAction3[HoverVerbosityAction3["Decrease"] = 1] = "Decrease";
+  })(HoverVerbosityAction2 || (HoverVerbosityAction2 = {}));
+  var IndentAction;
+  (function(IndentAction2) {
+    IndentAction2[IndentAction2["None"] = 0] = "None";
+    IndentAction2[IndentAction2["Indent"] = 1] = "Indent";
+    IndentAction2[IndentAction2["IndentOutdent"] = 2] = "IndentOutdent";
+    IndentAction2[IndentAction2["Outdent"] = 3] = "Outdent";
+  })(IndentAction || (IndentAction = {}));
+  var InjectedTextCursorStops;
+  (function(InjectedTextCursorStops3) {
+    InjectedTextCursorStops3[InjectedTextCursorStops3["Both"] = 0] = "Both";
+    InjectedTextCursorStops3[InjectedTextCursorStops3["Right"] = 1] = "Right";
+    InjectedTextCursorStops3[InjectedTextCursorStops3["Left"] = 2] = "Left";
+    InjectedTextCursorStops3[InjectedTextCursorStops3["None"] = 3] = "None";
+  })(InjectedTextCursorStops || (InjectedTextCursorStops = {}));
+  var InlayHintKind2;
+  (function(InlayHintKind3) {
+    InlayHintKind3[InlayHintKind3["Type"] = 1] = "Type";
+    InlayHintKind3[InlayHintKind3["Parameter"] = 2] = "Parameter";
+  })(InlayHintKind2 || (InlayHintKind2 = {}));
+  var InlineCompletionEndOfLifeReasonKind2;
+  (function(InlineCompletionEndOfLifeReasonKind3) {
+    InlineCompletionEndOfLifeReasonKind3[InlineCompletionEndOfLifeReasonKind3["Accepted"] = 0] = "Accepted";
+    InlineCompletionEndOfLifeReasonKind3[InlineCompletionEndOfLifeReasonKind3["Rejected"] = 1] = "Rejected";
+    InlineCompletionEndOfLifeReasonKind3[InlineCompletionEndOfLifeReasonKind3["Ignored"] = 2] = "Ignored";
+  })(InlineCompletionEndOfLifeReasonKind2 || (InlineCompletionEndOfLifeReasonKind2 = {}));
+  var InlineCompletionHintStyle2;
+  (function(InlineCompletionHintStyle3) {
+    InlineCompletionHintStyle3[InlineCompletionHintStyle3["Code"] = 1] = "Code";
+    InlineCompletionHintStyle3[InlineCompletionHintStyle3["Label"] = 2] = "Label";
+  })(InlineCompletionHintStyle2 || (InlineCompletionHintStyle2 = {}));
+  var InlineCompletionTriggerKind2;
+  (function(InlineCompletionTriggerKind3) {
+    InlineCompletionTriggerKind3[InlineCompletionTriggerKind3["Automatic"] = 0] = "Automatic";
+    InlineCompletionTriggerKind3[InlineCompletionTriggerKind3["Explicit"] = 1] = "Explicit";
+  })(InlineCompletionTriggerKind2 || (InlineCompletionTriggerKind2 = {}));
+  var KeyCode;
+  (function(KeyCode2) {
+    KeyCode2[KeyCode2["DependsOnKbLayout"] = -1] = "DependsOnKbLayout";
+    KeyCode2[KeyCode2["Unknown"] = 0] = "Unknown";
+    KeyCode2[KeyCode2["Backspace"] = 1] = "Backspace";
+    KeyCode2[KeyCode2["Tab"] = 2] = "Tab";
+    KeyCode2[KeyCode2["Enter"] = 3] = "Enter";
+    KeyCode2[KeyCode2["Shift"] = 4] = "Shift";
+    KeyCode2[KeyCode2["Ctrl"] = 5] = "Ctrl";
+    KeyCode2[KeyCode2["Alt"] = 6] = "Alt";
+    KeyCode2[KeyCode2["PauseBreak"] = 7] = "PauseBreak";
+    KeyCode2[KeyCode2["CapsLock"] = 8] = "CapsLock";
+    KeyCode2[KeyCode2["Escape"] = 9] = "Escape";
+    KeyCode2[KeyCode2["Space"] = 10] = "Space";
+    KeyCode2[KeyCode2["PageUp"] = 11] = "PageUp";
+    KeyCode2[KeyCode2["PageDown"] = 12] = "PageDown";
+    KeyCode2[KeyCode2["End"] = 13] = "End";
+    KeyCode2[KeyCode2["Home"] = 14] = "Home";
+    KeyCode2[KeyCode2["LeftArrow"] = 15] = "LeftArrow";
+    KeyCode2[KeyCode2["UpArrow"] = 16] = "UpArrow";
+    KeyCode2[KeyCode2["RightArrow"] = 17] = "RightArrow";
+    KeyCode2[KeyCode2["DownArrow"] = 18] = "DownArrow";
+    KeyCode2[KeyCode2["Insert"] = 19] = "Insert";
+    KeyCode2[KeyCode2["Delete"] = 20] = "Delete";
+    KeyCode2[KeyCode2["Digit0"] = 21] = "Digit0";
+    KeyCode2[KeyCode2["Digit1"] = 22] = "Digit1";
+    KeyCode2[KeyCode2["Digit2"] = 23] = "Digit2";
+    KeyCode2[KeyCode2["Digit3"] = 24] = "Digit3";
+    KeyCode2[KeyCode2["Digit4"] = 25] = "Digit4";
+    KeyCode2[KeyCode2["Digit5"] = 26] = "Digit5";
+    KeyCode2[KeyCode2["Digit6"] = 27] = "Digit6";
+    KeyCode2[KeyCode2["Digit7"] = 28] = "Digit7";
+    KeyCode2[KeyCode2["Digit8"] = 29] = "Digit8";
+    KeyCode2[KeyCode2["Digit9"] = 30] = "Digit9";
+    KeyCode2[KeyCode2["KeyA"] = 31] = "KeyA";
+    KeyCode2[KeyCode2["KeyB"] = 32] = "KeyB";
+    KeyCode2[KeyCode2["KeyC"] = 33] = "KeyC";
+    KeyCode2[KeyCode2["KeyD"] = 34] = "KeyD";
+    KeyCode2[KeyCode2["KeyE"] = 35] = "KeyE";
+    KeyCode2[KeyCode2["KeyF"] = 36] = "KeyF";
+    KeyCode2[KeyCode2["KeyG"] = 37] = "KeyG";
+    KeyCode2[KeyCode2["KeyH"] = 38] = "KeyH";
+    KeyCode2[KeyCode2["KeyI"] = 39] = "KeyI";
+    KeyCode2[KeyCode2["KeyJ"] = 40] = "KeyJ";
+    KeyCode2[KeyCode2["KeyK"] = 41] = "KeyK";
+    KeyCode2[KeyCode2["KeyL"] = 42] = "KeyL";
+    KeyCode2[KeyCode2["KeyM"] = 43] = "KeyM";
+    KeyCode2[KeyCode2["KeyN"] = 44] = "KeyN";
+    KeyCode2[KeyCode2["KeyO"] = 45] = "KeyO";
+    KeyCode2[KeyCode2["KeyP"] = 46] = "KeyP";
+    KeyCode2[KeyCode2["KeyQ"] = 47] = "KeyQ";
+    KeyCode2[KeyCode2["KeyR"] = 48] = "KeyR";
+    KeyCode2[KeyCode2["KeyS"] = 49] = "KeyS";
+    KeyCode2[KeyCode2["KeyT"] = 50] = "KeyT";
+    KeyCode2[KeyCode2["KeyU"] = 51] = "KeyU";
+    KeyCode2[KeyCode2["KeyV"] = 52] = "KeyV";
+    KeyCode2[KeyCode2["KeyW"] = 53] = "KeyW";
+    KeyCode2[KeyCode2["KeyX"] = 54] = "KeyX";
+    KeyCode2[KeyCode2["KeyY"] = 55] = "KeyY";
+    KeyCode2[KeyCode2["KeyZ"] = 56] = "KeyZ";
+    KeyCode2[KeyCode2["Meta"] = 57] = "Meta";
+    KeyCode2[KeyCode2["ContextMenu"] = 58] = "ContextMenu";
+    KeyCode2[KeyCode2["F1"] = 59] = "F1";
+    KeyCode2[KeyCode2["F2"] = 60] = "F2";
+    KeyCode2[KeyCode2["F3"] = 61] = "F3";
+    KeyCode2[KeyCode2["F4"] = 62] = "F4";
+    KeyCode2[KeyCode2["F5"] = 63] = "F5";
+    KeyCode2[KeyCode2["F6"] = 64] = "F6";
+    KeyCode2[KeyCode2["F7"] = 65] = "F7";
+    KeyCode2[KeyCode2["F8"] = 66] = "F8";
+    KeyCode2[KeyCode2["F9"] = 67] = "F9";
+    KeyCode2[KeyCode2["F10"] = 68] = "F10";
+    KeyCode2[KeyCode2["F11"] = 69] = "F11";
+    KeyCode2[KeyCode2["F12"] = 70] = "F12";
+    KeyCode2[KeyCode2["F13"] = 71] = "F13";
+    KeyCode2[KeyCode2["F14"] = 72] = "F14";
+    KeyCode2[KeyCode2["F15"] = 73] = "F15";
+    KeyCode2[KeyCode2["F16"] = 74] = "F16";
+    KeyCode2[KeyCode2["F17"] = 75] = "F17";
+    KeyCode2[KeyCode2["F18"] = 76] = "F18";
+    KeyCode2[KeyCode2["F19"] = 77] = "F19";
+    KeyCode2[KeyCode2["F20"] = 78] = "F20";
+    KeyCode2[KeyCode2["F21"] = 79] = "F21";
+    KeyCode2[KeyCode2["F22"] = 80] = "F22";
+    KeyCode2[KeyCode2["F23"] = 81] = "F23";
+    KeyCode2[KeyCode2["F24"] = 82] = "F24";
+    KeyCode2[KeyCode2["NumLock"] = 83] = "NumLock";
+    KeyCode2[KeyCode2["ScrollLock"] = 84] = "ScrollLock";
+    KeyCode2[KeyCode2["Semicolon"] = 85] = "Semicolon";
+    KeyCode2[KeyCode2["Equal"] = 86] = "Equal";
+    KeyCode2[KeyCode2["Comma"] = 87] = "Comma";
+    KeyCode2[KeyCode2["Minus"] = 88] = "Minus";
+    KeyCode2[KeyCode2["Period"] = 89] = "Period";
+    KeyCode2[KeyCode2["Slash"] = 90] = "Slash";
+    KeyCode2[KeyCode2["Backquote"] = 91] = "Backquote";
+    KeyCode2[KeyCode2["BracketLeft"] = 92] = "BracketLeft";
+    KeyCode2[KeyCode2["Backslash"] = 93] = "Backslash";
+    KeyCode2[KeyCode2["BracketRight"] = 94] = "BracketRight";
+    KeyCode2[KeyCode2["Quote"] = 95] = "Quote";
+    KeyCode2[KeyCode2["OEM_8"] = 96] = "OEM_8";
+    KeyCode2[KeyCode2["IntlBackslash"] = 97] = "IntlBackslash";
+    KeyCode2[KeyCode2["Numpad0"] = 98] = "Numpad0";
+    KeyCode2[KeyCode2["Numpad1"] = 99] = "Numpad1";
+    KeyCode2[KeyCode2["Numpad2"] = 100] = "Numpad2";
+    KeyCode2[KeyCode2["Numpad3"] = 101] = "Numpad3";
+    KeyCode2[KeyCode2["Numpad4"] = 102] = "Numpad4";
+    KeyCode2[KeyCode2["Numpad5"] = 103] = "Numpad5";
+    KeyCode2[KeyCode2["Numpad6"] = 104] = "Numpad6";
+    KeyCode2[KeyCode2["Numpad7"] = 105] = "Numpad7";
+    KeyCode2[KeyCode2["Numpad8"] = 106] = "Numpad8";
+    KeyCode2[KeyCode2["Numpad9"] = 107] = "Numpad9";
+    KeyCode2[KeyCode2["NumpadMultiply"] = 108] = "NumpadMultiply";
+    KeyCode2[KeyCode2["NumpadAdd"] = 109] = "NumpadAdd";
+    KeyCode2[KeyCode2["NUMPAD_SEPARATOR"] = 110] = "NUMPAD_SEPARATOR";
+    KeyCode2[KeyCode2["NumpadSubtract"] = 111] = "NumpadSubtract";
+    KeyCode2[KeyCode2["NumpadDecimal"] = 112] = "NumpadDecimal";
+    KeyCode2[KeyCode2["NumpadDivide"] = 113] = "NumpadDivide";
+    KeyCode2[KeyCode2["KEY_IN_COMPOSITION"] = 114] = "KEY_IN_COMPOSITION";
+    KeyCode2[KeyCode2["ABNT_C1"] = 115] = "ABNT_C1";
+    KeyCode2[KeyCode2["ABNT_C2"] = 116] = "ABNT_C2";
+    KeyCode2[KeyCode2["AudioVolumeMute"] = 117] = "AudioVolumeMute";
+    KeyCode2[KeyCode2["AudioVolumeUp"] = 118] = "AudioVolumeUp";
+    KeyCode2[KeyCode2["AudioVolumeDown"] = 119] = "AudioVolumeDown";
+    KeyCode2[KeyCode2["BrowserSearch"] = 120] = "BrowserSearch";
+    KeyCode2[KeyCode2["BrowserHome"] = 121] = "BrowserHome";
+    KeyCode2[KeyCode2["BrowserBack"] = 122] = "BrowserBack";
+    KeyCode2[KeyCode2["BrowserForward"] = 123] = "BrowserForward";
+    KeyCode2[KeyCode2["MediaTrackNext"] = 124] = "MediaTrackNext";
+    KeyCode2[KeyCode2["MediaTrackPrevious"] = 125] = "MediaTrackPrevious";
+    KeyCode2[KeyCode2["MediaStop"] = 126] = "MediaStop";
+    KeyCode2[KeyCode2["MediaPlayPause"] = 127] = "MediaPlayPause";
+    KeyCode2[KeyCode2["LaunchMediaPlayer"] = 128] = "LaunchMediaPlayer";
+    KeyCode2[KeyCode2["LaunchMail"] = 129] = "LaunchMail";
+    KeyCode2[KeyCode2["LaunchApp2"] = 130] = "LaunchApp2";
+    KeyCode2[KeyCode2["Clear"] = 131] = "Clear";
+    KeyCode2[KeyCode2["MAX_VALUE"] = 132] = "MAX_VALUE";
+  })(KeyCode || (KeyCode = {}));
+  var MarkerSeverity;
+  (function(MarkerSeverity2) {
+    MarkerSeverity2[MarkerSeverity2["Hint"] = 1] = "Hint";
+    MarkerSeverity2[MarkerSeverity2["Info"] = 2] = "Info";
+    MarkerSeverity2[MarkerSeverity2["Warning"] = 4] = "Warning";
+    MarkerSeverity2[MarkerSeverity2["Error"] = 8] = "Error";
+  })(MarkerSeverity || (MarkerSeverity = {}));
+  var MarkerTag;
+  (function(MarkerTag2) {
+    MarkerTag2[MarkerTag2["Unnecessary"] = 1] = "Unnecessary";
+    MarkerTag2[MarkerTag2["Deprecated"] = 2] = "Deprecated";
+  })(MarkerTag || (MarkerTag = {}));
+  var MinimapPosition;
+  (function(MinimapPosition2) {
+    MinimapPosition2[MinimapPosition2["Inline"] = 1] = "Inline";
+    MinimapPosition2[MinimapPosition2["Gutter"] = 2] = "Gutter";
+  })(MinimapPosition || (MinimapPosition = {}));
+  var MinimapSectionHeaderStyle;
+  (function(MinimapSectionHeaderStyle2) {
+    MinimapSectionHeaderStyle2[MinimapSectionHeaderStyle2["Normal"] = 1] = "Normal";
+    MinimapSectionHeaderStyle2[MinimapSectionHeaderStyle2["Underlined"] = 2] = "Underlined";
+  })(MinimapSectionHeaderStyle || (MinimapSectionHeaderStyle = {}));
+  var MouseTargetType;
+  (function(MouseTargetType2) {
+    MouseTargetType2[MouseTargetType2["UNKNOWN"] = 0] = "UNKNOWN";
+    MouseTargetType2[MouseTargetType2["TEXTAREA"] = 1] = "TEXTAREA";
+    MouseTargetType2[MouseTargetType2["GUTTER_GLYPH_MARGIN"] = 2] = "GUTTER_GLYPH_MARGIN";
+    MouseTargetType2[MouseTargetType2["GUTTER_LINE_NUMBERS"] = 3] = "GUTTER_LINE_NUMBERS";
+    MouseTargetType2[MouseTargetType2["GUTTER_LINE_DECORATIONS"] = 4] = "GUTTER_LINE_DECORATIONS";
+    MouseTargetType2[MouseTargetType2["GUTTER_VIEW_ZONE"] = 5] = "GUTTER_VIEW_ZONE";
+    MouseTargetType2[MouseTargetType2["CONTENT_TEXT"] = 6] = "CONTENT_TEXT";
+    MouseTargetType2[MouseTargetType2["CONTENT_EMPTY"] = 7] = "CONTENT_EMPTY";
+    MouseTargetType2[MouseTargetType2["CONTENT_VIEW_ZONE"] = 8] = "CONTENT_VIEW_ZONE";
+    MouseTargetType2[MouseTargetType2["CONTENT_WIDGET"] = 9] = "CONTENT_WIDGET";
+    MouseTargetType2[MouseTargetType2["OVERVIEW_RULER"] = 10] = "OVERVIEW_RULER";
+    MouseTargetType2[MouseTargetType2["SCROLLBAR"] = 11] = "SCROLLBAR";
+    MouseTargetType2[MouseTargetType2["OVERLAY_WIDGET"] = 12] = "OVERLAY_WIDGET";
+    MouseTargetType2[MouseTargetType2["OUTSIDE_EDITOR"] = 13] = "OUTSIDE_EDITOR";
+  })(MouseTargetType || (MouseTargetType = {}));
+  var NewSymbolNameTag2;
+  (function(NewSymbolNameTag3) {
+    NewSymbolNameTag3[NewSymbolNameTag3["AIGenerated"] = 1] = "AIGenerated";
+  })(NewSymbolNameTag2 || (NewSymbolNameTag2 = {}));
+  var NewSymbolNameTriggerKind2;
+  (function(NewSymbolNameTriggerKind3) {
+    NewSymbolNameTriggerKind3[NewSymbolNameTriggerKind3["Invoke"] = 0] = "Invoke";
+    NewSymbolNameTriggerKind3[NewSymbolNameTriggerKind3["Automatic"] = 1] = "Automatic";
+  })(NewSymbolNameTriggerKind2 || (NewSymbolNameTriggerKind2 = {}));
+  var OverlayWidgetPositionPreference;
+  (function(OverlayWidgetPositionPreference2) {
+    OverlayWidgetPositionPreference2[OverlayWidgetPositionPreference2["TOP_RIGHT_CORNER"] = 0] = "TOP_RIGHT_CORNER";
+    OverlayWidgetPositionPreference2[OverlayWidgetPositionPreference2["BOTTOM_RIGHT_CORNER"] = 1] = "BOTTOM_RIGHT_CORNER";
+    OverlayWidgetPositionPreference2[OverlayWidgetPositionPreference2["TOP_CENTER"] = 2] = "TOP_CENTER";
+  })(OverlayWidgetPositionPreference || (OverlayWidgetPositionPreference = {}));
+  var OverviewRulerLane;
+  (function(OverviewRulerLane3) {
+    OverviewRulerLane3[OverviewRulerLane3["Left"] = 1] = "Left";
+    OverviewRulerLane3[OverviewRulerLane3["Center"] = 2] = "Center";
+    OverviewRulerLane3[OverviewRulerLane3["Right"] = 4] = "Right";
+    OverviewRulerLane3[OverviewRulerLane3["Full"] = 7] = "Full";
+  })(OverviewRulerLane || (OverviewRulerLane = {}));
+  var PartialAcceptTriggerKind;
+  (function(PartialAcceptTriggerKind2) {
+    PartialAcceptTriggerKind2[PartialAcceptTriggerKind2["Word"] = 0] = "Word";
+    PartialAcceptTriggerKind2[PartialAcceptTriggerKind2["Line"] = 1] = "Line";
+    PartialAcceptTriggerKind2[PartialAcceptTriggerKind2["Suggest"] = 2] = "Suggest";
+  })(PartialAcceptTriggerKind || (PartialAcceptTriggerKind = {}));
+  var PositionAffinity;
+  (function(PositionAffinity2) {
+    PositionAffinity2[PositionAffinity2["Left"] = 0] = "Left";
+    PositionAffinity2[PositionAffinity2["Right"] = 1] = "Right";
+    PositionAffinity2[PositionAffinity2["None"] = 2] = "None";
+    PositionAffinity2[PositionAffinity2["LeftOfInjectedText"] = 3] = "LeftOfInjectedText";
+    PositionAffinity2[PositionAffinity2["RightOfInjectedText"] = 4] = "RightOfInjectedText";
+  })(PositionAffinity || (PositionAffinity = {}));
+  var RenderLineNumbersType;
+  (function(RenderLineNumbersType2) {
+    RenderLineNumbersType2[RenderLineNumbersType2["Off"] = 0] = "Off";
+    RenderLineNumbersType2[RenderLineNumbersType2["On"] = 1] = "On";
+    RenderLineNumbersType2[RenderLineNumbersType2["Relative"] = 2] = "Relative";
+    RenderLineNumbersType2[RenderLineNumbersType2["Interval"] = 3] = "Interval";
+    RenderLineNumbersType2[RenderLineNumbersType2["Custom"] = 4] = "Custom";
+  })(RenderLineNumbersType || (RenderLineNumbersType = {}));
+  var RenderMinimap;
+  (function(RenderMinimap2) {
+    RenderMinimap2[RenderMinimap2["None"] = 0] = "None";
+    RenderMinimap2[RenderMinimap2["Text"] = 1] = "Text";
+    RenderMinimap2[RenderMinimap2["Blocks"] = 2] = "Blocks";
+  })(RenderMinimap || (RenderMinimap = {}));
+  var ScrollType;
+  (function(ScrollType2) {
+    ScrollType2[ScrollType2["Smooth"] = 0] = "Smooth";
+    ScrollType2[ScrollType2["Immediate"] = 1] = "Immediate";
+  })(ScrollType || (ScrollType = {}));
+  var ScrollbarVisibility;
+  (function(ScrollbarVisibility2) {
+    ScrollbarVisibility2[ScrollbarVisibility2["Auto"] = 1] = "Auto";
+    ScrollbarVisibility2[ScrollbarVisibility2["Hidden"] = 2] = "Hidden";
+    ScrollbarVisibility2[ScrollbarVisibility2["Visible"] = 3] = "Visible";
+  })(ScrollbarVisibility || (ScrollbarVisibility = {}));
+  var SelectionDirection;
+  (function(SelectionDirection2) {
+    SelectionDirection2[SelectionDirection2["LTR"] = 0] = "LTR";
+    SelectionDirection2[SelectionDirection2["RTL"] = 1] = "RTL";
+  })(SelectionDirection || (SelectionDirection = {}));
+  var ShowLightbulbIconMode;
+  (function(ShowLightbulbIconMode2) {
+    ShowLightbulbIconMode2["Off"] = "off";
+    ShowLightbulbIconMode2["OnCode"] = "onCode";
+    ShowLightbulbIconMode2["On"] = "on";
+  })(ShowLightbulbIconMode || (ShowLightbulbIconMode = {}));
+  var SignatureHelpTriggerKind2;
+  (function(SignatureHelpTriggerKind3) {
+    SignatureHelpTriggerKind3[SignatureHelpTriggerKind3["Invoke"] = 1] = "Invoke";
+    SignatureHelpTriggerKind3[SignatureHelpTriggerKind3["TriggerCharacter"] = 2] = "TriggerCharacter";
+    SignatureHelpTriggerKind3[SignatureHelpTriggerKind3["ContentChange"] = 3] = "ContentChange";
+  })(SignatureHelpTriggerKind2 || (SignatureHelpTriggerKind2 = {}));
+  var SymbolKind;
+  (function(SymbolKind2) {
+    SymbolKind2[SymbolKind2["File"] = 0] = "File";
+    SymbolKind2[SymbolKind2["Module"] = 1] = "Module";
+    SymbolKind2[SymbolKind2["Namespace"] = 2] = "Namespace";
+    SymbolKind2[SymbolKind2["Package"] = 3] = "Package";
+    SymbolKind2[SymbolKind2["Class"] = 4] = "Class";
+    SymbolKind2[SymbolKind2["Method"] = 5] = "Method";
+    SymbolKind2[SymbolKind2["Property"] = 6] = "Property";
+    SymbolKind2[SymbolKind2["Field"] = 7] = "Field";
+    SymbolKind2[SymbolKind2["Constructor"] = 8] = "Constructor";
+    SymbolKind2[SymbolKind2["Enum"] = 9] = "Enum";
+    SymbolKind2[SymbolKind2["Interface"] = 10] = "Interface";
+    SymbolKind2[SymbolKind2["Function"] = 11] = "Function";
+    SymbolKind2[SymbolKind2["Variable"] = 12] = "Variable";
+    SymbolKind2[SymbolKind2["Constant"] = 13] = "Constant";
+    SymbolKind2[SymbolKind2["String"] = 14] = "String";
+    SymbolKind2[SymbolKind2["Number"] = 15] = "Number";
+    SymbolKind2[SymbolKind2["Boolean"] = 16] = "Boolean";
+    SymbolKind2[SymbolKind2["Array"] = 17] = "Array";
+    SymbolKind2[SymbolKind2["Object"] = 18] = "Object";
+    SymbolKind2[SymbolKind2["Key"] = 19] = "Key";
+    SymbolKind2[SymbolKind2["Null"] = 20] = "Null";
+    SymbolKind2[SymbolKind2["EnumMember"] = 21] = "EnumMember";
+    SymbolKind2[SymbolKind2["Struct"] = 22] = "Struct";
+    SymbolKind2[SymbolKind2["Event"] = 23] = "Event";
+    SymbolKind2[SymbolKind2["Operator"] = 24] = "Operator";
+    SymbolKind2[SymbolKind2["TypeParameter"] = 25] = "TypeParameter";
+  })(SymbolKind || (SymbolKind = {}));
+  var SymbolTag;
+  (function(SymbolTag2) {
+    SymbolTag2[SymbolTag2["Deprecated"] = 1] = "Deprecated";
+  })(SymbolTag || (SymbolTag = {}));
+  var TextDirection;
+  (function(TextDirection3) {
+    TextDirection3[TextDirection3["LTR"] = 0] = "LTR";
+    TextDirection3[TextDirection3["RTL"] = 1] = "RTL";
+  })(TextDirection || (TextDirection = {}));
+  var TextEditorCursorBlinkingStyle;
+  (function(TextEditorCursorBlinkingStyle2) {
+    TextEditorCursorBlinkingStyle2[TextEditorCursorBlinkingStyle2["Hidden"] = 0] = "Hidden";
+    TextEditorCursorBlinkingStyle2[TextEditorCursorBlinkingStyle2["Blink"] = 1] = "Blink";
+    TextEditorCursorBlinkingStyle2[TextEditorCursorBlinkingStyle2["Smooth"] = 2] = "Smooth";
+    TextEditorCursorBlinkingStyle2[TextEditorCursorBlinkingStyle2["Phase"] = 3] = "Phase";
+    TextEditorCursorBlinkingStyle2[TextEditorCursorBlinkingStyle2["Expand"] = 4] = "Expand";
+    TextEditorCursorBlinkingStyle2[TextEditorCursorBlinkingStyle2["Solid"] = 5] = "Solid";
+  })(TextEditorCursorBlinkingStyle || (TextEditorCursorBlinkingStyle = {}));
+  var TextEditorCursorStyle;
+  (function(TextEditorCursorStyle2) {
+    TextEditorCursorStyle2[TextEditorCursorStyle2["Line"] = 1] = "Line";
+    TextEditorCursorStyle2[TextEditorCursorStyle2["Block"] = 2] = "Block";
+    TextEditorCursorStyle2[TextEditorCursorStyle2["Underline"] = 3] = "Underline";
+    TextEditorCursorStyle2[TextEditorCursorStyle2["LineThin"] = 4] = "LineThin";
+    TextEditorCursorStyle2[TextEditorCursorStyle2["BlockOutline"] = 5] = "BlockOutline";
+    TextEditorCursorStyle2[TextEditorCursorStyle2["UnderlineThin"] = 6] = "UnderlineThin";
+  })(TextEditorCursorStyle || (TextEditorCursorStyle = {}));
+  var TrackedRangeStickiness;
+  (function(TrackedRangeStickiness2) {
+    TrackedRangeStickiness2[TrackedRangeStickiness2["AlwaysGrowsWhenTypingAtEdges"] = 0] = "AlwaysGrowsWhenTypingAtEdges";
+    TrackedRangeStickiness2[TrackedRangeStickiness2["NeverGrowsWhenTypingAtEdges"] = 1] = "NeverGrowsWhenTypingAtEdges";
+    TrackedRangeStickiness2[TrackedRangeStickiness2["GrowsOnlyWhenTypingBefore"] = 2] = "GrowsOnlyWhenTypingBefore";
+    TrackedRangeStickiness2[TrackedRangeStickiness2["GrowsOnlyWhenTypingAfter"] = 3] = "GrowsOnlyWhenTypingAfter";
+  })(TrackedRangeStickiness || (TrackedRangeStickiness = {}));
+  var WrappingIndent;
+  (function(WrappingIndent2) {
+    WrappingIndent2[WrappingIndent2["None"] = 0] = "None";
+    WrappingIndent2[WrappingIndent2["Same"] = 1] = "Same";
+    WrappingIndent2[WrappingIndent2["Indent"] = 2] = "Indent";
+    WrappingIndent2[WrappingIndent2["DeepIndent"] = 3] = "DeepIndent";
+  })(WrappingIndent || (WrappingIndent = {}));
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/services/editorBaseApi.js
+  var KeyMod = class {
+    static {
+      this.CtrlCmd = 2048;
+    }
+    static {
+      this.Shift = 1024;
+    }
+    static {
+      this.Alt = 512;
+    }
+    static {
+      this.WinCtrl = 256;
+    }
+    static chord(firstPart, secondPart) {
+      return KeyChord(firstPart, secondPart);
+    }
+  };
+  function createMonacoBaseAPI() {
+    return {
+      editor: void 0,
+      // undefined override expected here
+      languages: void 0,
+      // undefined override expected here
+      CancellationTokenSource,
+      Emitter,
+      KeyCode,
+      KeyMod,
+      Position,
+      Range,
+      Selection,
+      SelectionDirection,
+      MarkerSeverity,
+      MarkerTag,
+      Uri: URI,
+      Token
+    };
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/map.js
+  var _a;
+  var _b;
+  var _c;
+  var ResourceMapEntry = class {
+    constructor(uri, value) {
+      this.uri = uri;
+      this.value = value;
+    }
+  };
+  function isEntries(arg) {
+    return Array.isArray(arg);
+  }
+  var ResourceMap = class _ResourceMap {
+    static {
+      this.defaultToKey = (resource) => resource.toString();
+    }
+    constructor(arg, toKey) {
+      this[_a] = "ResourceMap";
+      if (arg instanceof _ResourceMap) {
+        this.map = new Map(arg.map);
+        this.toKey = toKey ?? _ResourceMap.defaultToKey;
+      } else if (isEntries(arg)) {
+        this.map = /* @__PURE__ */ new Map();
+        this.toKey = toKey ?? _ResourceMap.defaultToKey;
+        for (const [resource, value] of arg) {
+          this.set(resource, value);
+        }
+      } else {
+        this.map = /* @__PURE__ */ new Map();
+        this.toKey = arg ?? _ResourceMap.defaultToKey;
+      }
+    }
+    set(resource, value) {
+      this.map.set(this.toKey(resource), new ResourceMapEntry(resource, value));
+      return this;
+    }
+    get(resource) {
+      return this.map.get(this.toKey(resource))?.value;
+    }
+    has(resource) {
+      return this.map.has(this.toKey(resource));
+    }
+    get size() {
+      return this.map.size;
+    }
+    clear() {
+      this.map.clear();
+    }
+    delete(resource) {
+      return this.map.delete(this.toKey(resource));
+    }
+    forEach(clb, thisArg) {
+      if (typeof thisArg !== "undefined") {
+        clb = clb.bind(thisArg);
+      }
+      for (const [_, entry] of this.map) {
+        clb(entry.value, entry.uri, this);
+      }
+    }
+    *values() {
+      for (const entry of this.map.values()) {
+        yield entry.value;
+      }
+    }
+    *keys() {
+      for (const entry of this.map.values()) {
+        yield entry.uri;
+      }
+    }
+    *entries() {
+      for (const entry of this.map.values()) {
+        yield [entry.uri, entry.value];
+      }
+    }
+    *[(_a = Symbol.toStringTag, Symbol.iterator)]() {
+      for (const [, entry] of this.map) {
+        yield [entry.uri, entry.value];
+      }
+    }
+  };
+  var ResourceSet = class {
+    constructor(entriesOrKey, toKey) {
+      this[_b] = "ResourceSet";
+      if (!entriesOrKey || typeof entriesOrKey === "function") {
+        this._map = new ResourceMap(entriesOrKey);
+      } else {
+        this._map = new ResourceMap(toKey);
+        entriesOrKey.forEach(this.add, this);
+      }
+    }
+    get size() {
+      return this._map.size;
+    }
+    add(value) {
+      this._map.set(value, value);
+      return this;
+    }
+    clear() {
+      this._map.clear();
+    }
+    delete(value) {
+      return this._map.delete(value);
+    }
+    forEach(callbackfn, thisArg) {
+      this._map.forEach((_value, key) => callbackfn.call(thisArg, key, key, this));
+    }
+    has(value) {
+      return this._map.has(value);
+    }
+    entries() {
+      return this._map.entries();
+    }
+    keys() {
+      return this._map.keys();
+    }
+    values() {
+      return this._map.keys();
+    }
+    [(_b = Symbol.toStringTag, Symbol.iterator)]() {
+      return this.keys();
+    }
+  };
+  var LinkedMap = class {
+    constructor() {
+      this[_c] = "LinkedMap";
+      this._map = /* @__PURE__ */ new Map();
+      this._head = void 0;
+      this._tail = void 0;
+      this._size = 0;
+      this._state = 0;
+    }
+    clear() {
+      this._map.clear();
+      this._head = void 0;
+      this._tail = void 0;
+      this._size = 0;
+      this._state++;
+    }
+    isEmpty() {
+      return !this._head && !this._tail;
+    }
+    get size() {
+      return this._size;
+    }
+    get first() {
+      return this._head?.value;
+    }
+    get last() {
+      return this._tail?.value;
+    }
+    has(key) {
+      return this._map.has(key);
+    }
+    get(key, touch = 0) {
+      const item = this._map.get(key);
+      if (!item) {
+        return void 0;
+      }
+      if (touch !== 0) {
+        this.touch(item, touch);
+      }
+      return item.value;
+    }
+    set(key, value, touch = 0) {
+      let item = this._map.get(key);
+      if (item) {
+        item.value = value;
+        if (touch !== 0) {
+          this.touch(item, touch);
+        }
+      } else {
+        item = { key, value, next: void 0, previous: void 0 };
+        switch (touch) {
+          case 0:
+            this.addItemLast(item);
+            break;
+          case 1:
+            this.addItemFirst(item);
+            break;
+          case 2:
+            this.addItemLast(item);
+            break;
+          default:
+            this.addItemLast(item);
+            break;
+        }
+        this._map.set(key, item);
+        this._size++;
+      }
+      return this;
+    }
+    delete(key) {
+      return !!this.remove(key);
+    }
+    remove(key) {
+      const item = this._map.get(key);
+      if (!item) {
+        return void 0;
+      }
+      this._map.delete(key);
+      this.removeItem(item);
+      this._size--;
+      return item.value;
+    }
+    shift() {
+      if (!this._head && !this._tail) {
+        return void 0;
+      }
+      if (!this._head || !this._tail) {
+        throw new Error("Invalid list");
+      }
+      const item = this._head;
+      this._map.delete(item.key);
+      this.removeItem(item);
+      this._size--;
+      return item.value;
+    }
+    forEach(callbackfn, thisArg) {
+      const state = this._state;
+      let current = this._head;
+      while (current) {
+        if (thisArg) {
+          callbackfn.bind(thisArg)(current.value, current.key, this);
+        } else {
+          callbackfn(current.value, current.key, this);
+        }
+        if (this._state !== state) {
+          throw new Error(`LinkedMap got modified during iteration.`);
+        }
+        current = current.next;
+      }
+    }
+    keys() {
+      const map = this;
+      const state = this._state;
+      let current = this._head;
+      const iterator = {
+        [Symbol.iterator]() {
+          return iterator;
+        },
+        next() {
+          if (map._state !== state) {
+            throw new Error(`LinkedMap got modified during iteration.`);
+          }
+          if (current) {
+            const result = { value: current.key, done: false };
+            current = current.next;
+            return result;
+          } else {
+            return { value: void 0, done: true };
+          }
+        }
+      };
+      return iterator;
+    }
+    values() {
+      const map = this;
+      const state = this._state;
+      let current = this._head;
+      const iterator = {
+        [Symbol.iterator]() {
+          return iterator;
+        },
+        next() {
+          if (map._state !== state) {
+            throw new Error(`LinkedMap got modified during iteration.`);
+          }
+          if (current) {
+            const result = { value: current.value, done: false };
+            current = current.next;
+            return result;
+          } else {
+            return { value: void 0, done: true };
+          }
+        }
+      };
+      return iterator;
+    }
+    entries() {
+      const map = this;
+      const state = this._state;
+      let current = this._head;
+      const iterator = {
+        [Symbol.iterator]() {
+          return iterator;
+        },
+        next() {
+          if (map._state !== state) {
+            throw new Error(`LinkedMap got modified during iteration.`);
+          }
+          if (current) {
+            const result = { value: [current.key, current.value], done: false };
+            current = current.next;
+            return result;
+          } else {
+            return { value: void 0, done: true };
+          }
+        }
+      };
+      return iterator;
+    }
+    [(_c = Symbol.toStringTag, Symbol.iterator)]() {
+      return this.entries();
+    }
+    trimOld(newSize) {
+      if (newSize >= this.size) {
+        return;
+      }
+      if (newSize === 0) {
+        this.clear();
+        return;
+      }
+      let current = this._head;
+      let currentSize = this.size;
+      while (current && currentSize > newSize) {
+        this._map.delete(current.key);
+        current = current.next;
+        currentSize--;
+      }
+      this._head = current;
+      this._size = currentSize;
+      if (current) {
+        current.previous = void 0;
+      }
+      this._state++;
+    }
+    trimNew(newSize) {
+      if (newSize >= this.size) {
+        return;
+      }
+      if (newSize === 0) {
+        this.clear();
+        return;
+      }
+      let current = this._tail;
+      let currentSize = this.size;
+      while (current && currentSize > newSize) {
+        this._map.delete(current.key);
+        current = current.previous;
+        currentSize--;
+      }
+      this._tail = current;
+      this._size = currentSize;
+      if (current) {
+        current.next = void 0;
+      }
+      this._state++;
+    }
+    addItemFirst(item) {
+      if (!this._head && !this._tail) {
+        this._tail = item;
+      } else if (!this._head) {
+        throw new Error("Invalid list");
+      } else {
+        item.next = this._head;
+        this._head.previous = item;
+      }
+      this._head = item;
+      this._state++;
+    }
+    addItemLast(item) {
+      if (!this._head && !this._tail) {
+        this._head = item;
+      } else if (!this._tail) {
+        throw new Error("Invalid list");
+      } else {
+        item.previous = this._tail;
+        this._tail.next = item;
+      }
+      this._tail = item;
+      this._state++;
+    }
+    removeItem(item) {
+      if (item === this._head && item === this._tail) {
+        this._head = void 0;
+        this._tail = void 0;
+      } else if (item === this._head) {
+        if (!item.next) {
+          throw new Error("Invalid list");
+        }
+        item.next.previous = void 0;
+        this._head = item.next;
+      } else if (item === this._tail) {
+        if (!item.previous) {
+          throw new Error("Invalid list");
+        }
+        item.previous.next = void 0;
+        this._tail = item.previous;
+      } else {
+        const next = item.next;
+        const previous = item.previous;
+        if (!next || !previous) {
+          throw new Error("Invalid list");
+        }
+        next.previous = previous;
+        previous.next = next;
+      }
+      item.next = void 0;
+      item.previous = void 0;
+      this._state++;
+    }
+    touch(item, touch) {
+      if (!this._head || !this._tail) {
+        throw new Error("Invalid list");
+      }
+      if (touch !== 1 && touch !== 2) {
+        return;
+      }
+      if (touch === 1) {
+        if (item === this._head) {
+          return;
+        }
+        const next = item.next;
+        const previous = item.previous;
+        if (item === this._tail) {
+          previous.next = void 0;
+          this._tail = previous;
+        } else {
+          next.previous = previous;
+          previous.next = next;
+        }
+        item.previous = void 0;
+        item.next = this._head;
+        this._head.previous = item;
+        this._head = item;
+        this._state++;
+      } else if (touch === 2) {
+        if (item === this._tail) {
+          return;
+        }
+        const next = item.next;
+        const previous = item.previous;
+        if (item === this._head) {
+          next.previous = void 0;
+          this._head = next;
+        } else {
+          next.previous = previous;
+          previous.next = next;
+        }
+        item.next = void 0;
+        item.previous = this._tail;
+        this._tail.next = item;
+        this._tail = item;
+        this._state++;
+      }
+    }
+    toJSON() {
+      const data = [];
+      this.forEach((value, key) => {
+        data.push([key, value]);
+      });
+      return data;
+    }
+    fromJSON(data) {
+      this.clear();
+      for (const [key, value] of data) {
+        this.set(key, value);
+      }
+    }
+  };
+  var Cache = class extends LinkedMap {
+    constructor(limit, ratio = 1) {
+      super();
+      this._limit = limit;
+      this._ratio = Math.min(Math.max(0, ratio), 1);
+    }
+    get limit() {
+      return this._limit;
+    }
+    set limit(limit) {
+      this._limit = limit;
+      this.checkTrim();
+    }
+    get(key, touch = 2) {
+      return super.get(key, touch);
+    }
+    peek(key) {
+      return super.get(
+        key,
+        0
+        /* Touch.None */
+      );
+    }
+    set(key, value) {
+      super.set(
+        key,
+        value,
+        2
+        /* Touch.AsNew */
+      );
+      return this;
+    }
+    checkTrim() {
+      if (this.size > this._limit) {
+        this.trim(Math.round(this._limit * this._ratio));
+      }
+    }
+  };
+  var LRUCache = class extends Cache {
+    constructor(limit, ratio = 1) {
+      super(limit, ratio);
+    }
+    trim(newSize) {
+      this.trimOld(newSize);
+    }
+    set(key, value) {
+      super.set(key, value);
+      this.checkTrim();
+      return this;
+    }
+  };
+  var SetMap = class {
+    constructor() {
+      this.map = /* @__PURE__ */ new Map();
+    }
+    add(key, value) {
+      let values = this.map.get(key);
+      if (!values) {
+        values = /* @__PURE__ */ new Set();
+        this.map.set(key, values);
+      }
+      values.add(value);
+    }
+    delete(key, value) {
+      const values = this.map.get(key);
+      if (!values) {
+        return;
+      }
+      values.delete(value);
+      if (values.size === 0) {
+        this.map.delete(key);
+      }
+    }
+    forEach(key, fn) {
+      const values = this.map.get(key);
+      if (!values) {
+        return;
+      }
+      values.forEach(fn);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/wordCharacterClassifier.js
+  var wordClassifierCache = new LRUCache(10);
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/model.js
+  var OverviewRulerLane2;
+  (function(OverviewRulerLane3) {
+    OverviewRulerLane3[OverviewRulerLane3["Left"] = 1] = "Left";
+    OverviewRulerLane3[OverviewRulerLane3["Center"] = 2] = "Center";
+    OverviewRulerLane3[OverviewRulerLane3["Right"] = 4] = "Right";
+    OverviewRulerLane3[OverviewRulerLane3["Full"] = 7] = "Full";
+  })(OverviewRulerLane2 || (OverviewRulerLane2 = {}));
+  var GlyphMarginLane2;
+  (function(GlyphMarginLane3) {
+    GlyphMarginLane3[GlyphMarginLane3["Left"] = 1] = "Left";
+    GlyphMarginLane3[GlyphMarginLane3["Center"] = 2] = "Center";
+    GlyphMarginLane3[GlyphMarginLane3["Right"] = 3] = "Right";
+  })(GlyphMarginLane2 || (GlyphMarginLane2 = {}));
+  var TextDirection2;
+  (function(TextDirection3) {
+    TextDirection3[TextDirection3["LTR"] = 0] = "LTR";
+    TextDirection3[TextDirection3["RTL"] = 1] = "RTL";
+  })(TextDirection2 || (TextDirection2 = {}));
+  var InjectedTextCursorStops2;
+  (function(InjectedTextCursorStops3) {
+    InjectedTextCursorStops3[InjectedTextCursorStops3["Both"] = 0] = "Both";
+    InjectedTextCursorStops3[InjectedTextCursorStops3["Right"] = 1] = "Right";
+    InjectedTextCursorStops3[InjectedTextCursorStops3["Left"] = 2] = "Left";
+    InjectedTextCursorStops3[InjectedTextCursorStops3["None"] = 3] = "None";
+  })(InjectedTextCursorStops2 || (InjectedTextCursorStops2 = {}));
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/model/textModelSearch.js
+  function isMultilineRegexSource(searchString) {
+    if (!searchString || searchString.length === 0) {
+      return false;
+    }
+    for (let i = 0, len = searchString.length; i < len; i++) {
+      const chCode = searchString.charCodeAt(i);
+      if (chCode === 10) {
+        return true;
+      }
+      if (chCode === 92) {
+        i++;
+        if (i >= len) {
+          break;
+        }
+        const nextChCode = searchString.charCodeAt(i);
+        if (nextChCode === 110 || nextChCode === 114 || nextChCode === 87) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  function leftIsWordBounday(wordSeparators, text, textLength, matchStartIndex, matchLength) {
+    if (matchStartIndex === 0) {
+      return true;
+    }
+    const charBefore = text.charCodeAt(matchStartIndex - 1);
+    if (wordSeparators.get(charBefore) !== 0) {
+      return true;
+    }
+    if (charBefore === 13 || charBefore === 10) {
+      return true;
+    }
+    if (matchLength > 0) {
+      const firstCharInMatch = text.charCodeAt(matchStartIndex);
+      if (wordSeparators.get(firstCharInMatch) !== 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function rightIsWordBounday(wordSeparators, text, textLength, matchStartIndex, matchLength) {
+    if (matchStartIndex + matchLength === textLength) {
+      return true;
+    }
+    const charAfter = text.charCodeAt(matchStartIndex + matchLength);
+    if (wordSeparators.get(charAfter) !== 0) {
+      return true;
+    }
+    if (charAfter === 13 || charAfter === 10) {
+      return true;
+    }
+    if (matchLength > 0) {
+      const lastCharInMatch = text.charCodeAt(matchStartIndex + matchLength - 1);
+      if (wordSeparators.get(lastCharInMatch) !== 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function isValidMatch(wordSeparators, text, textLength, matchStartIndex, matchLength) {
+    return leftIsWordBounday(wordSeparators, text, textLength, matchStartIndex, matchLength) && rightIsWordBounday(wordSeparators, text, textLength, matchStartIndex, matchLength);
+  }
+  var Searcher = class {
+    constructor(wordSeparators, searchRegex) {
+      this._wordSeparators = wordSeparators;
+      this._searchRegex = searchRegex;
+      this._prevMatchStartIndex = -1;
+      this._prevMatchLength = 0;
+    }
+    reset(lastIndex) {
+      this._searchRegex.lastIndex = lastIndex;
+      this._prevMatchStartIndex = -1;
+      this._prevMatchLength = 0;
+    }
+    next(text) {
+      const textLength = text.length;
+      let m;
+      do {
+        if (this._prevMatchStartIndex + this._prevMatchLength === textLength) {
+          return null;
+        }
+        m = this._searchRegex.exec(text);
+        if (!m) {
+          return null;
+        }
+        const matchStartIndex = m.index;
+        const matchLength = m[0].length;
+        if (matchStartIndex === this._prevMatchStartIndex && matchLength === this._prevMatchLength) {
+          if (matchLength === 0) {
+            if (getNextCodePoint(text, textLength, this._searchRegex.lastIndex) > 65535) {
+              this._searchRegex.lastIndex += 2;
+            } else {
+              this._searchRegex.lastIndex += 1;
+            }
+            continue;
+          }
+          return null;
+        }
+        this._prevMatchStartIndex = matchStartIndex;
+        this._prevMatchLength = matchLength;
+        if (!this._wordSeparators || isValidMatch(this._wordSeparators, text, textLength, matchStartIndex, matchLength)) {
+          return m;
+        }
+      } while (m);
+      return null;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/wordHelper.js
+  var USUAL_WORD_SEPARATORS = "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?";
+  function createWordRegExp(allowInWords = "") {
+    let source = "(-?\\d*\\.\\d\\w*)|([^";
+    for (const sep2 of USUAL_WORD_SEPARATORS) {
+      if (allowInWords.indexOf(sep2) >= 0) {
+        continue;
+      }
+      source += "\\" + sep2;
+    }
+    source += "\\s]+)";
+    return new RegExp(source, "g");
+  }
+  var DEFAULT_WORD_REGEXP = createWordRegExp();
+  function ensureValidWordDefinition(wordDefinition) {
+    let result = DEFAULT_WORD_REGEXP;
+    if (wordDefinition && wordDefinition instanceof RegExp) {
+      if (!wordDefinition.global) {
+        let flags = "g";
+        if (wordDefinition.ignoreCase) {
+          flags += "i";
+        }
+        if (wordDefinition.multiline) {
+          flags += "m";
+        }
+        if (wordDefinition.unicode) {
+          flags += "u";
+        }
+        result = new RegExp(wordDefinition.source, flags);
+      } else {
+        result = wordDefinition;
+      }
+    }
+    result.lastIndex = 0;
+    return result;
+  }
+  var _defaultConfig = new LinkedList();
+  _defaultConfig.unshift({
+    maxLen: 1e3,
+    windowSize: 15,
+    timeBudget: 150
+  });
+  function getWordAtText(column, wordDefinition, text, textOffset, config) {
+    wordDefinition = ensureValidWordDefinition(wordDefinition);
+    if (!config) {
+      config = Iterable.first(_defaultConfig);
+    }
+    if (text.length > config.maxLen) {
+      let start2 = column - config.maxLen / 2;
+      if (start2 < 0) {
+        start2 = 0;
+      } else {
+        textOffset += start2;
+      }
+      text = text.substring(start2, column + config.maxLen / 2);
+      return getWordAtText(column, wordDefinition, text, textOffset, config);
+    }
+    const t1 = Date.now();
+    const pos = column - 1 - textOffset;
+    let prevRegexIndex = -1;
+    let match = null;
+    for (let i = 1; ; i++) {
+      if (Date.now() - t1 >= config.timeBudget) {
+        break;
+      }
+      const regexIndex = pos - config.windowSize * i;
+      wordDefinition.lastIndex = Math.max(0, regexIndex);
+      const thisMatch = _findRegexMatchEnclosingPosition(wordDefinition, text, pos, prevRegexIndex);
+      if (!thisMatch && match) {
+        break;
+      }
+      match = thisMatch;
+      if (regexIndex <= 0) {
+        break;
+      }
+      prevRegexIndex = regexIndex;
+    }
+    if (match) {
+      const result = {
+        word: match[0],
+        startColumn: textOffset + 1 + match.index,
+        endColumn: textOffset + 1 + match.index + match[0].length
+      };
+      wordDefinition.lastIndex = 0;
+      return result;
+    }
+    return null;
+  }
+  function _findRegexMatchEnclosingPosition(wordDefinition, text, pos, stopPos) {
+    let match;
+    while (match = wordDefinition.exec(text)) {
+      const matchIndex = match.index || 0;
+      if (matchIndex <= pos && wordDefinition.lastIndex >= pos) {
+        return match;
+      } else if (stopPos > 0 && matchIndex > stopPos) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/services/unicodeTextModelHighlighter.js
+  var UnicodeTextModelHighlighter = class {
+    static computeUnicodeHighlights(model, options, range) {
+      const startLine = range ? range.startLineNumber : 1;
+      const endLine = range ? range.endLineNumber : model.getLineCount();
+      const codePointHighlighter = new CodePointHighlighter(options);
+      const candidates = codePointHighlighter.getCandidateCodePoints();
+      let regex;
+      if (candidates === "allNonBasicAscii") {
+        regex = new RegExp("[^\\t\\n\\r\\x20-\\x7E]", "g");
+      } else {
+        regex = new RegExp(`${buildRegExpCharClassExpr(Array.from(candidates))}`, "g");
+      }
+      const searcher = new Searcher(null, regex);
+      const ranges = [];
+      let hasMore = false;
+      let m;
+      let ambiguousCharacterCount = 0;
+      let invisibleCharacterCount = 0;
+      let nonBasicAsciiCharacterCount = 0;
+      forLoop: for (let lineNumber = startLine, lineCount = endLine; lineNumber <= lineCount; lineNumber++) {
+        const lineContent = model.getLineContent(lineNumber);
+        const lineLength = lineContent.length;
+        searcher.reset(0);
+        do {
+          m = searcher.next(lineContent);
+          if (m) {
+            let startIndex = m.index;
+            let endIndex = m.index + m[0].length;
+            if (startIndex > 0) {
+              const charCodeBefore = lineContent.charCodeAt(startIndex - 1);
+              if (isHighSurrogate(charCodeBefore)) {
+                startIndex--;
+              }
+            }
+            if (endIndex + 1 < lineLength) {
+              const charCodeBefore = lineContent.charCodeAt(endIndex - 1);
+              if (isHighSurrogate(charCodeBefore)) {
+                endIndex++;
+              }
+            }
+            const str = lineContent.substring(startIndex, endIndex);
+            let word = getWordAtText(startIndex + 1, DEFAULT_WORD_REGEXP, lineContent, 0);
+            if (word && word.endColumn <= startIndex + 1) {
+              word = null;
+            }
+            const highlightReason = codePointHighlighter.shouldHighlightNonBasicASCII(str, word ? word.word : null);
+            if (highlightReason !== 0) {
+              if (highlightReason === 3) {
+                ambiguousCharacterCount++;
+              } else if (highlightReason === 2) {
+                invisibleCharacterCount++;
+              } else if (highlightReason === 1) {
+                nonBasicAsciiCharacterCount++;
+              } else {
+                assertNever();
+              }
+              const MAX_RESULT_LENGTH = 1e3;
+              if (ranges.length >= MAX_RESULT_LENGTH) {
+                hasMore = true;
+                break forLoop;
+              }
+              ranges.push(new Range(lineNumber, startIndex + 1, lineNumber, endIndex + 1));
+            }
+          }
+        } while (m);
+      }
+      return {
+        ranges,
+        hasMore,
+        ambiguousCharacterCount,
+        invisibleCharacterCount,
+        nonBasicAsciiCharacterCount
+      };
+    }
+    static computeUnicodeHighlightReason(char, options) {
+      const codePointHighlighter = new CodePointHighlighter(options);
+      const reason = codePointHighlighter.shouldHighlightNonBasicASCII(char, null);
+      switch (reason) {
+        case 0:
+          return null;
+        case 2:
+          return {
+            kind: 1
+            /* UnicodeHighlighterReasonKind.Invisible */
+          };
+        case 3: {
+          const codePoint = char.codePointAt(0);
+          const primaryConfusable = codePointHighlighter.ambiguousCharacters.getPrimaryConfusable(codePoint);
+          const notAmbiguousInLocales = AmbiguousCharacters.getLocales().filter((l) => !AmbiguousCharacters.getInstance(/* @__PURE__ */ new Set([...options.allowedLocales, l])).isAmbiguous(codePoint));
+          return { kind: 0, confusableWith: String.fromCodePoint(primaryConfusable), notAmbiguousInLocales };
+        }
+        case 1:
+          return {
+            kind: 2
+            /* UnicodeHighlighterReasonKind.NonBasicAscii */
+          };
+      }
+    }
+  };
+  function buildRegExpCharClassExpr(codePoints, flags) {
+    const src = `[${escapeRegExpCharacters(codePoints.map((i) => String.fromCodePoint(i)).join(""))}]`;
+    return src;
+  }
+  var CodePointHighlighter = class {
+    constructor(options) {
+      this.options = options;
+      this.allowedCodePoints = new Set(options.allowedCodePoints);
+      this.ambiguousCharacters = AmbiguousCharacters.getInstance(new Set(options.allowedLocales));
+    }
+    getCandidateCodePoints() {
+      if (this.options.nonBasicASCII) {
+        return "allNonBasicAscii";
+      }
+      const set = /* @__PURE__ */ new Set();
+      if (this.options.invisibleCharacters) {
+        for (const cp of InvisibleCharacters.codePoints) {
+          if (!isAllowedInvisibleCharacter(String.fromCodePoint(cp))) {
+            set.add(cp);
+          }
+        }
+      }
+      if (this.options.ambiguousCharacters) {
+        for (const cp of this.ambiguousCharacters.getConfusableCodePoints()) {
+          set.add(cp);
+        }
+      }
+      for (const cp of this.allowedCodePoints) {
+        set.delete(cp);
+      }
+      return set;
+    }
+    shouldHighlightNonBasicASCII(character, wordContext) {
+      const codePoint = character.codePointAt(0);
+      if (this.allowedCodePoints.has(codePoint)) {
+        return 0;
+      }
+      if (this.options.nonBasicASCII) {
+        return 1;
+      }
+      let hasBasicASCIICharacters = false;
+      let hasNonConfusableNonBasicAsciiCharacter = false;
+      if (wordContext) {
+        for (const char of wordContext) {
+          const codePoint2 = char.codePointAt(0);
+          const isBasicASCII$1 = isBasicASCII(char);
+          hasBasicASCIICharacters = hasBasicASCIICharacters || isBasicASCII$1;
+          if (!isBasicASCII$1 && !this.ambiguousCharacters.isAmbiguous(codePoint2) && !InvisibleCharacters.isInvisibleCharacter(codePoint2)) {
+            hasNonConfusableNonBasicAsciiCharacter = true;
+          }
+        }
+      }
+      if (
+        /* Don't allow mixing weird looking characters with ASCII */
+        !hasBasicASCIICharacters && /* Is there an obviously weird looking character? */
+        hasNonConfusableNonBasicAsciiCharacter
+      ) {
+        return 0;
+      }
+      if (this.options.invisibleCharacters) {
+        if (!isAllowedInvisibleCharacter(character) && InvisibleCharacters.isInvisibleCharacter(codePoint)) {
+          return 2;
+        }
+      }
+      if (this.options.ambiguousCharacters) {
+        if (this.ambiguousCharacters.isAmbiguous(codePoint)) {
+          return 3;
+        }
+      }
+      return 0;
+    }
+  };
+  function isAllowedInvisibleCharacter(character) {
+    return character === " " || character === "\n" || character === "	";
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/linesDiffComputer.js
+  var LinesDiff = class {
+    constructor(changes, moves, hitTimeout) {
+      this.changes = changes;
+      this.moves = moves;
+      this.hitTimeout = hitTimeout;
+    }
+  };
+  var MovedText = class {
+    constructor(lineRangeMapping, changes) {
+      this.lineRangeMapping = lineRangeMapping;
+      this.changes = changes;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/arrays.js
+  function equals2(one, other, itemEquals = (a, b) => a === b) {
+    if (one === other) {
+      return true;
+    }
+    if (!one || !other) {
+      return false;
+    }
+    if (one.length !== other.length) {
+      return false;
+    }
+    for (let i = 0, len = one.length; i < len; i++) {
+      if (!itemEquals(one[i], other[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  function* groupAdjacentBy(items, shouldBeGrouped) {
+    let currentGroup;
+    let last;
+    for (const item of items) {
+      if (last !== void 0 && shouldBeGrouped(last, item)) {
+        currentGroup.push(item);
+      } else {
+        if (currentGroup) {
+          yield currentGroup;
+        }
+        currentGroup = [item];
+      }
+      last = item;
+    }
+    if (currentGroup) {
+      yield currentGroup;
+    }
+  }
+  function forEachAdjacent(arr, f) {
+    for (let i = 0; i <= arr.length; i++) {
+      f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
+    }
+  }
+  function forEachWithNeighbors(arr, f) {
+    for (let i = 0; i < arr.length; i++) {
+      f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
+    }
+  }
+  function pushMany(arr, items) {
+    for (const item of items) {
+      arr.push(item);
+    }
+  }
+  var CompareResult;
+  (function(CompareResult2) {
+    function isLessThan(result) {
+      return result < 0;
+    }
+    CompareResult2.isLessThan = isLessThan;
+    function isLessThanOrEqual(result) {
+      return result <= 0;
+    }
+    CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
+    function isGreaterThan(result) {
+      return result > 0;
+    }
+    CompareResult2.isGreaterThan = isGreaterThan;
+    function isNeitherLessOrGreaterThan(result) {
+      return result === 0;
+    }
+    CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
+    CompareResult2.greaterThan = 1;
+    CompareResult2.lessThan = -1;
+    CompareResult2.neitherLessOrGreaterThan = 0;
+  })(CompareResult || (CompareResult = {}));
+  function compareBy(selector, comparator) {
+    return (a, b) => comparator(selector(a), selector(b));
+  }
+  var numberComparator = (a, b) => a - b;
+  function reverseOrder(comparator) {
+    return (a, b) => -comparator(a, b);
+  }
+  var CallbackIterable = class _CallbackIterable {
+    static {
+      this.empty = new _CallbackIterable((_callback) => {
+      });
+    }
+    constructor(iterate) {
+      this.iterate = iterate;
+    }
+    toArray() {
+      const result = [];
+      this.iterate((item) => {
+        result.push(item);
+        return true;
+      });
+      return result;
+    }
+    filter(predicate) {
+      return new _CallbackIterable((cb) => this.iterate((item) => predicate(item) ? cb(item) : true));
+    }
+    map(mapFn) {
+      return new _CallbackIterable((cb) => this.iterate((item) => cb(mapFn(item))));
+    }
+    findLast(predicate) {
+      let result;
+      this.iterate((item) => {
+        if (predicate(item)) {
+          result = item;
+        }
+        return true;
+      });
+      return result;
+    }
+    findLastMaxBy(comparator) {
+      let result;
+      let first = true;
+      this.iterate((item) => {
+        if (first || CompareResult.isGreaterThan(comparator(item, result))) {
+          first = false;
+          result = item;
+        }
+        return true;
+      });
+      return result;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/ranges/offsetRange.js
+  var OffsetRange = class _OffsetRange {
+    static fromTo(start2, endExclusive) {
+      return new _OffsetRange(start2, endExclusive);
+    }
+    static addRange(range, sortedRanges) {
+      let i = 0;
+      while (i < sortedRanges.length && sortedRanges[i].endExclusive < range.start) {
+        i++;
+      }
+      let j = i;
+      while (j < sortedRanges.length && sortedRanges[j].start <= range.endExclusive) {
+        j++;
+      }
+      if (i === j) {
+        sortedRanges.splice(i, 0, range);
+      } else {
+        const start2 = Math.min(range.start, sortedRanges[i].start);
+        const end = Math.max(range.endExclusive, sortedRanges[j - 1].endExclusive);
+        sortedRanges.splice(i, j - i, new _OffsetRange(start2, end));
+      }
+    }
+    static tryCreate(start2, endExclusive) {
+      if (start2 > endExclusive) {
+        return void 0;
+      }
+      return new _OffsetRange(start2, endExclusive);
+    }
+    static ofLength(length) {
+      return new _OffsetRange(0, length);
+    }
+    static ofStartAndLength(start2, length) {
+      return new _OffsetRange(start2, start2 + length);
+    }
+    static emptyAt(offset) {
+      return new _OffsetRange(offset, offset);
+    }
+    constructor(start2, endExclusive) {
+      this.start = start2;
+      this.endExclusive = endExclusive;
+      if (start2 > endExclusive) {
+        throw new BugIndicatingError(`Invalid range: ${this.toString()}`);
+      }
+    }
+    get isEmpty() {
+      return this.start === this.endExclusive;
+    }
+    delta(offset) {
+      return new _OffsetRange(this.start + offset, this.endExclusive + offset);
+    }
+    deltaStart(offset) {
+      return new _OffsetRange(this.start + offset, this.endExclusive);
+    }
+    deltaEnd(offset) {
+      return new _OffsetRange(this.start, this.endExclusive + offset);
+    }
+    get length() {
+      return this.endExclusive - this.start;
+    }
+    toString() {
+      return `[${this.start}, ${this.endExclusive})`;
+    }
+    equals(other) {
+      return this.start === other.start && this.endExclusive === other.endExclusive;
+    }
+    contains(offset) {
+      return this.start <= offset && offset < this.endExclusive;
+    }
+    /**
+     * for all numbers n: range1.contains(n) or range2.contains(n) => range1.join(range2).contains(n)
+     * The joined range is the smallest range that contains both ranges.
+     */
+    join(other) {
+      return new _OffsetRange(Math.min(this.start, other.start), Math.max(this.endExclusive, other.endExclusive));
+    }
+    /**
+     * for all numbers n: range1.contains(n) and range2.contains(n) <=> range1.intersect(range2).contains(n)
+     *
+     * The resulting range is empty if the ranges do not intersect, but touch.
+     * If the ranges don't even touch, the result is undefined.
+     */
+    intersect(other) {
+      const start2 = Math.max(this.start, other.start);
+      const end = Math.min(this.endExclusive, other.endExclusive);
+      if (start2 <= end) {
+        return new _OffsetRange(start2, end);
+      }
+      return void 0;
+    }
+    intersectionLength(range) {
+      const start2 = Math.max(this.start, range.start);
+      const end = Math.min(this.endExclusive, range.endExclusive);
+      return Math.max(0, end - start2);
+    }
+    intersects(other) {
+      const start2 = Math.max(this.start, other.start);
+      const end = Math.min(this.endExclusive, other.endExclusive);
+      return start2 < end;
+    }
+    intersectsOrTouches(other) {
+      const start2 = Math.max(this.start, other.start);
+      const end = Math.min(this.endExclusive, other.endExclusive);
+      return start2 <= end;
+    }
+    isBefore(other) {
+      return this.endExclusive <= other.start;
+    }
+    isAfter(other) {
+      return this.start >= other.endExclusive;
+    }
+    slice(arr) {
+      return arr.slice(this.start, this.endExclusive);
+    }
+    substring(str) {
+      return str.substring(this.start, this.endExclusive);
+    }
+    /**
+     * Returns the given value if it is contained in this instance, otherwise the closest value that is contained.
+     * The range must not be empty.
+     */
+    clip(value) {
+      if (this.isEmpty) {
+        throw new BugIndicatingError(`Invalid clipping range: ${this.toString()}`);
+      }
+      return Math.max(this.start, Math.min(this.endExclusive - 1, value));
+    }
+    /**
+     * Returns `r := value + k * length` such that `r` is contained in this range.
+     * The range must not be empty.
+     *
+     * E.g. `[5, 10).clipCyclic(10) === 5`, `[5, 10).clipCyclic(11) === 6` and `[5, 10).clipCyclic(4) === 9`.
+     */
+    clipCyclic(value) {
+      if (this.isEmpty) {
+        throw new BugIndicatingError(`Invalid clipping range: ${this.toString()}`);
+      }
+      if (value < this.start) {
+        return this.endExclusive - (this.start - value) % this.length;
+      }
+      if (value >= this.endExclusive) {
+        return this.start + (value - this.start) % this.length;
+      }
+      return value;
+    }
+    forEach(f) {
+      for (let i = this.start; i < this.endExclusive; i++) {
+        f(i);
+      }
+    }
+    /**
+     * this: [ 5, 10), range: [10, 15) => [5, 15)]
+     * Throws if the ranges are not touching.
+    */
+    joinRightTouching(range) {
+      if (this.endExclusive !== range.start) {
+        throw new BugIndicatingError(`Invalid join: ${this.toString()} and ${range.toString()}`);
+      }
+      return new _OffsetRange(this.start, range.endExclusive);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/arraysFind.js
+  function findLastMonotonous(array, predicate) {
+    const idx = findLastIdxMonotonous(array, predicate);
+    return idx === -1 ? void 0 : array[idx];
+  }
+  function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
+    let i = startIdx;
+    let j = endIdxEx;
+    while (i < j) {
+      const k = Math.floor((i + j) / 2);
+      if (predicate(array[k])) {
+        i = k + 1;
+      } else {
+        j = k;
+      }
+    }
+    return i - 1;
+  }
+  function findFirstMonotonous(array, predicate) {
+    const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
+    return idx === array.length ? void 0 : array[idx];
+  }
+  function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
+    let i = startIdx;
+    let j = endIdxEx;
+    while (i < j) {
+      const k = Math.floor((i + j) / 2);
+      if (predicate(array[k])) {
+        j = k;
+      } else {
+        i = k + 1;
+      }
+    }
+    return i;
+  }
+  var MonotonousArray = class _MonotonousArray {
+    static {
+      this.assertInvariants = false;
+    }
+    constructor(_array) {
+      this._array = _array;
+      this._findLastMonotonousLastIdx = 0;
+    }
+    /**
+     * The predicate must be monotonous, i.e. `arr.map(predicate)` must be like `[true, ..., true, false, ..., false]`!
+     * For subsequent calls, current predicate must be weaker than (or equal to) the previous predicate, i.e. more entries must be `true`.
+     */
+    findLastMonotonous(predicate) {
+      if (_MonotonousArray.assertInvariants) {
+        if (this._prevFindLastPredicate) {
+          for (const item of this._array) {
+            if (this._prevFindLastPredicate(item) && !predicate(item)) {
+              throw new Error("MonotonousArray: current predicate must be weaker than (or equal to) the previous predicate.");
+            }
+          }
+        }
+        this._prevFindLastPredicate = predicate;
+      }
+      const idx = findLastIdxMonotonous(this._array, predicate, this._findLastMonotonousLastIdx);
+      this._findLastMonotonousLastIdx = idx + 1;
+      return idx === -1 ? void 0 : this._array[idx];
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/ranges/lineRange.js
+  var LineRange = class _LineRange {
+    static ofLength(startLineNumber, length) {
+      return new _LineRange(startLineNumber, startLineNumber + length);
+    }
+    static fromRange(range) {
+      return new _LineRange(range.startLineNumber, range.endLineNumber);
+    }
+    static fromRangeInclusive(range) {
+      return new _LineRange(range.startLineNumber, range.endLineNumber + 1);
+    }
+    static {
+      this.compareByStart = compareBy((l) => l.startLineNumber, numberComparator);
+    }
+    /**
+     * @param lineRanges An array of arrays of of sorted line ranges.
+     */
+    static joinMany(lineRanges) {
+      if (lineRanges.length === 0) {
+        return [];
+      }
+      let result = new LineRangeSet(lineRanges[0].slice());
+      for (let i = 1; i < lineRanges.length; i++) {
+        result = result.getUnion(new LineRangeSet(lineRanges[i].slice()));
+      }
+      return result.ranges;
+    }
+    static join(lineRanges) {
+      if (lineRanges.length === 0) {
+        throw new BugIndicatingError("lineRanges cannot be empty");
+      }
+      let startLineNumber = lineRanges[0].startLineNumber;
+      let endLineNumberExclusive = lineRanges[0].endLineNumberExclusive;
+      for (let i = 1; i < lineRanges.length; i++) {
+        startLineNumber = Math.min(startLineNumber, lineRanges[i].startLineNumber);
+        endLineNumberExclusive = Math.max(endLineNumberExclusive, lineRanges[i].endLineNumberExclusive);
+      }
+      return new _LineRange(startLineNumber, endLineNumberExclusive);
+    }
+    /**
+     * @internal
+     */
+    static deserialize(lineRange) {
+      return new _LineRange(lineRange[0], lineRange[1]);
+    }
+    constructor(startLineNumber, endLineNumberExclusive) {
+      if (startLineNumber > endLineNumberExclusive) {
+        throw new BugIndicatingError(`startLineNumber ${startLineNumber} cannot be after endLineNumberExclusive ${endLineNumberExclusive}`);
+      }
+      this.startLineNumber = startLineNumber;
+      this.endLineNumberExclusive = endLineNumberExclusive;
+    }
+    /**
+     * Indicates if this line range contains the given line number.
+     */
+    contains(lineNumber) {
+      return this.startLineNumber <= lineNumber && lineNumber < this.endLineNumberExclusive;
+    }
+    /**
+     * Indicates if this line range is empty.
+     */
+    get isEmpty() {
+      return this.startLineNumber === this.endLineNumberExclusive;
+    }
+    /**
+     * Moves this line range by the given offset of line numbers.
+     */
+    delta(offset) {
+      return new _LineRange(this.startLineNumber + offset, this.endLineNumberExclusive + offset);
+    }
+    deltaLength(offset) {
+      return new _LineRange(this.startLineNumber, this.endLineNumberExclusive + offset);
+    }
+    /**
+     * The number of lines this line range spans.
+     */
+    get length() {
+      return this.endLineNumberExclusive - this.startLineNumber;
+    }
+    /**
+     * Creates a line range that combines this and the given line range.
+     */
+    join(other) {
+      return new _LineRange(Math.min(this.startLineNumber, other.startLineNumber), Math.max(this.endLineNumberExclusive, other.endLineNumberExclusive));
+    }
+    toString() {
+      return `[${this.startLineNumber},${this.endLineNumberExclusive})`;
+    }
+    /**
+     * The resulting range is empty if the ranges do not intersect, but touch.
+     * If the ranges don't even touch, the result is undefined.
+     */
+    intersect(other) {
+      const startLineNumber = Math.max(this.startLineNumber, other.startLineNumber);
+      const endLineNumberExclusive = Math.min(this.endLineNumberExclusive, other.endLineNumberExclusive);
+      if (startLineNumber <= endLineNumberExclusive) {
+        return new _LineRange(startLineNumber, endLineNumberExclusive);
+      }
+      return void 0;
+    }
+    intersectsStrict(other) {
+      return this.startLineNumber < other.endLineNumberExclusive && other.startLineNumber < this.endLineNumberExclusive;
+    }
+    intersectsOrTouches(other) {
+      return this.startLineNumber <= other.endLineNumberExclusive && other.startLineNumber <= this.endLineNumberExclusive;
+    }
+    equals(b) {
+      return this.startLineNumber === b.startLineNumber && this.endLineNumberExclusive === b.endLineNumberExclusive;
+    }
+    toInclusiveRange() {
+      if (this.isEmpty) {
+        return null;
+      }
+      return new Range(this.startLineNumber, 1, this.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER);
+    }
+    /**
+     * @deprecated Using this function is discouraged because it might lead to bugs: The end position is not guaranteed to be a valid position!
+    */
+    toExclusiveRange() {
+      return new Range(this.startLineNumber, 1, this.endLineNumberExclusive, 1);
+    }
+    mapToLineArray(f) {
+      const result = [];
+      for (let lineNumber = this.startLineNumber; lineNumber < this.endLineNumberExclusive; lineNumber++) {
+        result.push(f(lineNumber));
+      }
+      return result;
+    }
+    forEach(f) {
+      for (let lineNumber = this.startLineNumber; lineNumber < this.endLineNumberExclusive; lineNumber++) {
+        f(lineNumber);
+      }
+    }
+    /**
+     * @internal
+     */
+    serialize() {
+      return [this.startLineNumber, this.endLineNumberExclusive];
+    }
+    /**
+     * Converts this 1-based line range to a 0-based offset range (subtracts 1!).
+     * @internal
+     */
+    toOffsetRange() {
+      return new OffsetRange(this.startLineNumber - 1, this.endLineNumberExclusive - 1);
+    }
+    addMargin(marginTop, marginBottom) {
+      return new _LineRange(this.startLineNumber - marginTop, this.endLineNumberExclusive + marginBottom);
+    }
+  };
+  var LineRangeSet = class _LineRangeSet {
+    constructor(_normalizedRanges = []) {
+      this._normalizedRanges = _normalizedRanges;
+    }
+    get ranges() {
+      return this._normalizedRanges;
+    }
+    addRange(range) {
+      if (range.length === 0) {
+        return;
+      }
+      const joinRangeStartIdx = findFirstIdxMonotonousOrArrLen(this._normalizedRanges, (r) => r.endLineNumberExclusive >= range.startLineNumber);
+      const joinRangeEndIdxExclusive = findLastIdxMonotonous(this._normalizedRanges, (r) => r.startLineNumber <= range.endLineNumberExclusive) + 1;
+      if (joinRangeStartIdx === joinRangeEndIdxExclusive) {
+        this._normalizedRanges.splice(joinRangeStartIdx, 0, range);
+      } else if (joinRangeStartIdx === joinRangeEndIdxExclusive - 1) {
+        const joinRange = this._normalizedRanges[joinRangeStartIdx];
+        this._normalizedRanges[joinRangeStartIdx] = joinRange.join(range);
+      } else {
+        const joinRange = this._normalizedRanges[joinRangeStartIdx].join(this._normalizedRanges[joinRangeEndIdxExclusive - 1]).join(range);
+        this._normalizedRanges.splice(joinRangeStartIdx, joinRangeEndIdxExclusive - joinRangeStartIdx, joinRange);
+      }
+    }
+    contains(lineNumber) {
+      const rangeThatStartsBeforeEnd = findLastMonotonous(this._normalizedRanges, (r) => r.startLineNumber <= lineNumber);
+      return !!rangeThatStartsBeforeEnd && rangeThatStartsBeforeEnd.endLineNumberExclusive > lineNumber;
+    }
+    intersects(range) {
+      const rangeThatStartsBeforeEnd = findLastMonotonous(this._normalizedRanges, (r) => r.startLineNumber < range.endLineNumberExclusive);
+      return !!rangeThatStartsBeforeEnd && rangeThatStartsBeforeEnd.endLineNumberExclusive > range.startLineNumber;
+    }
+    getUnion(other) {
+      if (this._normalizedRanges.length === 0) {
+        return other;
+      }
+      if (other._normalizedRanges.length === 0) {
+        return this;
+      }
+      const result = [];
+      let i1 = 0;
+      let i2 = 0;
+      let current = null;
+      while (i1 < this._normalizedRanges.length || i2 < other._normalizedRanges.length) {
+        let next = null;
+        if (i1 < this._normalizedRanges.length && i2 < other._normalizedRanges.length) {
+          const lineRange1 = this._normalizedRanges[i1];
+          const lineRange2 = other._normalizedRanges[i2];
+          if (lineRange1.startLineNumber < lineRange2.startLineNumber) {
+            next = lineRange1;
+            i1++;
+          } else {
+            next = lineRange2;
+            i2++;
+          }
+        } else if (i1 < this._normalizedRanges.length) {
+          next = this._normalizedRanges[i1];
+          i1++;
+        } else {
+          next = other._normalizedRanges[i2];
+          i2++;
+        }
+        if (current === null) {
+          current = next;
+        } else {
+          if (current.endLineNumberExclusive >= next.startLineNumber) {
+            current = new LineRange(current.startLineNumber, Math.max(current.endLineNumberExclusive, next.endLineNumberExclusive));
+          } else {
+            result.push(current);
+            current = next;
+          }
+        }
+      }
+      if (current !== null) {
+        result.push(current);
+      }
+      return new _LineRangeSet(result);
+    }
+    /**
+     * Subtracts all ranges in this set from `range` and returns the result.
+     */
+    subtractFrom(range) {
+      const joinRangeStartIdx = findFirstIdxMonotonousOrArrLen(this._normalizedRanges, (r) => r.endLineNumberExclusive >= range.startLineNumber);
+      const joinRangeEndIdxExclusive = findLastIdxMonotonous(this._normalizedRanges, (r) => r.startLineNumber <= range.endLineNumberExclusive) + 1;
+      if (joinRangeStartIdx === joinRangeEndIdxExclusive) {
+        return new _LineRangeSet([range]);
+      }
+      const result = [];
+      let startLineNumber = range.startLineNumber;
+      for (let i = joinRangeStartIdx; i < joinRangeEndIdxExclusive; i++) {
+        const r = this._normalizedRanges[i];
+        if (r.startLineNumber > startLineNumber) {
+          result.push(new LineRange(startLineNumber, r.startLineNumber));
+        }
+        startLineNumber = r.endLineNumberExclusive;
+      }
+      if (startLineNumber < range.endLineNumberExclusive) {
+        result.push(new LineRange(startLineNumber, range.endLineNumberExclusive));
+      }
+      return new _LineRangeSet(result);
+    }
+    toString() {
+      return this._normalizedRanges.map((r) => r.toString()).join(", ");
+    }
+    getIntersection(other) {
+      const result = [];
+      let i1 = 0;
+      let i2 = 0;
+      while (i1 < this._normalizedRanges.length && i2 < other._normalizedRanges.length) {
+        const r1 = this._normalizedRanges[i1];
+        const r2 = other._normalizedRanges[i2];
+        const i = r1.intersect(r2);
+        if (i && !i.isEmpty) {
+          result.push(i);
+        }
+        if (r1.endLineNumberExclusive < r2.endLineNumberExclusive) {
+          i1++;
+        } else {
+          i2++;
+        }
+      }
+      return new _LineRangeSet(result);
+    }
+    getWithDelta(value) {
+      return new _LineRangeSet(this._normalizedRanges.map((r) => r.delta(value)));
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/text/textLength.js
+  var TextLength = class _TextLength {
+    static {
+      this.zero = new _TextLength(0, 0);
+    }
+    static betweenPositions(position1, position2) {
+      if (position1.lineNumber === position2.lineNumber) {
+        return new _TextLength(0, position2.column - position1.column);
+      } else {
+        return new _TextLength(position2.lineNumber - position1.lineNumber, position2.column - 1);
+      }
+    }
+    static fromPosition(pos) {
+      return new _TextLength(pos.lineNumber - 1, pos.column - 1);
+    }
+    static ofRange(range) {
+      return _TextLength.betweenPositions(range.getStartPosition(), range.getEndPosition());
+    }
+    static ofText(text) {
+      let line = 0;
+      let column = 0;
+      for (const c of text) {
+        if (c === "\n") {
+          line++;
+          column = 0;
+        } else {
+          column++;
+        }
+      }
+      return new _TextLength(line, column);
+    }
+    constructor(lineCount, columnCount) {
+      this.lineCount = lineCount;
+      this.columnCount = columnCount;
+    }
+    isGreaterThanOrEqualTo(other) {
+      if (this.lineCount !== other.lineCount) {
+        return this.lineCount > other.lineCount;
+      }
+      return this.columnCount >= other.columnCount;
+    }
+    add(other) {
+      if (other.lineCount === 0) {
+        return new _TextLength(this.lineCount, this.columnCount + other.columnCount);
+      } else {
+        return new _TextLength(this.lineCount + other.lineCount, other.columnCount);
+      }
+    }
+    createRange(startPosition) {
+      if (this.lineCount === 0) {
+        return new Range(startPosition.lineNumber, startPosition.column, startPosition.lineNumber, startPosition.column + this.columnCount);
+      } else {
+        return new Range(startPosition.lineNumber, startPosition.column, startPosition.lineNumber + this.lineCount, this.columnCount + 1);
+      }
+    }
+    toRange() {
+      return new Range(1, 1, this.lineCount + 1, this.columnCount + 1);
+    }
+    toLineRange() {
+      return LineRange.ofLength(1, this.lineCount + 1);
+    }
+    addToPosition(position) {
+      if (this.lineCount === 0) {
+        return new Position(position.lineNumber, position.column + this.columnCount);
+      } else {
+        return new Position(position.lineNumber + this.lineCount, this.columnCount + 1);
+      }
+    }
+    toString() {
+      return `${this.lineCount},${this.columnCount}`;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/text/positionToOffsetImpl.js
+  var PositionOffsetTransformerBase = class {
+    getOffsetRange(range) {
+      return new OffsetRange(this.getOffset(range.getStartPosition()), this.getOffset(range.getEndPosition()));
+    }
+    getRange(offsetRange) {
+      return Range.fromPositions(this.getPosition(offsetRange.start), this.getPosition(offsetRange.endExclusive));
+    }
+    getStringReplacement(edit) {
+      return new Deps.deps.StringReplacement(this.getOffsetRange(edit.range), edit.text);
+    }
+    getTextReplacement(edit) {
+      return new Deps.deps.TextReplacement(this.getRange(edit.replaceRange), edit.newText);
+    }
+    getTextEdit(edit) {
+      const edits = edit.replacements.map((e) => this.getTextReplacement(e));
+      return new Deps.deps.TextEdit(edits);
+    }
+  };
+  var Deps = class {
+    static {
+      this._deps = void 0;
+    }
+    static get deps() {
+      if (!this._deps) {
+        throw new Error("Dependencies not set. Call _setDependencies first.");
+      }
+      return this._deps;
+    }
+  };
+  var PositionOffsetTransformer = class extends PositionOffsetTransformerBase {
+    constructor(text) {
+      super();
+      this.text = text;
+      this.lineStartOffsetByLineIdx = [];
+      this.lineEndOffsetByLineIdx = [];
+      this.lineStartOffsetByLineIdx.push(0);
+      for (let i = 0; i < text.length; i++) {
+        if (text.charAt(i) === "\n") {
+          this.lineStartOffsetByLineIdx.push(i + 1);
+          if (i > 0 && text.charAt(i - 1) === "\r") {
+            this.lineEndOffsetByLineIdx.push(i - 1);
+          } else {
+            this.lineEndOffsetByLineIdx.push(i);
+          }
+        }
+      }
+      this.lineEndOffsetByLineIdx.push(text.length);
+    }
+    getOffset(position) {
+      const valPos = this._validatePosition(position);
+      return this.lineStartOffsetByLineIdx[valPos.lineNumber - 1] + valPos.column - 1;
+    }
+    _validatePosition(position) {
+      if (position.lineNumber < 1) {
+        return new Position(1, 1);
+      }
+      const lineCount = this.textLength.lineCount + 1;
+      if (position.lineNumber > lineCount) {
+        const lineLength2 = this.getLineLength(lineCount);
+        return new Position(lineCount, lineLength2 + 1);
+      }
+      if (position.column < 1) {
+        return new Position(position.lineNumber, 1);
+      }
+      const lineLength = this.getLineLength(position.lineNumber);
+      if (position.column - 1 > lineLength) {
+        return new Position(position.lineNumber, lineLength + 1);
+      }
+      return position;
+    }
+    getPosition(offset) {
+      const idx = findLastIdxMonotonous(this.lineStartOffsetByLineIdx, (i) => i <= offset);
+      const lineNumber = idx + 1;
+      const column = offset - this.lineStartOffsetByLineIdx[idx] + 1;
+      return new Position(lineNumber, column);
+    }
+    get textLength() {
+      const lineIdx = this.lineStartOffsetByLineIdx.length - 1;
+      return new Deps.deps.TextLength(lineIdx, this.text.length - this.lineStartOffsetByLineIdx[lineIdx]);
+    }
+    getLineLength(lineNumber) {
+      return this.lineEndOffsetByLineIdx[lineNumber - 1] - this.lineStartOffsetByLineIdx[lineNumber - 1];
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/text/abstractText.js
+  var AbstractText = class {
+    constructor() {
+      this._transformer = void 0;
+    }
+    get endPositionExclusive() {
+      return this.length.addToPosition(new Position(1, 1));
+    }
+    get lineRange() {
+      return this.length.toLineRange();
+    }
+    getValue() {
+      return this.getValueOfRange(this.length.toRange());
+    }
+    getValueOfOffsetRange(range) {
+      return this.getValueOfRange(this.getTransformer().getRange(range));
+    }
+    getLineLength(lineNumber) {
+      return this.getValueOfRange(new Range(lineNumber, 1, lineNumber, Number.MAX_SAFE_INTEGER)).length;
+    }
+    getTransformer() {
+      if (!this._transformer) {
+        this._transformer = new PositionOffsetTransformer(this.getValue());
+      }
+      return this._transformer;
+    }
+    getLineAt(lineNumber) {
+      return this.getValueOfRange(new Range(lineNumber, 1, lineNumber, Number.MAX_SAFE_INTEGER));
+    }
+  };
+  var LineBasedText = class extends AbstractText {
+    constructor(_getLineContent, _lineCount) {
+      assert(_lineCount >= 1);
+      super();
+      this._getLineContent = _getLineContent;
+      this._lineCount = _lineCount;
+    }
+    getValueOfRange(range) {
+      if (range.startLineNumber === range.endLineNumber) {
+        return this._getLineContent(range.startLineNumber).substring(range.startColumn - 1, range.endColumn - 1);
+      }
+      let result = this._getLineContent(range.startLineNumber).substring(range.startColumn - 1);
+      for (let i = range.startLineNumber + 1; i < range.endLineNumber; i++) {
+        result += "\n" + this._getLineContent(i);
+      }
+      result += "\n" + this._getLineContent(range.endLineNumber).substring(0, range.endColumn - 1);
+      return result;
+    }
+    getLineLength(lineNumber) {
+      return this._getLineContent(lineNumber).length;
+    }
+    get length() {
+      const lastLine = this._getLineContent(this._lineCount);
+      return new TextLength(this._lineCount - 1, lastLine.length);
+    }
+  };
+  var ArrayText = class extends LineBasedText {
+    constructor(lines) {
+      super((lineNumber) => lines[lineNumber - 1], lines.length);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/core/edits/textEdit.js
+  var TextReplacement = class _TextReplacement {
+    static joinReplacements(replacements, initialValue) {
+      if (replacements.length === 0) {
+        throw new BugIndicatingError();
+      }
+      if (replacements.length === 1) {
+        return replacements[0];
+      }
+      const startPos = replacements[0].range.getStartPosition();
+      const endPos = replacements[replacements.length - 1].range.getEndPosition();
+      let newText = "";
+      for (let i = 0; i < replacements.length; i++) {
+        const curEdit = replacements[i];
+        newText += curEdit.text;
+        if (i < replacements.length - 1) {
+          const nextEdit = replacements[i + 1];
+          const gapRange = Range.fromPositions(curEdit.range.getEndPosition(), nextEdit.range.getStartPosition());
+          const gapText = initialValue.getValueOfRange(gapRange);
+          newText += gapText;
+        }
+      }
+      return new _TextReplacement(Range.fromPositions(startPos, endPos), newText);
+    }
+    static fromStringReplacement(replacement, initialState) {
+      return new _TextReplacement(initialState.getTransformer().getRange(replacement.replaceRange), replacement.newText);
+    }
+    static delete(range) {
+      return new _TextReplacement(range, "");
+    }
+    constructor(range, text) {
+      this.range = range;
+      this.text = text;
+    }
+    get isEmpty() {
+      return this.range.isEmpty() && this.text.length === 0;
+    }
+    static equals(first, second) {
+      return first.range.equalsRange(second.range) && first.text === second.text;
+    }
+    equals(other) {
+      return _TextReplacement.equals(this, other);
+    }
+    removeCommonPrefixAndSuffix(text) {
+      const prefix = this.removeCommonPrefix(text);
+      const suffix = prefix.removeCommonSuffix(text);
+      return suffix;
+    }
+    removeCommonPrefix(text) {
+      const normalizedOriginalText = text.getValueOfRange(this.range).replaceAll("\r\n", "\n");
+      const normalizedModifiedText = this.text.replaceAll("\r\n", "\n");
+      const commonPrefixLen = commonPrefixLength(normalizedOriginalText, normalizedModifiedText);
+      const start2 = TextLength.ofText(normalizedOriginalText.substring(0, commonPrefixLen)).addToPosition(this.range.getStartPosition());
+      const newText = normalizedModifiedText.substring(commonPrefixLen);
+      const range = Range.fromPositions(start2, this.range.getEndPosition());
+      return new _TextReplacement(range, newText);
+    }
+    removeCommonSuffix(text) {
+      const normalizedOriginalText = text.getValueOfRange(this.range).replaceAll("\r\n", "\n");
+      const normalizedModifiedText = this.text.replaceAll("\r\n", "\n");
+      const commonSuffixLen = commonSuffixLength(normalizedOriginalText, normalizedModifiedText);
+      const end = TextLength.ofText(normalizedOriginalText.substring(0, normalizedOriginalText.length - commonSuffixLen)).addToPosition(this.range.getStartPosition());
+      const newText = normalizedModifiedText.substring(0, normalizedModifiedText.length - commonSuffixLen);
+      const range = Range.fromPositions(this.range.getStartPosition(), end);
+      return new _TextReplacement(range, newText);
+    }
+    toString() {
+      const start2 = this.range.getStartPosition();
+      const end = this.range.getEndPosition();
+      return `(${start2.lineNumber},${start2.column} -> ${end.lineNumber},${end.column}): "${this.text}"`;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/rangeMapping.js
+  var LineRangeMapping = class _LineRangeMapping {
+    static inverse(mapping, originalLineCount, modifiedLineCount) {
+      const result = [];
+      let lastOriginalEndLineNumber = 1;
+      let lastModifiedEndLineNumber = 1;
+      for (const m of mapping) {
+        const r2 = new _LineRangeMapping(new LineRange(lastOriginalEndLineNumber, m.original.startLineNumber), new LineRange(lastModifiedEndLineNumber, m.modified.startLineNumber));
+        if (!r2.modified.isEmpty) {
+          result.push(r2);
+        }
+        lastOriginalEndLineNumber = m.original.endLineNumberExclusive;
+        lastModifiedEndLineNumber = m.modified.endLineNumberExclusive;
+      }
+      const r = new _LineRangeMapping(new LineRange(lastOriginalEndLineNumber, originalLineCount + 1), new LineRange(lastModifiedEndLineNumber, modifiedLineCount + 1));
+      if (!r.modified.isEmpty) {
+        result.push(r);
+      }
+      return result;
+    }
+    static clip(mapping, originalRange, modifiedRange) {
+      const result = [];
+      for (const m of mapping) {
+        const original = m.original.intersect(originalRange);
+        const modified = m.modified.intersect(modifiedRange);
+        if (original && !original.isEmpty && modified && !modified.isEmpty) {
+          result.push(new _LineRangeMapping(original, modified));
+        }
+      }
+      return result;
+    }
+    constructor(originalRange, modifiedRange) {
+      this.original = originalRange;
+      this.modified = modifiedRange;
+    }
+    toString() {
+      return `{${this.original.toString()}->${this.modified.toString()}}`;
+    }
+    flip() {
+      return new _LineRangeMapping(this.modified, this.original);
+    }
+    join(other) {
+      return new _LineRangeMapping(this.original.join(other.original), this.modified.join(other.modified));
+    }
+    /**
+     * This method assumes that the LineRangeMapping describes a valid diff!
+     * I.e. if one range is empty, the other range cannot be the entire document.
+     * It avoids various problems when the line range points to non-existing line-numbers.
+    */
+    toRangeMapping() {
+      const origInclusiveRange = this.original.toInclusiveRange();
+      const modInclusiveRange = this.modified.toInclusiveRange();
+      if (origInclusiveRange && modInclusiveRange) {
+        return new RangeMapping(origInclusiveRange, modInclusiveRange);
+      } else if (this.original.startLineNumber === 1 || this.modified.startLineNumber === 1) {
+        if (!(this.modified.startLineNumber === 1 && this.original.startLineNumber === 1)) {
+          throw new BugIndicatingError("not a valid diff");
+        }
+        return new RangeMapping(new Range(this.original.startLineNumber, 1, this.original.endLineNumberExclusive, 1), new Range(this.modified.startLineNumber, 1, this.modified.endLineNumberExclusive, 1));
+      } else {
+        return new RangeMapping(new Range(this.original.startLineNumber - 1, Number.MAX_SAFE_INTEGER, this.original.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER), new Range(this.modified.startLineNumber - 1, Number.MAX_SAFE_INTEGER, this.modified.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER));
+      }
+    }
+    /**
+     * This method assumes that the LineRangeMapping describes a valid diff!
+     * I.e. if one range is empty, the other range cannot be the entire document.
+     * It avoids various problems when the line range points to non-existing line-numbers.
+    */
+    toRangeMapping2(original, modified) {
+      if (isValidLineNumber(this.original.endLineNumberExclusive, original) && isValidLineNumber(this.modified.endLineNumberExclusive, modified)) {
+        return new RangeMapping(new Range(this.original.startLineNumber, 1, this.original.endLineNumberExclusive, 1), new Range(this.modified.startLineNumber, 1, this.modified.endLineNumberExclusive, 1));
+      }
+      if (!this.original.isEmpty && !this.modified.isEmpty) {
+        return new RangeMapping(Range.fromPositions(new Position(this.original.startLineNumber, 1), normalizePosition(new Position(this.original.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER), original)), Range.fromPositions(new Position(this.modified.startLineNumber, 1), normalizePosition(new Position(this.modified.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER), modified)));
+      }
+      if (this.original.startLineNumber > 1 && this.modified.startLineNumber > 1) {
+        return new RangeMapping(Range.fromPositions(normalizePosition(new Position(this.original.startLineNumber - 1, Number.MAX_SAFE_INTEGER), original), normalizePosition(new Position(this.original.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER), original)), Range.fromPositions(normalizePosition(new Position(this.modified.startLineNumber - 1, Number.MAX_SAFE_INTEGER), modified), normalizePosition(new Position(this.modified.endLineNumberExclusive - 1, Number.MAX_SAFE_INTEGER), modified)));
+      }
+      throw new BugIndicatingError();
+    }
+  };
+  function normalizePosition(position, content) {
+    if (position.lineNumber < 1) {
+      return new Position(1, 1);
+    }
+    if (position.lineNumber > content.length) {
+      return new Position(content.length, content[content.length - 1].length + 1);
+    }
+    const line = content[position.lineNumber - 1];
+    if (position.column > line.length + 1) {
+      return new Position(position.lineNumber, line.length + 1);
+    }
+    return position;
+  }
+  function isValidLineNumber(lineNumber, lines) {
+    return lineNumber >= 1 && lineNumber <= lines.length;
+  }
+  var DetailedLineRangeMapping = class _DetailedLineRangeMapping extends LineRangeMapping {
+    static fromRangeMappings(rangeMappings) {
+      const originalRange = LineRange.join(rangeMappings.map((r) => LineRange.fromRangeInclusive(r.originalRange)));
+      const modifiedRange = LineRange.join(rangeMappings.map((r) => LineRange.fromRangeInclusive(r.modifiedRange)));
+      return new _DetailedLineRangeMapping(originalRange, modifiedRange, rangeMappings);
+    }
+    constructor(originalRange, modifiedRange, innerChanges) {
+      super(originalRange, modifiedRange);
+      this.innerChanges = innerChanges;
+    }
+    flip() {
+      return new _DetailedLineRangeMapping(this.modified, this.original, this.innerChanges?.map((c) => c.flip()));
+    }
+    withInnerChangesFromLineRanges() {
+      return new _DetailedLineRangeMapping(this.original, this.modified, [this.toRangeMapping()]);
+    }
+  };
+  var RangeMapping = class _RangeMapping {
+    static fromEdit(edit) {
+      const newRanges = edit.getNewRanges();
+      const result = edit.replacements.map((e, idx) => new _RangeMapping(e.range, newRanges[idx]));
+      return result;
+    }
+    static assertSorted(rangeMappings) {
+      for (let i = 1; i < rangeMappings.length; i++) {
+        const previous = rangeMappings[i - 1];
+        const current = rangeMappings[i];
+        if (!(previous.originalRange.getEndPosition().isBeforeOrEqual(current.originalRange.getStartPosition()) && previous.modifiedRange.getEndPosition().isBeforeOrEqual(current.modifiedRange.getStartPosition()))) {
+          throw new BugIndicatingError("Range mappings must be sorted");
+        }
+      }
+    }
+    constructor(originalRange, modifiedRange) {
+      this.originalRange = originalRange;
+      this.modifiedRange = modifiedRange;
+    }
+    toString() {
+      return `{${this.originalRange.toString()}->${this.modifiedRange.toString()}}`;
+    }
+    flip() {
+      return new _RangeMapping(this.modifiedRange, this.originalRange);
+    }
+    /**
+     * Creates a single text edit that describes the change from the original to the modified text.
+    */
+    toTextEdit(modified) {
+      const newText = modified.getValueOfRange(this.modifiedRange);
+      return new TextReplacement(this.originalRange, newText);
+    }
+  };
+  function lineRangeMappingFromRangeMappings(alignments, originalLines, modifiedLines, dontAssertStartLine = false) {
+    const changes = [];
+    for (const g of groupAdjacentBy(alignments.map((a) => getLineRangeMapping(a, originalLines, modifiedLines)), (a1, a2) => a1.original.intersectsOrTouches(a2.original) || a1.modified.intersectsOrTouches(a2.modified))) {
+      const first = g[0];
+      const last = g[g.length - 1];
+      changes.push(new DetailedLineRangeMapping(first.original.join(last.original), first.modified.join(last.modified), g.map((a) => a.innerChanges[0])));
+    }
+    assertFn(() => {
+      if (!dontAssertStartLine && changes.length > 0) {
+        if (changes[0].modified.startLineNumber !== changes[0].original.startLineNumber) {
+          return false;
+        }
+        if (modifiedLines.length.lineCount - changes[changes.length - 1].modified.endLineNumberExclusive !== originalLines.length.lineCount - changes[changes.length - 1].original.endLineNumberExclusive) {
+          return false;
+        }
+      }
+      return checkAdjacentItems(changes, (m1, m2) => m2.original.startLineNumber - m1.original.endLineNumberExclusive === m2.modified.startLineNumber - m1.modified.endLineNumberExclusive && // There has to be an unchanged line in between (otherwise both diffs should have been joined)
+      m1.original.endLineNumberExclusive < m2.original.startLineNumber && m1.modified.endLineNumberExclusive < m2.modified.startLineNumber);
+    });
+    return changes;
+  }
+  function getLineRangeMapping(rangeMapping, originalLines, modifiedLines) {
+    let lineStartDelta = 0;
+    let lineEndDelta = 0;
+    if (rangeMapping.modifiedRange.endColumn === 1 && rangeMapping.originalRange.endColumn === 1 && rangeMapping.originalRange.startLineNumber + lineStartDelta <= rangeMapping.originalRange.endLineNumber && rangeMapping.modifiedRange.startLineNumber + lineStartDelta <= rangeMapping.modifiedRange.endLineNumber) {
+      lineEndDelta = -1;
+    }
+    if (rangeMapping.modifiedRange.startColumn - 1 >= modifiedLines.getLineLength(rangeMapping.modifiedRange.startLineNumber) && rangeMapping.originalRange.startColumn - 1 >= originalLines.getLineLength(rangeMapping.originalRange.startLineNumber) && rangeMapping.originalRange.startLineNumber <= rangeMapping.originalRange.endLineNumber + lineEndDelta && rangeMapping.modifiedRange.startLineNumber <= rangeMapping.modifiedRange.endLineNumber + lineEndDelta) {
+      lineStartDelta = 1;
+    }
+    const originalLineRange = new LineRange(rangeMapping.originalRange.startLineNumber + lineStartDelta, rangeMapping.originalRange.endLineNumber + 1 + lineEndDelta);
+    const modifiedLineRange = new LineRange(rangeMapping.modifiedRange.startLineNumber + lineStartDelta, rangeMapping.modifiedRange.endLineNumber + 1 + lineEndDelta);
+    return new DetailedLineRangeMapping(originalLineRange, modifiedLineRange, [rangeMapping]);
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/legacyLinesDiffComputer.js
+  var MINIMUM_MATCHING_CHARACTER_LENGTH = 3;
+  var LegacyLinesDiffComputer = class {
+    computeDiff(originalLines, modifiedLines, options) {
+      const diffComputer = new DiffComputer(originalLines, modifiedLines, {
+        maxComputationTime: options.maxComputationTimeMs,
+        shouldIgnoreTrimWhitespace: options.ignoreTrimWhitespace,
+        shouldComputeCharChanges: true,
+        shouldMakePrettyDiff: true,
+        shouldPostProcessCharChanges: true
+      });
+      const result = diffComputer.computeDiff();
+      const changes = [];
+      let lastChange = null;
+      for (const c of result.changes) {
+        let originalRange;
+        if (c.originalEndLineNumber === 0) {
+          originalRange = new LineRange(c.originalStartLineNumber + 1, c.originalStartLineNumber + 1);
+        } else {
+          originalRange = new LineRange(c.originalStartLineNumber, c.originalEndLineNumber + 1);
+        }
+        let modifiedRange;
+        if (c.modifiedEndLineNumber === 0) {
+          modifiedRange = new LineRange(c.modifiedStartLineNumber + 1, c.modifiedStartLineNumber + 1);
+        } else {
+          modifiedRange = new LineRange(c.modifiedStartLineNumber, c.modifiedEndLineNumber + 1);
+        }
+        let change = new DetailedLineRangeMapping(originalRange, modifiedRange, c.charChanges?.map((c2) => new RangeMapping(new Range(c2.originalStartLineNumber, c2.originalStartColumn, c2.originalEndLineNumber, c2.originalEndColumn), new Range(c2.modifiedStartLineNumber, c2.modifiedStartColumn, c2.modifiedEndLineNumber, c2.modifiedEndColumn))));
+        if (lastChange) {
+          if (lastChange.modified.endLineNumberExclusive === change.modified.startLineNumber || lastChange.original.endLineNumberExclusive === change.original.startLineNumber) {
+            change = new DetailedLineRangeMapping(lastChange.original.join(change.original), lastChange.modified.join(change.modified), lastChange.innerChanges && change.innerChanges ? lastChange.innerChanges.concat(change.innerChanges) : void 0);
+            changes.pop();
+          }
+        }
+        changes.push(change);
+        lastChange = change;
+      }
+      assertFn(() => {
+        return checkAdjacentItems(changes, (m1, m2) => m2.original.startLineNumber - m1.original.endLineNumberExclusive === m2.modified.startLineNumber - m1.modified.endLineNumberExclusive && // There has to be an unchanged line in between (otherwise both diffs should have been joined)
+        m1.original.endLineNumberExclusive < m2.original.startLineNumber && m1.modified.endLineNumberExclusive < m2.modified.startLineNumber);
+      });
+      return new LinesDiff(changes, [], result.quitEarly);
+    }
+  };
+  function computeDiff(originalSequence, modifiedSequence, continueProcessingPredicate, pretty) {
+    const diffAlgo = new LcsDiff(originalSequence, modifiedSequence, continueProcessingPredicate);
+    return diffAlgo.ComputeDiff(pretty);
+  }
+  var LineSequence = class {
+    constructor(lines) {
+      const startColumns = [];
+      const endColumns = [];
+      for (let i = 0, length = lines.length; i < length; i++) {
+        startColumns[i] = getFirstNonBlankColumn(lines[i], 1);
+        endColumns[i] = getLastNonBlankColumn(lines[i], 1);
+      }
+      this.lines = lines;
+      this._startColumns = startColumns;
+      this._endColumns = endColumns;
+    }
+    getElements() {
+      const elements = [];
+      for (let i = 0, len = this.lines.length; i < len; i++) {
+        elements[i] = this.lines[i].substring(this._startColumns[i] - 1, this._endColumns[i] - 1);
+      }
+      return elements;
+    }
+    getStrictElement(index) {
+      return this.lines[index];
+    }
+    getStartLineNumber(i) {
+      return i + 1;
+    }
+    getEndLineNumber(i) {
+      return i + 1;
+    }
+    createCharSequence(shouldIgnoreTrimWhitespace, startIndex, endIndex) {
+      const charCodes = [];
+      const lineNumbers = [];
+      const columns = [];
+      let len = 0;
+      for (let index = startIndex; index <= endIndex; index++) {
+        const lineContent = this.lines[index];
+        const startColumn = shouldIgnoreTrimWhitespace ? this._startColumns[index] : 1;
+        const endColumn = shouldIgnoreTrimWhitespace ? this._endColumns[index] : lineContent.length + 1;
+        for (let col = startColumn; col < endColumn; col++) {
+          charCodes[len] = lineContent.charCodeAt(col - 1);
+          lineNumbers[len] = index + 1;
+          columns[len] = col;
+          len++;
+        }
+        if (!shouldIgnoreTrimWhitespace && index < endIndex) {
+          charCodes[len] = 10;
+          lineNumbers[len] = index + 1;
+          columns[len] = lineContent.length + 1;
+          len++;
+        }
+      }
+      return new CharSequence(charCodes, lineNumbers, columns);
+    }
+  };
+  var CharSequence = class {
+    constructor(charCodes, lineNumbers, columns) {
+      this._charCodes = charCodes;
+      this._lineNumbers = lineNumbers;
+      this._columns = columns;
+    }
+    toString() {
+      return "[" + this._charCodes.map((s, idx) => (s === 10 ? "\\n" : String.fromCharCode(s)) + `-(${this._lineNumbers[idx]},${this._columns[idx]})`).join(", ") + "]";
+    }
+    _assertIndex(index, arr) {
+      if (index < 0 || index >= arr.length) {
+        throw new Error(`Illegal index`);
+      }
+    }
+    getElements() {
+      return this._charCodes;
+    }
+    getStartLineNumber(i) {
+      if (i > 0 && i === this._lineNumbers.length) {
+        return this.getEndLineNumber(i - 1);
+      }
+      this._assertIndex(i, this._lineNumbers);
+      return this._lineNumbers[i];
+    }
+    getEndLineNumber(i) {
+      if (i === -1) {
+        return this.getStartLineNumber(i + 1);
+      }
+      this._assertIndex(i, this._lineNumbers);
+      if (this._charCodes[i] === 10) {
+        return this._lineNumbers[i] + 1;
+      }
+      return this._lineNumbers[i];
+    }
+    getStartColumn(i) {
+      if (i > 0 && i === this._columns.length) {
+        return this.getEndColumn(i - 1);
+      }
+      this._assertIndex(i, this._columns);
+      return this._columns[i];
+    }
+    getEndColumn(i) {
+      if (i === -1) {
+        return this.getStartColumn(i + 1);
+      }
+      this._assertIndex(i, this._columns);
+      if (this._charCodes[i] === 10) {
+        return 1;
+      }
+      return this._columns[i] + 1;
+    }
+  };
+  var CharChange = class _CharChange {
+    constructor(originalStartLineNumber, originalStartColumn, originalEndLineNumber, originalEndColumn, modifiedStartLineNumber, modifiedStartColumn, modifiedEndLineNumber, modifiedEndColumn) {
+      this.originalStartLineNumber = originalStartLineNumber;
+      this.originalStartColumn = originalStartColumn;
+      this.originalEndLineNumber = originalEndLineNumber;
+      this.originalEndColumn = originalEndColumn;
+      this.modifiedStartLineNumber = modifiedStartLineNumber;
+      this.modifiedStartColumn = modifiedStartColumn;
+      this.modifiedEndLineNumber = modifiedEndLineNumber;
+      this.modifiedEndColumn = modifiedEndColumn;
+    }
+    static createFromDiffChange(diffChange, originalCharSequence, modifiedCharSequence) {
+      const originalStartLineNumber = originalCharSequence.getStartLineNumber(diffChange.originalStart);
+      const originalStartColumn = originalCharSequence.getStartColumn(diffChange.originalStart);
+      const originalEndLineNumber = originalCharSequence.getEndLineNumber(diffChange.originalStart + diffChange.originalLength - 1);
+      const originalEndColumn = originalCharSequence.getEndColumn(diffChange.originalStart + diffChange.originalLength - 1);
+      const modifiedStartLineNumber = modifiedCharSequence.getStartLineNumber(diffChange.modifiedStart);
+      const modifiedStartColumn = modifiedCharSequence.getStartColumn(diffChange.modifiedStart);
+      const modifiedEndLineNumber = modifiedCharSequence.getEndLineNumber(diffChange.modifiedStart + diffChange.modifiedLength - 1);
+      const modifiedEndColumn = modifiedCharSequence.getEndColumn(diffChange.modifiedStart + diffChange.modifiedLength - 1);
+      return new _CharChange(originalStartLineNumber, originalStartColumn, originalEndLineNumber, originalEndColumn, modifiedStartLineNumber, modifiedStartColumn, modifiedEndLineNumber, modifiedEndColumn);
+    }
+  };
+  function postProcessCharChanges(rawChanges) {
+    if (rawChanges.length <= 1) {
+      return rawChanges;
+    }
+    const result = [rawChanges[0]];
+    let prevChange = result[0];
+    for (let i = 1, len = rawChanges.length; i < len; i++) {
+      const currChange = rawChanges[i];
+      const originalMatchingLength = currChange.originalStart - (prevChange.originalStart + prevChange.originalLength);
+      const modifiedMatchingLength = currChange.modifiedStart - (prevChange.modifiedStart + prevChange.modifiedLength);
+      const matchingLength = Math.min(originalMatchingLength, modifiedMatchingLength);
+      if (matchingLength < MINIMUM_MATCHING_CHARACTER_LENGTH) {
+        prevChange.originalLength = currChange.originalStart + currChange.originalLength - prevChange.originalStart;
+        prevChange.modifiedLength = currChange.modifiedStart + currChange.modifiedLength - prevChange.modifiedStart;
+      } else {
+        result.push(currChange);
+        prevChange = currChange;
+      }
+    }
+    return result;
+  }
+  var LineChange = class _LineChange {
+    constructor(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges) {
+      this.originalStartLineNumber = originalStartLineNumber;
+      this.originalEndLineNumber = originalEndLineNumber;
+      this.modifiedStartLineNumber = modifiedStartLineNumber;
+      this.modifiedEndLineNumber = modifiedEndLineNumber;
+      this.charChanges = charChanges;
+    }
+    static createFromDiffResult(shouldIgnoreTrimWhitespace, diffChange, originalLineSequence, modifiedLineSequence, continueCharDiff, shouldComputeCharChanges, shouldPostProcessCharChanges) {
+      let originalStartLineNumber;
+      let originalEndLineNumber;
+      let modifiedStartLineNumber;
+      let modifiedEndLineNumber;
+      let charChanges = void 0;
+      if (diffChange.originalLength === 0) {
+        originalStartLineNumber = originalLineSequence.getStartLineNumber(diffChange.originalStart) - 1;
+        originalEndLineNumber = 0;
+      } else {
+        originalStartLineNumber = originalLineSequence.getStartLineNumber(diffChange.originalStart);
+        originalEndLineNumber = originalLineSequence.getEndLineNumber(diffChange.originalStart + diffChange.originalLength - 1);
+      }
+      if (diffChange.modifiedLength === 0) {
+        modifiedStartLineNumber = modifiedLineSequence.getStartLineNumber(diffChange.modifiedStart) - 1;
+        modifiedEndLineNumber = 0;
+      } else {
+        modifiedStartLineNumber = modifiedLineSequence.getStartLineNumber(diffChange.modifiedStart);
+        modifiedEndLineNumber = modifiedLineSequence.getEndLineNumber(diffChange.modifiedStart + diffChange.modifiedLength - 1);
+      }
+      if (shouldComputeCharChanges && diffChange.originalLength > 0 && diffChange.originalLength < 20 && diffChange.modifiedLength > 0 && diffChange.modifiedLength < 20 && continueCharDiff()) {
+        const originalCharSequence = originalLineSequence.createCharSequence(shouldIgnoreTrimWhitespace, diffChange.originalStart, diffChange.originalStart + diffChange.originalLength - 1);
+        const modifiedCharSequence = modifiedLineSequence.createCharSequence(shouldIgnoreTrimWhitespace, diffChange.modifiedStart, diffChange.modifiedStart + diffChange.modifiedLength - 1);
+        if (originalCharSequence.getElements().length > 0 && modifiedCharSequence.getElements().length > 0) {
+          let rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueCharDiff, true).changes;
+          if (shouldPostProcessCharChanges) {
+            rawChanges = postProcessCharChanges(rawChanges);
+          }
+          charChanges = [];
+          for (let i = 0, length = rawChanges.length; i < length; i++) {
+            charChanges.push(CharChange.createFromDiffChange(rawChanges[i], originalCharSequence, modifiedCharSequence));
+          }
+        }
+      }
+      return new _LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges);
+    }
+  };
+  var DiffComputer = class {
+    constructor(originalLines, modifiedLines, opts) {
+      this.shouldComputeCharChanges = opts.shouldComputeCharChanges;
+      this.shouldPostProcessCharChanges = opts.shouldPostProcessCharChanges;
+      this.shouldIgnoreTrimWhitespace = opts.shouldIgnoreTrimWhitespace;
+      this.shouldMakePrettyDiff = opts.shouldMakePrettyDiff;
+      this.originalLines = originalLines;
+      this.modifiedLines = modifiedLines;
+      this.original = new LineSequence(originalLines);
+      this.modified = new LineSequence(modifiedLines);
+      this.continueLineDiff = createContinueProcessingPredicate(opts.maxComputationTime);
+      this.continueCharDiff = createContinueProcessingPredicate(opts.maxComputationTime === 0 ? 0 : Math.min(opts.maxComputationTime, 5e3));
+    }
+    computeDiff() {
+      if (this.original.lines.length === 1 && this.original.lines[0].length === 0) {
+        if (this.modified.lines.length === 1 && this.modified.lines[0].length === 0) {
+          return {
+            quitEarly: false,
+            changes: []
+          };
+        }
+        return {
+          quitEarly: false,
+          changes: [{
+            originalStartLineNumber: 1,
+            originalEndLineNumber: 1,
+            modifiedStartLineNumber: 1,
+            modifiedEndLineNumber: this.modified.lines.length,
+            charChanges: void 0
+          }]
+        };
+      }
+      if (this.modified.lines.length === 1 && this.modified.lines[0].length === 0) {
+        return {
+          quitEarly: false,
+          changes: [{
+            originalStartLineNumber: 1,
+            originalEndLineNumber: this.original.lines.length,
+            modifiedStartLineNumber: 1,
+            modifiedEndLineNumber: 1,
+            charChanges: void 0
+          }]
+        };
+      }
+      const diffResult = computeDiff(this.original, this.modified, this.continueLineDiff, this.shouldMakePrettyDiff);
+      const rawChanges = diffResult.changes;
+      const quitEarly = diffResult.quitEarly;
+      if (this.shouldIgnoreTrimWhitespace) {
+        const lineChanges = [];
+        for (let i = 0, length = rawChanges.length; i < length; i++) {
+          lineChanges.push(LineChange.createFromDiffResult(this.shouldIgnoreTrimWhitespace, rawChanges[i], this.original, this.modified, this.continueCharDiff, this.shouldComputeCharChanges, this.shouldPostProcessCharChanges));
+        }
+        return {
+          quitEarly,
+          changes: lineChanges
+        };
+      }
+      const result = [];
+      let originalLineIndex = 0;
+      let modifiedLineIndex = 0;
+      for (let i = -1, len = rawChanges.length; i < len; i++) {
+        const nextChange = i + 1 < len ? rawChanges[i + 1] : null;
+        const originalStop = nextChange ? nextChange.originalStart : this.originalLines.length;
+        const modifiedStop = nextChange ? nextChange.modifiedStart : this.modifiedLines.length;
+        while (originalLineIndex < originalStop && modifiedLineIndex < modifiedStop) {
+          const originalLine = this.originalLines[originalLineIndex];
+          const modifiedLine = this.modifiedLines[modifiedLineIndex];
+          if (originalLine !== modifiedLine) {
+            {
+              let originalStartColumn = getFirstNonBlankColumn(originalLine, 1);
+              let modifiedStartColumn = getFirstNonBlankColumn(modifiedLine, 1);
+              while (originalStartColumn > 1 && modifiedStartColumn > 1) {
+                const originalChar = originalLine.charCodeAt(originalStartColumn - 2);
+                const modifiedChar = modifiedLine.charCodeAt(modifiedStartColumn - 2);
+                if (originalChar !== modifiedChar) {
+                  break;
+                }
+                originalStartColumn--;
+                modifiedStartColumn--;
+              }
+              if (originalStartColumn > 1 || modifiedStartColumn > 1) {
+                this._pushTrimWhitespaceCharChange(result, originalLineIndex + 1, 1, originalStartColumn, modifiedLineIndex + 1, 1, modifiedStartColumn);
+              }
+            }
+            {
+              let originalEndColumn = getLastNonBlankColumn(originalLine, 1);
+              let modifiedEndColumn = getLastNonBlankColumn(modifiedLine, 1);
+              const originalMaxColumn = originalLine.length + 1;
+              const modifiedMaxColumn = modifiedLine.length + 1;
+              while (originalEndColumn < originalMaxColumn && modifiedEndColumn < modifiedMaxColumn) {
+                const originalChar = originalLine.charCodeAt(originalEndColumn - 1);
+                const modifiedChar = originalLine.charCodeAt(modifiedEndColumn - 1);
+                if (originalChar !== modifiedChar) {
+                  break;
+                }
+                originalEndColumn++;
+                modifiedEndColumn++;
+              }
+              if (originalEndColumn < originalMaxColumn || modifiedEndColumn < modifiedMaxColumn) {
+                this._pushTrimWhitespaceCharChange(result, originalLineIndex + 1, originalEndColumn, originalMaxColumn, modifiedLineIndex + 1, modifiedEndColumn, modifiedMaxColumn);
+              }
+            }
+          }
+          originalLineIndex++;
+          modifiedLineIndex++;
+        }
+        if (nextChange) {
+          result.push(LineChange.createFromDiffResult(this.shouldIgnoreTrimWhitespace, nextChange, this.original, this.modified, this.continueCharDiff, this.shouldComputeCharChanges, this.shouldPostProcessCharChanges));
+          originalLineIndex += nextChange.originalLength;
+          modifiedLineIndex += nextChange.modifiedLength;
+        }
+      }
+      return {
+        quitEarly,
+        changes: result
+      };
+    }
+    _pushTrimWhitespaceCharChange(result, originalLineNumber, originalStartColumn, originalEndColumn, modifiedLineNumber, modifiedStartColumn, modifiedEndColumn) {
+      if (this._mergeTrimWhitespaceCharChange(result, originalLineNumber, originalStartColumn, originalEndColumn, modifiedLineNumber, modifiedStartColumn, modifiedEndColumn)) {
+        return;
+      }
+      let charChanges = void 0;
+      if (this.shouldComputeCharChanges) {
+        charChanges = [new CharChange(originalLineNumber, originalStartColumn, originalLineNumber, originalEndColumn, modifiedLineNumber, modifiedStartColumn, modifiedLineNumber, modifiedEndColumn)];
+      }
+      result.push(new LineChange(originalLineNumber, originalLineNumber, modifiedLineNumber, modifiedLineNumber, charChanges));
+    }
+    _mergeTrimWhitespaceCharChange(result, originalLineNumber, originalStartColumn, originalEndColumn, modifiedLineNumber, modifiedStartColumn, modifiedEndColumn) {
+      const len = result.length;
+      if (len === 0) {
+        return false;
+      }
+      const prevChange = result[len - 1];
+      if (prevChange.originalEndLineNumber === 0 || prevChange.modifiedEndLineNumber === 0) {
+        return false;
+      }
+      if (prevChange.originalEndLineNumber === originalLineNumber && prevChange.modifiedEndLineNumber === modifiedLineNumber) {
+        if (this.shouldComputeCharChanges && prevChange.charChanges) {
+          prevChange.charChanges.push(new CharChange(originalLineNumber, originalStartColumn, originalLineNumber, originalEndColumn, modifiedLineNumber, modifiedStartColumn, modifiedLineNumber, modifiedEndColumn));
+        }
+        return true;
+      }
+      if (prevChange.originalEndLineNumber + 1 === originalLineNumber && prevChange.modifiedEndLineNumber + 1 === modifiedLineNumber) {
+        prevChange.originalEndLineNumber = originalLineNumber;
+        prevChange.modifiedEndLineNumber = modifiedLineNumber;
+        if (this.shouldComputeCharChanges && prevChange.charChanges) {
+          prevChange.charChanges.push(new CharChange(originalLineNumber, originalStartColumn, originalLineNumber, originalEndColumn, modifiedLineNumber, modifiedStartColumn, modifiedLineNumber, modifiedEndColumn));
+        }
+        return true;
+      }
+      return false;
+    }
+  };
+  function getFirstNonBlankColumn(txt, defaultValue) {
+    const r = firstNonWhitespaceIndex(txt);
+    if (r === -1) {
+      return defaultValue;
+    }
+    return r + 1;
+  }
+  function getLastNonBlankColumn(txt, defaultValue) {
+    const r = lastNonWhitespaceIndex(txt);
+    if (r === -1) {
+      return defaultValue;
+    }
+    return r + 2;
+  }
+  function createContinueProcessingPredicate(maximumRuntime) {
+    if (maximumRuntime === 0) {
+      return () => true;
+    }
+    const startTime = Date.now();
+    return () => {
+      return Date.now() - startTime < maximumRuntime;
+    };
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/algorithms/diffAlgorithm.js
+  var DiffAlgorithmResult = class _DiffAlgorithmResult {
+    static trivial(seq1, seq2) {
+      return new _DiffAlgorithmResult([new SequenceDiff(OffsetRange.ofLength(seq1.length), OffsetRange.ofLength(seq2.length))], false);
+    }
+    static trivialTimedOut(seq1, seq2) {
+      return new _DiffAlgorithmResult([new SequenceDiff(OffsetRange.ofLength(seq1.length), OffsetRange.ofLength(seq2.length))], true);
+    }
+    constructor(diffs, hitTimeout) {
+      this.diffs = diffs;
+      this.hitTimeout = hitTimeout;
+    }
+  };
+  var SequenceDiff = class _SequenceDiff {
+    static invert(sequenceDiffs, doc1Length) {
+      const result = [];
+      forEachAdjacent(sequenceDiffs, (a, b) => {
+        result.push(_SequenceDiff.fromOffsetPairs(a ? a.getEndExclusives() : OffsetPair.zero, b ? b.getStarts() : new OffsetPair(doc1Length, (a ? a.seq2Range.endExclusive - a.seq1Range.endExclusive : 0) + doc1Length)));
+      });
+      return result;
+    }
+    static fromOffsetPairs(start2, endExclusive) {
+      return new _SequenceDiff(new OffsetRange(start2.offset1, endExclusive.offset1), new OffsetRange(start2.offset2, endExclusive.offset2));
+    }
+    static assertSorted(sequenceDiffs) {
+      let last = void 0;
+      for (const cur of sequenceDiffs) {
+        if (last) {
+          if (!(last.seq1Range.endExclusive <= cur.seq1Range.start && last.seq2Range.endExclusive <= cur.seq2Range.start)) {
+            throw new BugIndicatingError("Sequence diffs must be sorted");
+          }
+        }
+        last = cur;
+      }
+    }
+    constructor(seq1Range, seq2Range) {
+      this.seq1Range = seq1Range;
+      this.seq2Range = seq2Range;
+    }
+    swap() {
+      return new _SequenceDiff(this.seq2Range, this.seq1Range);
+    }
+    toString() {
+      return `${this.seq1Range} <-> ${this.seq2Range}`;
+    }
+    join(other) {
+      return new _SequenceDiff(this.seq1Range.join(other.seq1Range), this.seq2Range.join(other.seq2Range));
+    }
+    delta(offset) {
+      if (offset === 0) {
+        return this;
+      }
+      return new _SequenceDiff(this.seq1Range.delta(offset), this.seq2Range.delta(offset));
+    }
+    deltaStart(offset) {
+      if (offset === 0) {
+        return this;
+      }
+      return new _SequenceDiff(this.seq1Range.deltaStart(offset), this.seq2Range.deltaStart(offset));
+    }
+    deltaEnd(offset) {
+      if (offset === 0) {
+        return this;
+      }
+      return new _SequenceDiff(this.seq1Range.deltaEnd(offset), this.seq2Range.deltaEnd(offset));
+    }
+    intersect(other) {
+      const i1 = this.seq1Range.intersect(other.seq1Range);
+      const i2 = this.seq2Range.intersect(other.seq2Range);
+      if (!i1 || !i2) {
+        return void 0;
+      }
+      return new _SequenceDiff(i1, i2);
+    }
+    getStarts() {
+      return new OffsetPair(this.seq1Range.start, this.seq2Range.start);
+    }
+    getEndExclusives() {
+      return new OffsetPair(this.seq1Range.endExclusive, this.seq2Range.endExclusive);
+    }
+  };
+  var OffsetPair = class _OffsetPair {
+    static {
+      this.zero = new _OffsetPair(0, 0);
+    }
+    static {
+      this.max = new _OffsetPair(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+    }
+    constructor(offset1, offset2) {
+      this.offset1 = offset1;
+      this.offset2 = offset2;
+    }
+    toString() {
+      return `${this.offset1} <-> ${this.offset2}`;
+    }
+    delta(offset) {
+      if (offset === 0) {
+        return this;
+      }
+      return new _OffsetPair(this.offset1 + offset, this.offset2 + offset);
+    }
+    equals(other) {
+      return this.offset1 === other.offset1 && this.offset2 === other.offset2;
+    }
+  };
+  var InfiniteTimeout = class _InfiniteTimeout {
+    static {
+      this.instance = new _InfiniteTimeout();
+    }
+    isValid() {
+      return true;
+    }
+  };
+  var DateTimeout = class {
+    constructor(timeout) {
+      this.timeout = timeout;
+      this.startTime = Date.now();
+      this.valid = true;
+      if (timeout <= 0) {
+        throw new BugIndicatingError("timeout must be positive");
+      }
+    }
+    // Recommendation: Set a log-point `{this.disable()}` in the body
+    isValid() {
+      const valid = Date.now() - this.startTime < this.timeout;
+      if (!valid && this.valid) {
+        this.valid = false;
+      }
+      return this.valid;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/utils.js
+  var Array2D = class {
+    constructor(width, height) {
+      this.width = width;
+      this.height = height;
+      this.array = [];
+      this.array = new Array(width * height);
+    }
+    get(x, y) {
+      return this.array[x + y * this.width];
+    }
+    set(x, y, value) {
+      this.array[x + y * this.width] = value;
+    }
+  };
+  function isSpace(charCode) {
+    return charCode === 32 || charCode === 9;
+  }
+  var LineRangeFragment = class _LineRangeFragment {
+    static {
+      this.chrKeys = /* @__PURE__ */ new Map();
+    }
+    static getKey(chr) {
+      let key = this.chrKeys.get(chr);
+      if (key === void 0) {
+        key = this.chrKeys.size;
+        this.chrKeys.set(chr, key);
+      }
+      return key;
+    }
+    constructor(range, lines, source) {
+      this.range = range;
+      this.lines = lines;
+      this.source = source;
+      this.histogram = [];
+      let counter = 0;
+      for (let i = range.startLineNumber - 1; i < range.endLineNumberExclusive - 1; i++) {
+        const line = lines[i];
+        for (let j = 0; j < line.length; j++) {
+          counter++;
+          const chr = line[j];
+          const key2 = _LineRangeFragment.getKey(chr);
+          this.histogram[key2] = (this.histogram[key2] || 0) + 1;
+        }
+        counter++;
+        const key = _LineRangeFragment.getKey("\n");
+        this.histogram[key] = (this.histogram[key] || 0) + 1;
+      }
+      this.totalCount = counter;
+    }
+    computeSimilarity(other) {
+      let sumDifferences = 0;
+      const maxLength = Math.max(this.histogram.length, other.histogram.length);
+      for (let i = 0; i < maxLength; i++) {
+        sumDifferences += Math.abs((this.histogram[i] ?? 0) - (other.histogram[i] ?? 0));
+      }
+      return 1 - sumDifferences / (this.totalCount + other.totalCount);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/algorithms/dynamicProgrammingDiffing.js
+  var DynamicProgrammingDiffing = class {
+    compute(sequence1, sequence2, timeout = InfiniteTimeout.instance, equalityScore) {
+      if (sequence1.length === 0 || sequence2.length === 0) {
+        return DiffAlgorithmResult.trivial(sequence1, sequence2);
+      }
+      const lcsLengths = new Array2D(sequence1.length, sequence2.length);
+      const directions = new Array2D(sequence1.length, sequence2.length);
+      const lengths = new Array2D(sequence1.length, sequence2.length);
+      for (let s12 = 0; s12 < sequence1.length; s12++) {
+        for (let s22 = 0; s22 < sequence2.length; s22++) {
+          if (!timeout.isValid()) {
+            return DiffAlgorithmResult.trivialTimedOut(sequence1, sequence2);
+          }
+          const horizontalLen = s12 === 0 ? 0 : lcsLengths.get(s12 - 1, s22);
+          const verticalLen = s22 === 0 ? 0 : lcsLengths.get(s12, s22 - 1);
+          let extendedSeqScore;
+          if (sequence1.getElement(s12) === sequence2.getElement(s22)) {
+            if (s12 === 0 || s22 === 0) {
+              extendedSeqScore = 0;
+            } else {
+              extendedSeqScore = lcsLengths.get(s12 - 1, s22 - 1);
+            }
+            if (s12 > 0 && s22 > 0 && directions.get(s12 - 1, s22 - 1) === 3) {
+              extendedSeqScore += lengths.get(s12 - 1, s22 - 1);
+            }
+            extendedSeqScore += equalityScore ? equalityScore(s12, s22) : 1;
+          } else {
+            extendedSeqScore = -1;
+          }
+          const newValue = Math.max(horizontalLen, verticalLen, extendedSeqScore);
+          if (newValue === extendedSeqScore) {
+            const prevLen = s12 > 0 && s22 > 0 ? lengths.get(s12 - 1, s22 - 1) : 0;
+            lengths.set(s12, s22, prevLen + 1);
+            directions.set(s12, s22, 3);
+          } else if (newValue === horizontalLen) {
+            lengths.set(s12, s22, 0);
+            directions.set(s12, s22, 1);
+          } else if (newValue === verticalLen) {
+            lengths.set(s12, s22, 0);
+            directions.set(s12, s22, 2);
+          }
+          lcsLengths.set(s12, s22, newValue);
+        }
+      }
+      const result = [];
+      let lastAligningPosS1 = sequence1.length;
+      let lastAligningPosS2 = sequence2.length;
+      function reportDecreasingAligningPositions(s12, s22) {
+        if (s12 + 1 !== lastAligningPosS1 || s22 + 1 !== lastAligningPosS2) {
+          result.push(new SequenceDiff(new OffsetRange(s12 + 1, lastAligningPosS1), new OffsetRange(s22 + 1, lastAligningPosS2)));
+        }
+        lastAligningPosS1 = s12;
+        lastAligningPosS2 = s22;
+      }
+      let s1 = sequence1.length - 1;
+      let s2 = sequence2.length - 1;
+      while (s1 >= 0 && s2 >= 0) {
+        if (directions.get(s1, s2) === 3) {
+          reportDecreasingAligningPositions(s1, s2);
+          s1--;
+          s2--;
+        } else {
+          if (directions.get(s1, s2) === 1) {
+            s1--;
+          } else {
+            s2--;
+          }
+        }
+      }
+      reportDecreasingAligningPositions(-1, -1);
+      result.reverse();
+      return new DiffAlgorithmResult(result, false);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/algorithms/myersDiffAlgorithm.js
+  var MyersDiffAlgorithm = class {
+    compute(seq1, seq2, timeout = InfiniteTimeout.instance) {
+      if (seq1.length === 0 || seq2.length === 0) {
+        return DiffAlgorithmResult.trivial(seq1, seq2);
+      }
+      const seqX = seq1;
+      const seqY = seq2;
+      function getXAfterSnake(x, y) {
+        while (x < seqX.length && y < seqY.length && seqX.getElement(x) === seqY.getElement(y)) {
+          x++;
+          y++;
+        }
+        return x;
+      }
+      let d = 0;
+      const V = new FastInt32Array();
+      V.set(0, getXAfterSnake(0, 0));
+      const paths = new FastArrayNegativeIndices();
+      paths.set(0, V.get(0) === 0 ? null : new SnakePath(null, 0, 0, V.get(0)));
+      let k = 0;
+      loop: while (true) {
+        d++;
+        if (!timeout.isValid()) {
+          return DiffAlgorithmResult.trivialTimedOut(seqX, seqY);
+        }
+        const lowerBound = -Math.min(d, seqY.length + d % 2);
+        const upperBound = Math.min(d, seqX.length + d % 2);
+        for (k = lowerBound; k <= upperBound; k += 2) {
+          const maxXofDLineTop = k === upperBound ? -1 : V.get(k + 1);
+          const maxXofDLineLeft = k === lowerBound ? -1 : V.get(k - 1) + 1;
+          const x = Math.min(Math.max(maxXofDLineTop, maxXofDLineLeft), seqX.length);
+          const y = x - k;
+          if (x > seqX.length || y > seqY.length) {
+            continue;
+          }
+          const newMaxX = getXAfterSnake(x, y);
+          V.set(k, newMaxX);
+          const lastPath = x === maxXofDLineTop ? paths.get(k + 1) : paths.get(k - 1);
+          paths.set(k, newMaxX !== x ? new SnakePath(lastPath, x, y, newMaxX - x) : lastPath);
+          if (V.get(k) === seqX.length && V.get(k) - k === seqY.length) {
+            break loop;
+          }
+        }
+      }
+      let path = paths.get(k);
+      const result = [];
+      let lastAligningPosS1 = seqX.length;
+      let lastAligningPosS2 = seqY.length;
+      while (true) {
+        const endX = path ? path.x + path.length : 0;
+        const endY = path ? path.y + path.length : 0;
+        if (endX !== lastAligningPosS1 || endY !== lastAligningPosS2) {
+          result.push(new SequenceDiff(new OffsetRange(endX, lastAligningPosS1), new OffsetRange(endY, lastAligningPosS2)));
+        }
+        if (!path) {
+          break;
+        }
+        lastAligningPosS1 = path.x;
+        lastAligningPosS2 = path.y;
+        path = path.prev;
+      }
+      result.reverse();
+      return new DiffAlgorithmResult(result, false);
+    }
+  };
+  var SnakePath = class {
+    constructor(prev, x, y, length) {
+      this.prev = prev;
+      this.x = x;
+      this.y = y;
+      this.length = length;
+    }
+  };
+  var FastInt32Array = class {
+    constructor() {
+      this.positiveArr = new Int32Array(10);
+      this.negativeArr = new Int32Array(10);
+    }
+    get(idx) {
+      if (idx < 0) {
+        idx = -idx - 1;
+        return this.negativeArr[idx];
+      } else {
+        return this.positiveArr[idx];
+      }
+    }
+    set(idx, value) {
+      if (idx < 0) {
+        idx = -idx - 1;
+        if (idx >= this.negativeArr.length) {
+          const arr = this.negativeArr;
+          this.negativeArr = new Int32Array(arr.length * 2);
+          this.negativeArr.set(arr);
+        }
+        this.negativeArr[idx] = value;
+      } else {
+        if (idx >= this.positiveArr.length) {
+          const arr = this.positiveArr;
+          this.positiveArr = new Int32Array(arr.length * 2);
+          this.positiveArr.set(arr);
+        }
+        this.positiveArr[idx] = value;
+      }
+    }
+  };
+  var FastArrayNegativeIndices = class {
+    constructor() {
+      this.positiveArr = [];
+      this.negativeArr = [];
+    }
+    get(idx) {
+      if (idx < 0) {
+        idx = -idx - 1;
+        return this.negativeArr[idx];
+      } else {
+        return this.positiveArr[idx];
+      }
+    }
+    set(idx, value) {
+      if (idx < 0) {
+        idx = -idx - 1;
+        this.negativeArr[idx] = value;
+      } else {
+        this.positiveArr[idx] = value;
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/linesSliceCharSequence.js
+  var LinesSliceCharSequence = class {
+    constructor(lines, range, considerWhitespaceChanges) {
+      this.lines = lines;
+      this.range = range;
+      this.considerWhitespaceChanges = considerWhitespaceChanges;
+      this.elements = [];
+      this.firstElementOffsetByLineIdx = [];
+      this.lineStartOffsets = [];
+      this.trimmedWsLengthsByLineIdx = [];
+      this.firstElementOffsetByLineIdx.push(0);
+      for (let lineNumber = this.range.startLineNumber; lineNumber <= this.range.endLineNumber; lineNumber++) {
+        let line = lines[lineNumber - 1];
+        let lineStartOffset = 0;
+        if (lineNumber === this.range.startLineNumber && this.range.startColumn > 1) {
+          lineStartOffset = this.range.startColumn - 1;
+          line = line.substring(lineStartOffset);
+        }
+        this.lineStartOffsets.push(lineStartOffset);
+        let trimmedWsLength = 0;
+        if (!considerWhitespaceChanges) {
+          const trimmedStartLine = line.trimStart();
+          trimmedWsLength = line.length - trimmedStartLine.length;
+          line = trimmedStartLine.trimEnd();
+        }
+        this.trimmedWsLengthsByLineIdx.push(trimmedWsLength);
+        const lineLength = lineNumber === this.range.endLineNumber ? Math.min(this.range.endColumn - 1 - lineStartOffset - trimmedWsLength, line.length) : line.length;
+        for (let i = 0; i < lineLength; i++) {
+          this.elements.push(line.charCodeAt(i));
+        }
+        if (lineNumber < this.range.endLineNumber) {
+          this.elements.push("\n".charCodeAt(0));
+          this.firstElementOffsetByLineIdx.push(this.elements.length);
+        }
+      }
+    }
+    toString() {
+      return `Slice: "${this.text}"`;
+    }
+    get text() {
+      return this.getText(new OffsetRange(0, this.length));
+    }
+    getText(range) {
+      return this.elements.slice(range.start, range.endExclusive).map((e) => String.fromCharCode(e)).join("");
+    }
+    getElement(offset) {
+      return this.elements[offset];
+    }
+    get length() {
+      return this.elements.length;
+    }
+    getBoundaryScore(length) {
+      const prevCategory = getCategory(length > 0 ? this.elements[length - 1] : -1);
+      const nextCategory = getCategory(length < this.elements.length ? this.elements[length] : -1);
+      if (prevCategory === 7 && nextCategory === 8) {
+        return 0;
+      }
+      if (prevCategory === 8) {
+        return 150;
+      }
+      let score2 = 0;
+      if (prevCategory !== nextCategory) {
+        score2 += 10;
+        if (prevCategory === 0 && nextCategory === 1) {
+          score2 += 1;
+        }
+      }
+      score2 += getCategoryBoundaryScore(prevCategory);
+      score2 += getCategoryBoundaryScore(nextCategory);
+      return score2;
+    }
+    translateOffset(offset, preference = "right") {
+      const i = findLastIdxMonotonous(this.firstElementOffsetByLineIdx, (value) => value <= offset);
+      const lineOffset = offset - this.firstElementOffsetByLineIdx[i];
+      return new Position(this.range.startLineNumber + i, 1 + this.lineStartOffsets[i] + lineOffset + (lineOffset === 0 && preference === "left" ? 0 : this.trimmedWsLengthsByLineIdx[i]));
+    }
+    translateRange(range) {
+      const pos1 = this.translateOffset(range.start, "right");
+      const pos2 = this.translateOffset(range.endExclusive, "left");
+      if (pos2.isBefore(pos1)) {
+        return Range.fromPositions(pos2, pos2);
+      }
+      return Range.fromPositions(pos1, pos2);
+    }
+    /**
+     * Finds the word that contains the character at the given offset
+     */
+    findWordContaining(offset) {
+      if (offset < 0 || offset >= this.elements.length) {
+        return void 0;
+      }
+      if (!isWordChar(this.elements[offset])) {
+        return void 0;
+      }
+      let start2 = offset;
+      while (start2 > 0 && isWordChar(this.elements[start2 - 1])) {
+        start2--;
+      }
+      let end = offset;
+      while (end < this.elements.length && isWordChar(this.elements[end])) {
+        end++;
+      }
+      return new OffsetRange(start2, end);
+    }
+    /** fooBar has the two sub-words foo and bar */
+    findSubWordContaining(offset) {
+      if (offset < 0 || offset >= this.elements.length) {
+        return void 0;
+      }
+      if (!isWordChar(this.elements[offset])) {
+        return void 0;
+      }
+      let start2 = offset;
+      while (start2 > 0 && isWordChar(this.elements[start2 - 1]) && !isUpperCase(this.elements[start2])) {
+        start2--;
+      }
+      let end = offset;
+      while (end < this.elements.length && isWordChar(this.elements[end]) && !isUpperCase(this.elements[end])) {
+        end++;
+      }
+      return new OffsetRange(start2, end);
+    }
+    countLinesIn(range) {
+      return this.translateOffset(range.endExclusive).lineNumber - this.translateOffset(range.start).lineNumber;
+    }
+    isStronglyEqual(offset1, offset2) {
+      return this.elements[offset1] === this.elements[offset2];
+    }
+    extendToFullLines(range) {
+      const start2 = findLastMonotonous(this.firstElementOffsetByLineIdx, (x) => x <= range.start) ?? 0;
+      const end = findFirstMonotonous(this.firstElementOffsetByLineIdx, (x) => range.endExclusive <= x) ?? this.elements.length;
+      return new OffsetRange(start2, end);
+    }
+  };
+  function isWordChar(charCode) {
+    return charCode >= 97 && charCode <= 122 || charCode >= 65 && charCode <= 90 || charCode >= 48 && charCode <= 57;
+  }
+  function isUpperCase(charCode) {
+    return charCode >= 65 && charCode <= 90;
+  }
+  var score = {
+    [
+      0
+      /* CharBoundaryCategory.WordLower */
+    ]: 0,
+    [
+      1
+      /* CharBoundaryCategory.WordUpper */
+    ]: 0,
+    [
+      2
+      /* CharBoundaryCategory.WordNumber */
+    ]: 0,
+    [
+      3
+      /* CharBoundaryCategory.End */
+    ]: 10,
+    [
+      4
+      /* CharBoundaryCategory.Other */
+    ]: 2,
+    [
+      5
+      /* CharBoundaryCategory.Separator */
+    ]: 30,
+    [
+      6
+      /* CharBoundaryCategory.Space */
+    ]: 3,
+    [
+      7
+      /* CharBoundaryCategory.LineBreakCR */
+    ]: 10,
+    [
+      8
+      /* CharBoundaryCategory.LineBreakLF */
+    ]: 10
+  };
+  function getCategoryBoundaryScore(category) {
+    return score[category];
+  }
+  function getCategory(charCode) {
+    if (charCode === 10) {
+      return 8;
+    } else if (charCode === 13) {
+      return 7;
+    } else if (isSpace(charCode)) {
+      return 6;
+    } else if (charCode >= 97 && charCode <= 122) {
+      return 0;
+    } else if (charCode >= 65 && charCode <= 90) {
+      return 1;
+    } else if (charCode >= 48 && charCode <= 57) {
+      return 2;
+    } else if (charCode === -1) {
+      return 3;
+    } else if (charCode === 44 || charCode === 59) {
+      return 5;
+    } else {
+      return 4;
+    }
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/computeMovedLines.js
+  function computeMovedLines(changes, originalLines, modifiedLines, hashedOriginalLines, hashedModifiedLines, timeout) {
+    let { moves, excludedChanges } = computeMovesFromSimpleDeletionsToSimpleInsertions(changes, originalLines, modifiedLines, timeout);
+    if (!timeout.isValid()) {
+      return [];
+    }
+    const filteredChanges = changes.filter((c) => !excludedChanges.has(c));
+    const unchangedMoves = computeUnchangedMoves(filteredChanges, hashedOriginalLines, hashedModifiedLines, originalLines, modifiedLines, timeout);
+    pushMany(moves, unchangedMoves);
+    moves = joinCloseConsecutiveMoves(moves);
+    moves = moves.filter((current) => {
+      const lines = current.original.toOffsetRange().slice(originalLines).map((l) => l.trim());
+      const originalText = lines.join("\n");
+      return originalText.length >= 15 && countWhere(lines, (l) => l.length >= 2) >= 2;
+    });
+    moves = removeMovesInSameDiff(changes, moves);
+    return moves;
+  }
+  function countWhere(arr, predicate) {
+    let count = 0;
+    for (const t of arr) {
+      if (predicate(t)) {
+        count++;
+      }
+    }
+    return count;
+  }
+  function computeMovesFromSimpleDeletionsToSimpleInsertions(changes, originalLines, modifiedLines, timeout) {
+    const moves = [];
+    const deletions = changes.filter((c) => c.modified.isEmpty && c.original.length >= 3).map((d) => new LineRangeFragment(d.original, originalLines, d));
+    const insertions = new Set(changes.filter((c) => c.original.isEmpty && c.modified.length >= 3).map((d) => new LineRangeFragment(d.modified, modifiedLines, d)));
+    const excludedChanges = /* @__PURE__ */ new Set();
+    for (const deletion of deletions) {
+      let highestSimilarity = -1;
+      let best;
+      for (const insertion of insertions) {
+        const similarity = deletion.computeSimilarity(insertion);
+        if (similarity > highestSimilarity) {
+          highestSimilarity = similarity;
+          best = insertion;
+        }
+      }
+      if (highestSimilarity > 0.9 && best) {
+        insertions.delete(best);
+        moves.push(new LineRangeMapping(deletion.range, best.range));
+        excludedChanges.add(deletion.source);
+        excludedChanges.add(best.source);
+      }
+      if (!timeout.isValid()) {
+        return { moves, excludedChanges };
+      }
+    }
+    return { moves, excludedChanges };
+  }
+  function computeUnchangedMoves(changes, hashedOriginalLines, hashedModifiedLines, originalLines, modifiedLines, timeout) {
+    const moves = [];
+    const original3LineHashes = new SetMap();
+    for (const change of changes) {
+      for (let i = change.original.startLineNumber; i < change.original.endLineNumberExclusive - 2; i++) {
+        const key = `${hashedOriginalLines[i - 1]}:${hashedOriginalLines[i + 1 - 1]}:${hashedOriginalLines[i + 2 - 1]}`;
+        original3LineHashes.add(key, { range: new LineRange(i, i + 3) });
+      }
+    }
+    const possibleMappings = [];
+    changes.sort(compareBy((c) => c.modified.startLineNumber, numberComparator));
+    for (const change of changes) {
+      let lastMappings = [];
+      for (let i = change.modified.startLineNumber; i < change.modified.endLineNumberExclusive - 2; i++) {
+        const key = `${hashedModifiedLines[i - 1]}:${hashedModifiedLines[i + 1 - 1]}:${hashedModifiedLines[i + 2 - 1]}`;
+        const currentModifiedRange = new LineRange(i, i + 3);
+        const nextMappings = [];
+        original3LineHashes.forEach(key, ({ range }) => {
+          for (const lastMapping of lastMappings) {
+            if (lastMapping.originalLineRange.endLineNumberExclusive + 1 === range.endLineNumberExclusive && lastMapping.modifiedLineRange.endLineNumberExclusive + 1 === currentModifiedRange.endLineNumberExclusive) {
+              lastMapping.originalLineRange = new LineRange(lastMapping.originalLineRange.startLineNumber, range.endLineNumberExclusive);
+              lastMapping.modifiedLineRange = new LineRange(lastMapping.modifiedLineRange.startLineNumber, currentModifiedRange.endLineNumberExclusive);
+              nextMappings.push(lastMapping);
+              return;
+            }
+          }
+          const mapping = {
+            modifiedLineRange: currentModifiedRange,
+            originalLineRange: range
+          };
+          possibleMappings.push(mapping);
+          nextMappings.push(mapping);
+        });
+        lastMappings = nextMappings;
+      }
+      if (!timeout.isValid()) {
+        return [];
+      }
+    }
+    possibleMappings.sort(reverseOrder(compareBy((m) => m.modifiedLineRange.length, numberComparator)));
+    const modifiedSet = new LineRangeSet();
+    const originalSet = new LineRangeSet();
+    for (const mapping of possibleMappings) {
+      const diffOrigToMod = mapping.modifiedLineRange.startLineNumber - mapping.originalLineRange.startLineNumber;
+      const modifiedSections = modifiedSet.subtractFrom(mapping.modifiedLineRange);
+      const originalTranslatedSections = originalSet.subtractFrom(mapping.originalLineRange).getWithDelta(diffOrigToMod);
+      const modifiedIntersectedSections = modifiedSections.getIntersection(originalTranslatedSections);
+      for (const s of modifiedIntersectedSections.ranges) {
+        if (s.length < 3) {
+          continue;
+        }
+        const modifiedLineRange = s;
+        const originalLineRange = s.delta(-diffOrigToMod);
+        moves.push(new LineRangeMapping(originalLineRange, modifiedLineRange));
+        modifiedSet.addRange(modifiedLineRange);
+        originalSet.addRange(originalLineRange);
+      }
+    }
+    moves.sort(compareBy((m) => m.original.startLineNumber, numberComparator));
+    const monotonousChanges = new MonotonousArray(changes);
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i];
+      const firstTouchingChangeOrig = monotonousChanges.findLastMonotonous((c) => c.original.startLineNumber <= move.original.startLineNumber);
+      const firstTouchingChangeMod = findLastMonotonous(changes, (c) => c.modified.startLineNumber <= move.modified.startLineNumber);
+      const linesAbove = Math.max(move.original.startLineNumber - firstTouchingChangeOrig.original.startLineNumber, move.modified.startLineNumber - firstTouchingChangeMod.modified.startLineNumber);
+      const lastTouchingChangeOrig = monotonousChanges.findLastMonotonous((c) => c.original.startLineNumber < move.original.endLineNumberExclusive);
+      const lastTouchingChangeMod = findLastMonotonous(changes, (c) => c.modified.startLineNumber < move.modified.endLineNumberExclusive);
+      const linesBelow = Math.max(lastTouchingChangeOrig.original.endLineNumberExclusive - move.original.endLineNumberExclusive, lastTouchingChangeMod.modified.endLineNumberExclusive - move.modified.endLineNumberExclusive);
+      let extendToTop;
+      for (extendToTop = 0; extendToTop < linesAbove; extendToTop++) {
+        const origLine = move.original.startLineNumber - extendToTop - 1;
+        const modLine = move.modified.startLineNumber - extendToTop - 1;
+        if (origLine > originalLines.length || modLine > modifiedLines.length) {
+          break;
+        }
+        if (modifiedSet.contains(modLine) || originalSet.contains(origLine)) {
+          break;
+        }
+        if (!areLinesSimilar(originalLines[origLine - 1], modifiedLines[modLine - 1], timeout)) {
+          break;
+        }
+      }
+      if (extendToTop > 0) {
+        originalSet.addRange(new LineRange(move.original.startLineNumber - extendToTop, move.original.startLineNumber));
+        modifiedSet.addRange(new LineRange(move.modified.startLineNumber - extendToTop, move.modified.startLineNumber));
+      }
+      let extendToBottom;
+      for (extendToBottom = 0; extendToBottom < linesBelow; extendToBottom++) {
+        const origLine = move.original.endLineNumberExclusive + extendToBottom;
+        const modLine = move.modified.endLineNumberExclusive + extendToBottom;
+        if (origLine > originalLines.length || modLine > modifiedLines.length) {
+          break;
+        }
+        if (modifiedSet.contains(modLine) || originalSet.contains(origLine)) {
+          break;
+        }
+        if (!areLinesSimilar(originalLines[origLine - 1], modifiedLines[modLine - 1], timeout)) {
+          break;
+        }
+      }
+      if (extendToBottom > 0) {
+        originalSet.addRange(new LineRange(move.original.endLineNumberExclusive, move.original.endLineNumberExclusive + extendToBottom));
+        modifiedSet.addRange(new LineRange(move.modified.endLineNumberExclusive, move.modified.endLineNumberExclusive + extendToBottom));
+      }
+      if (extendToTop > 0 || extendToBottom > 0) {
+        moves[i] = new LineRangeMapping(new LineRange(move.original.startLineNumber - extendToTop, move.original.endLineNumberExclusive + extendToBottom), new LineRange(move.modified.startLineNumber - extendToTop, move.modified.endLineNumberExclusive + extendToBottom));
+      }
+    }
+    return moves;
+  }
+  function areLinesSimilar(line1, line2, timeout) {
+    if (line1.trim() === line2.trim()) {
+      return true;
+    }
+    if (line1.length > 300 && line2.length > 300) {
+      return false;
+    }
+    const myersDiffingAlgorithm = new MyersDiffAlgorithm();
+    const result = myersDiffingAlgorithm.compute(new LinesSliceCharSequence([line1], new Range(1, 1, 1, line1.length), false), new LinesSliceCharSequence([line2], new Range(1, 1, 1, line2.length), false), timeout);
+    let commonNonSpaceCharCount = 0;
+    const inverted = SequenceDiff.invert(result.diffs, line1.length);
+    for (const seq of inverted) {
+      seq.seq1Range.forEach((idx) => {
+        if (!isSpace(line1.charCodeAt(idx))) {
+          commonNonSpaceCharCount++;
+        }
+      });
+    }
+    function countNonWsChars(str) {
+      let count = 0;
+      for (let i = 0; i < line1.length; i++) {
+        if (!isSpace(str.charCodeAt(i))) {
+          count++;
+        }
+      }
+      return count;
+    }
+    const longerLineLength = countNonWsChars(line1.length > line2.length ? line1 : line2);
+    const r = commonNonSpaceCharCount / longerLineLength > 0.6 && longerLineLength > 10;
+    return r;
+  }
+  function joinCloseConsecutiveMoves(moves) {
+    if (moves.length === 0) {
+      return moves;
+    }
+    moves.sort(compareBy((m) => m.original.startLineNumber, numberComparator));
+    const result = [moves[0]];
+    for (let i = 1; i < moves.length; i++) {
+      const last = result[result.length - 1];
+      const current = moves[i];
+      const originalDist = current.original.startLineNumber - last.original.endLineNumberExclusive;
+      const modifiedDist = current.modified.startLineNumber - last.modified.endLineNumberExclusive;
+      const currentMoveAfterLast = originalDist >= 0 && modifiedDist >= 0;
+      if (currentMoveAfterLast && originalDist + modifiedDist <= 2) {
+        result[result.length - 1] = last.join(current);
+        continue;
+      }
+      result.push(current);
+    }
+    return result;
+  }
+  function removeMovesInSameDiff(changes, moves) {
+    const changesMonotonous = new MonotonousArray(changes);
+    moves = moves.filter((m) => {
+      const diffBeforeEndOfMoveOriginal = changesMonotonous.findLastMonotonous((c) => c.original.startLineNumber < m.original.endLineNumberExclusive) || new LineRangeMapping(new LineRange(1, 1), new LineRange(1, 1));
+      const diffBeforeEndOfMoveModified = findLastMonotonous(changes, (c) => c.modified.startLineNumber < m.modified.endLineNumberExclusive);
+      const differentDiffs = diffBeforeEndOfMoveOriginal !== diffBeforeEndOfMoveModified;
+      return differentDiffs;
+    });
+    return moves;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/heuristicSequenceOptimizations.js
+  function optimizeSequenceDiffs(sequence1, sequence2, sequenceDiffs) {
+    let result = sequenceDiffs;
+    result = joinSequenceDiffsByShifting(sequence1, sequence2, result);
+    result = joinSequenceDiffsByShifting(sequence1, sequence2, result);
+    result = shiftSequenceDiffs(sequence1, sequence2, result);
+    return result;
+  }
+  function joinSequenceDiffsByShifting(sequence1, sequence2, sequenceDiffs) {
+    if (sequenceDiffs.length === 0) {
+      return sequenceDiffs;
+    }
+    const result = [];
+    result.push(sequenceDiffs[0]);
+    for (let i = 1; i < sequenceDiffs.length; i++) {
+      const prevResult = result[result.length - 1];
+      let cur = sequenceDiffs[i];
+      if (cur.seq1Range.isEmpty || cur.seq2Range.isEmpty) {
+        const length = cur.seq1Range.start - prevResult.seq1Range.endExclusive;
+        let d;
+        for (d = 1; d <= length; d++) {
+          if (sequence1.getElement(cur.seq1Range.start - d) !== sequence1.getElement(cur.seq1Range.endExclusive - d) || sequence2.getElement(cur.seq2Range.start - d) !== sequence2.getElement(cur.seq2Range.endExclusive - d)) {
+            break;
+          }
+        }
+        d--;
+        if (d === length) {
+          result[result.length - 1] = new SequenceDiff(new OffsetRange(prevResult.seq1Range.start, cur.seq1Range.endExclusive - length), new OffsetRange(prevResult.seq2Range.start, cur.seq2Range.endExclusive - length));
+          continue;
+        }
+        cur = cur.delta(-d);
+      }
+      result.push(cur);
+    }
+    const result2 = [];
+    for (let i = 0; i < result.length - 1; i++) {
+      const nextResult = result[i + 1];
+      let cur = result[i];
+      if (cur.seq1Range.isEmpty || cur.seq2Range.isEmpty) {
+        const length = nextResult.seq1Range.start - cur.seq1Range.endExclusive;
+        let d;
+        for (d = 0; d < length; d++) {
+          if (!sequence1.isStronglyEqual(cur.seq1Range.start + d, cur.seq1Range.endExclusive + d) || !sequence2.isStronglyEqual(cur.seq2Range.start + d, cur.seq2Range.endExclusive + d)) {
+            break;
+          }
+        }
+        if (d === length) {
+          result[i + 1] = new SequenceDiff(new OffsetRange(cur.seq1Range.start + length, nextResult.seq1Range.endExclusive), new OffsetRange(cur.seq2Range.start + length, nextResult.seq2Range.endExclusive));
+          continue;
+        }
+        if (d > 0) {
+          cur = cur.delta(d);
+        }
+      }
+      result2.push(cur);
+    }
+    if (result.length > 0) {
+      result2.push(result[result.length - 1]);
+    }
+    return result2;
+  }
+  function shiftSequenceDiffs(sequence1, sequence2, sequenceDiffs) {
+    if (!sequence1.getBoundaryScore || !sequence2.getBoundaryScore) {
+      return sequenceDiffs;
+    }
+    for (let i = 0; i < sequenceDiffs.length; i++) {
+      const prevDiff = i > 0 ? sequenceDiffs[i - 1] : void 0;
+      const diff = sequenceDiffs[i];
+      const nextDiff = i + 1 < sequenceDiffs.length ? sequenceDiffs[i + 1] : void 0;
+      const seq1ValidRange = new OffsetRange(prevDiff ? prevDiff.seq1Range.endExclusive + 1 : 0, nextDiff ? nextDiff.seq1Range.start - 1 : sequence1.length);
+      const seq2ValidRange = new OffsetRange(prevDiff ? prevDiff.seq2Range.endExclusive + 1 : 0, nextDiff ? nextDiff.seq2Range.start - 1 : sequence2.length);
+      if (diff.seq1Range.isEmpty) {
+        sequenceDiffs[i] = shiftDiffToBetterPosition(diff, sequence1, sequence2, seq1ValidRange, seq2ValidRange);
+      } else if (diff.seq2Range.isEmpty) {
+        sequenceDiffs[i] = shiftDiffToBetterPosition(diff.swap(), sequence2, sequence1, seq2ValidRange, seq1ValidRange).swap();
+      }
+    }
+    return sequenceDiffs;
+  }
+  function shiftDiffToBetterPosition(diff, sequence1, sequence2, seq1ValidRange, seq2ValidRange) {
+    const maxShiftLimit = 100;
+    let deltaBefore = 1;
+    while (diff.seq1Range.start - deltaBefore >= seq1ValidRange.start && diff.seq2Range.start - deltaBefore >= seq2ValidRange.start && sequence2.isStronglyEqual(diff.seq2Range.start - deltaBefore, diff.seq2Range.endExclusive - deltaBefore) && deltaBefore < maxShiftLimit) {
+      deltaBefore++;
+    }
+    deltaBefore--;
+    let deltaAfter = 0;
+    while (diff.seq1Range.start + deltaAfter < seq1ValidRange.endExclusive && diff.seq2Range.endExclusive + deltaAfter < seq2ValidRange.endExclusive && sequence2.isStronglyEqual(diff.seq2Range.start + deltaAfter, diff.seq2Range.endExclusive + deltaAfter) && deltaAfter < maxShiftLimit) {
+      deltaAfter++;
+    }
+    if (deltaBefore === 0 && deltaAfter === 0) {
+      return diff;
+    }
+    let bestDelta = 0;
+    let bestScore = -1;
+    for (let delta = -deltaBefore; delta <= deltaAfter; delta++) {
+      const seq2OffsetStart = diff.seq2Range.start + delta;
+      const seq2OffsetEndExclusive = diff.seq2Range.endExclusive + delta;
+      const seq1Offset = diff.seq1Range.start + delta;
+      const score2 = sequence1.getBoundaryScore(seq1Offset) + sequence2.getBoundaryScore(seq2OffsetStart) + sequence2.getBoundaryScore(seq2OffsetEndExclusive);
+      if (score2 > bestScore) {
+        bestScore = score2;
+        bestDelta = delta;
+      }
+    }
+    return diff.delta(bestDelta);
+  }
+  function removeShortMatches(sequence1, sequence2, sequenceDiffs) {
+    const result = [];
+    for (const s of sequenceDiffs) {
+      const last = result[result.length - 1];
+      if (!last) {
+        result.push(s);
+        continue;
+      }
+      if (s.seq1Range.start - last.seq1Range.endExclusive <= 2 || s.seq2Range.start - last.seq2Range.endExclusive <= 2) {
+        result[result.length - 1] = new SequenceDiff(last.seq1Range.join(s.seq1Range), last.seq2Range.join(s.seq2Range));
+      } else {
+        result.push(s);
+      }
+    }
+    return result;
+  }
+  function extendDiffsToEntireWordIfAppropriate(sequence1, sequence2, sequenceDiffs, findParent, force = false) {
+    const equalMappings = SequenceDiff.invert(sequenceDiffs, sequence1.length);
+    const additional = [];
+    let lastPoint = new OffsetPair(0, 0);
+    function scanWord(pair, equalMapping) {
+      if (pair.offset1 < lastPoint.offset1 || pair.offset2 < lastPoint.offset2) {
+        return;
+      }
+      const w1 = findParent(sequence1, pair.offset1);
+      const w2 = findParent(sequence2, pair.offset2);
+      if (!w1 || !w2) {
+        return;
+      }
+      let w = new SequenceDiff(w1, w2);
+      const equalPart = w.intersect(equalMapping);
+      let equalChars1 = equalPart.seq1Range.length;
+      let equalChars2 = equalPart.seq2Range.length;
+      while (equalMappings.length > 0) {
+        const next = equalMappings[0];
+        const intersects = next.seq1Range.intersects(w.seq1Range) || next.seq2Range.intersects(w.seq2Range);
+        if (!intersects) {
+          break;
+        }
+        const v1 = findParent(sequence1, next.seq1Range.start);
+        const v2 = findParent(sequence2, next.seq2Range.start);
+        const v = new SequenceDiff(v1, v2);
+        const equalPart2 = v.intersect(next);
+        equalChars1 += equalPart2.seq1Range.length;
+        equalChars2 += equalPart2.seq2Range.length;
+        w = w.join(v);
+        if (w.seq1Range.endExclusive >= next.seq1Range.endExclusive) {
+          equalMappings.shift();
+        } else {
+          break;
+        }
+      }
+      if (force && equalChars1 + equalChars2 < w.seq1Range.length + w.seq2Range.length || equalChars1 + equalChars2 < (w.seq1Range.length + w.seq2Range.length) * 2 / 3) {
+        additional.push(w);
+      }
+      lastPoint = w.getEndExclusives();
+    }
+    while (equalMappings.length > 0) {
+      const next = equalMappings.shift();
+      if (next.seq1Range.isEmpty) {
+        continue;
+      }
+      scanWord(next.getStarts(), next);
+      scanWord(next.getEndExclusives().delta(-1), next);
+    }
+    const merged = mergeSequenceDiffs(sequenceDiffs, additional);
+    return merged;
+  }
+  function mergeSequenceDiffs(sequenceDiffs1, sequenceDiffs2) {
+    const result = [];
+    while (sequenceDiffs1.length > 0 || sequenceDiffs2.length > 0) {
+      const sd1 = sequenceDiffs1[0];
+      const sd2 = sequenceDiffs2[0];
+      let next;
+      if (sd1 && (!sd2 || sd1.seq1Range.start < sd2.seq1Range.start)) {
+        next = sequenceDiffs1.shift();
+      } else {
+        next = sequenceDiffs2.shift();
+      }
+      if (result.length > 0 && result[result.length - 1].seq1Range.endExclusive >= next.seq1Range.start) {
+        result[result.length - 1] = result[result.length - 1].join(next);
+      } else {
+        result.push(next);
+      }
+    }
+    return result;
+  }
+  function removeVeryShortMatchingLinesBetweenDiffs(sequence1, _sequence2, sequenceDiffs) {
+    let diffs = sequenceDiffs;
+    if (diffs.length === 0) {
+      return diffs;
+    }
+    let counter = 0;
+    let shouldRepeat;
+    do {
+      shouldRepeat = false;
+      const result = [
+        diffs[0]
+      ];
+      for (let i = 1; i < diffs.length; i++) {
+        let shouldJoinDiffs = function(before, after) {
+          const unchangedRange = new OffsetRange(lastResult.seq1Range.endExclusive, cur.seq1Range.start);
+          const unchangedText = sequence1.getText(unchangedRange);
+          const unchangedTextWithoutWs = unchangedText.replace(/\s/g, "");
+          if (unchangedTextWithoutWs.length <= 4 && (before.seq1Range.length + before.seq2Range.length > 5 || after.seq1Range.length + after.seq2Range.length > 5)) {
+            return true;
+          }
+          return false;
+        };
+        const cur = diffs[i];
+        const lastResult = result[result.length - 1];
+        const shouldJoin = shouldJoinDiffs(lastResult, cur);
+        if (shouldJoin) {
+          shouldRepeat = true;
+          result[result.length - 1] = result[result.length - 1].join(cur);
+        } else {
+          result.push(cur);
+        }
+      }
+      diffs = result;
+    } while (counter++ < 10 && shouldRepeat);
+    return diffs;
+  }
+  function removeVeryShortMatchingTextBetweenLongDiffs(sequence1, sequence2, sequenceDiffs) {
+    let diffs = sequenceDiffs;
+    if (diffs.length === 0) {
+      return diffs;
+    }
+    let counter = 0;
+    let shouldRepeat;
+    do {
+      shouldRepeat = false;
+      const result = [
+        diffs[0]
+      ];
+      for (let i = 1; i < diffs.length; i++) {
+        let shouldJoinDiffs = function(before, after) {
+          const unchangedRange = new OffsetRange(lastResult.seq1Range.endExclusive, cur.seq1Range.start);
+          const unchangedLineCount = sequence1.countLinesIn(unchangedRange);
+          if (unchangedLineCount > 5 || unchangedRange.length > 500) {
+            return false;
+          }
+          const unchangedText = sequence1.getText(unchangedRange).trim();
+          if (unchangedText.length > 20 || unchangedText.split(/\r\n|\r|\n/).length > 1) {
+            return false;
+          }
+          const beforeLineCount1 = sequence1.countLinesIn(before.seq1Range);
+          const beforeSeq1Length = before.seq1Range.length;
+          const beforeLineCount2 = sequence2.countLinesIn(before.seq2Range);
+          const beforeSeq2Length = before.seq2Range.length;
+          const afterLineCount1 = sequence1.countLinesIn(after.seq1Range);
+          const afterSeq1Length = after.seq1Range.length;
+          const afterLineCount2 = sequence2.countLinesIn(after.seq2Range);
+          const afterSeq2Length = after.seq2Range.length;
+          const max = 2 * 40 + 50;
+          function cap(v) {
+            return Math.min(v, max);
+          }
+          if (Math.pow(Math.pow(cap(beforeLineCount1 * 40 + beforeSeq1Length), 1.5) + Math.pow(cap(beforeLineCount2 * 40 + beforeSeq2Length), 1.5), 1.5) + Math.pow(Math.pow(cap(afterLineCount1 * 40 + afterSeq1Length), 1.5) + Math.pow(cap(afterLineCount2 * 40 + afterSeq2Length), 1.5), 1.5) > (max ** 1.5) ** 1.5 * 1.3) {
+            return true;
+          }
+          return false;
+        };
+        const cur = diffs[i];
+        const lastResult = result[result.length - 1];
+        const shouldJoin = shouldJoinDiffs(lastResult, cur);
+        if (shouldJoin) {
+          shouldRepeat = true;
+          result[result.length - 1] = result[result.length - 1].join(cur);
+        } else {
+          result.push(cur);
+        }
+      }
+      diffs = result;
+    } while (counter++ < 10 && shouldRepeat);
+    const newDiffs = [];
+    forEachWithNeighbors(diffs, (prev, cur, next) => {
+      let newDiff = cur;
+      function shouldMarkAsChanged(text) {
+        return text.length > 0 && text.trim().length <= 3 && cur.seq1Range.length + cur.seq2Range.length > 100;
+      }
+      const fullRange1 = sequence1.extendToFullLines(cur.seq1Range);
+      const prefix = sequence1.getText(new OffsetRange(fullRange1.start, cur.seq1Range.start));
+      if (shouldMarkAsChanged(prefix)) {
+        newDiff = newDiff.deltaStart(-prefix.length);
+      }
+      const suffix = sequence1.getText(new OffsetRange(cur.seq1Range.endExclusive, fullRange1.endExclusive));
+      if (shouldMarkAsChanged(suffix)) {
+        newDiff = newDiff.deltaEnd(suffix.length);
+      }
+      const availableSpace = SequenceDiff.fromOffsetPairs(prev ? prev.getEndExclusives() : OffsetPair.zero, next ? next.getStarts() : OffsetPair.max);
+      const result = newDiff.intersect(availableSpace);
+      if (newDiffs.length > 0 && result.getStarts().equals(newDiffs[newDiffs.length - 1].getEndExclusives())) {
+        newDiffs[newDiffs.length - 1] = newDiffs[newDiffs.length - 1].join(result);
+      } else {
+        newDiffs.push(result);
+      }
+    });
+    return newDiffs;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/lineSequence.js
+  var LineSequence2 = class {
+    constructor(trimmedHash, lines) {
+      this.trimmedHash = trimmedHash;
+      this.lines = lines;
+    }
+    getElement(offset) {
+      return this.trimmedHash[offset];
+    }
+    get length() {
+      return this.trimmedHash.length;
+    }
+    getBoundaryScore(length) {
+      const indentationBefore = length === 0 ? 0 : getIndentation(this.lines[length - 1]);
+      const indentationAfter = length === this.lines.length ? 0 : getIndentation(this.lines[length]);
+      return 1e3 - (indentationBefore + indentationAfter);
+    }
+    getText(range) {
+      return this.lines.slice(range.start, range.endExclusive).join("\n");
+    }
+    isStronglyEqual(offset1, offset2) {
+      return this.lines[offset1] === this.lines[offset2];
+    }
+  };
+  function getIndentation(str) {
+    let i = 0;
+    while (i < str.length && (str.charCodeAt(i) === 32 || str.charCodeAt(i) === 9)) {
+      i++;
+    }
+    return i;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/defaultLinesDiffComputer/defaultLinesDiffComputer.js
+  var DefaultLinesDiffComputer = class {
+    constructor() {
+      this.dynamicProgrammingDiffing = new DynamicProgrammingDiffing();
+      this.myersDiffingAlgorithm = new MyersDiffAlgorithm();
+    }
+    computeDiff(originalLines, modifiedLines, options) {
+      if (originalLines.length <= 1 && equals2(originalLines, modifiedLines, (a, b) => a === b)) {
+        return new LinesDiff([], [], false);
+      }
+      if (originalLines.length === 1 && originalLines[0].length === 0 || modifiedLines.length === 1 && modifiedLines[0].length === 0) {
+        return new LinesDiff([
+          new DetailedLineRangeMapping(new LineRange(1, originalLines.length + 1), new LineRange(1, modifiedLines.length + 1), [
+            new RangeMapping(new Range(1, 1, originalLines.length, originalLines[originalLines.length - 1].length + 1), new Range(1, 1, modifiedLines.length, modifiedLines[modifiedLines.length - 1].length + 1))
+          ])
+        ], [], false);
+      }
+      const timeout = options.maxComputationTimeMs === 0 ? InfiniteTimeout.instance : new DateTimeout(options.maxComputationTimeMs);
+      const considerWhitespaceChanges = !options.ignoreTrimWhitespace;
+      const perfectHashes = /* @__PURE__ */ new Map();
+      function getOrCreateHash(text) {
+        let hash = perfectHashes.get(text);
+        if (hash === void 0) {
+          hash = perfectHashes.size;
+          perfectHashes.set(text, hash);
+        }
+        return hash;
+      }
+      const originalLinesHashes = originalLines.map((l) => getOrCreateHash(l.trim()));
+      const modifiedLinesHashes = modifiedLines.map((l) => getOrCreateHash(l.trim()));
+      const sequence1 = new LineSequence2(originalLinesHashes, originalLines);
+      const sequence2 = new LineSequence2(modifiedLinesHashes, modifiedLines);
+      const lineAlignmentResult = (() => {
+        if (sequence1.length + sequence2.length < 1700) {
+          return this.dynamicProgrammingDiffing.compute(sequence1, sequence2, timeout, (offset1, offset2) => originalLines[offset1] === modifiedLines[offset2] ? modifiedLines[offset2].length === 0 ? 0.1 : 1 + Math.log(1 + modifiedLines[offset2].length) : 0.99);
+        }
+        return this.myersDiffingAlgorithm.compute(sequence1, sequence2, timeout);
+      })();
+      let lineAlignments = lineAlignmentResult.diffs;
+      let hitTimeout = lineAlignmentResult.hitTimeout;
+      lineAlignments = optimizeSequenceDiffs(sequence1, sequence2, lineAlignments);
+      lineAlignments = removeVeryShortMatchingLinesBetweenDiffs(sequence1, sequence2, lineAlignments);
+      const alignments = [];
+      const scanForWhitespaceChanges = (equalLinesCount) => {
+        if (!considerWhitespaceChanges) {
+          return;
+        }
+        for (let i = 0; i < equalLinesCount; i++) {
+          const seq1Offset = seq1LastStart + i;
+          const seq2Offset = seq2LastStart + i;
+          if (originalLines[seq1Offset] !== modifiedLines[seq2Offset]) {
+            const characterDiffs = this.refineDiff(originalLines, modifiedLines, new SequenceDiff(new OffsetRange(seq1Offset, seq1Offset + 1), new OffsetRange(seq2Offset, seq2Offset + 1)), timeout, considerWhitespaceChanges, options);
+            for (const a of characterDiffs.mappings) {
+              alignments.push(a);
+            }
+            if (characterDiffs.hitTimeout) {
+              hitTimeout = true;
+            }
+          }
+        }
+      };
+      let seq1LastStart = 0;
+      let seq2LastStart = 0;
+      for (const diff of lineAlignments) {
+        assertFn(() => diff.seq1Range.start - seq1LastStart === diff.seq2Range.start - seq2LastStart);
+        const equalLinesCount = diff.seq1Range.start - seq1LastStart;
+        scanForWhitespaceChanges(equalLinesCount);
+        seq1LastStart = diff.seq1Range.endExclusive;
+        seq2LastStart = diff.seq2Range.endExclusive;
+        const characterDiffs = this.refineDiff(originalLines, modifiedLines, diff, timeout, considerWhitespaceChanges, options);
+        if (characterDiffs.hitTimeout) {
+          hitTimeout = true;
+        }
+        for (const a of characterDiffs.mappings) {
+          alignments.push(a);
+        }
+      }
+      scanForWhitespaceChanges(originalLines.length - seq1LastStart);
+      const original = new ArrayText(originalLines);
+      const modified = new ArrayText(modifiedLines);
+      const changes = lineRangeMappingFromRangeMappings(alignments, original, modified);
+      let moves = [];
+      if (options.computeMoves) {
+        moves = this.computeMoves(changes, originalLines, modifiedLines, originalLinesHashes, modifiedLinesHashes, timeout, considerWhitespaceChanges, options);
+      }
+      assertFn(() => {
+        function validatePosition(pos, lines) {
+          if (pos.lineNumber < 1 || pos.lineNumber > lines.length) {
+            return false;
+          }
+          const line = lines[pos.lineNumber - 1];
+          if (pos.column < 1 || pos.column > line.length + 1) {
+            return false;
+          }
+          return true;
+        }
+        function validateRange(range, lines) {
+          if (range.startLineNumber < 1 || range.startLineNumber > lines.length + 1) {
+            return false;
+          }
+          if (range.endLineNumberExclusive < 1 || range.endLineNumberExclusive > lines.length + 1) {
+            return false;
+          }
+          return true;
+        }
+        for (const c of changes) {
+          if (!c.innerChanges) {
+            return false;
+          }
+          for (const ic of c.innerChanges) {
+            const valid = validatePosition(ic.modifiedRange.getStartPosition(), modifiedLines) && validatePosition(ic.modifiedRange.getEndPosition(), modifiedLines) && validatePosition(ic.originalRange.getStartPosition(), originalLines) && validatePosition(ic.originalRange.getEndPosition(), originalLines);
+            if (!valid) {
+              return false;
+            }
+          }
+          if (!validateRange(c.modified, modifiedLines) || !validateRange(c.original, originalLines)) {
+            return false;
+          }
+        }
+        return true;
+      });
+      return new LinesDiff(changes, moves, hitTimeout);
+    }
+    computeMoves(changes, originalLines, modifiedLines, hashedOriginalLines, hashedModifiedLines, timeout, considerWhitespaceChanges, options) {
+      const moves = computeMovedLines(changes, originalLines, modifiedLines, hashedOriginalLines, hashedModifiedLines, timeout);
+      const movesWithDiffs = moves.map((m) => {
+        const moveChanges = this.refineDiff(originalLines, modifiedLines, new SequenceDiff(m.original.toOffsetRange(), m.modified.toOffsetRange()), timeout, considerWhitespaceChanges, options);
+        const mappings = lineRangeMappingFromRangeMappings(moveChanges.mappings, new ArrayText(originalLines), new ArrayText(modifiedLines), true);
+        return new MovedText(m, mappings);
+      });
+      return movesWithDiffs;
+    }
+    refineDiff(originalLines, modifiedLines, diff, timeout, considerWhitespaceChanges, options) {
+      const lineRangeMapping = toLineRangeMapping(diff);
+      const rangeMapping = lineRangeMapping.toRangeMapping2(originalLines, modifiedLines);
+      const slice1 = new LinesSliceCharSequence(originalLines, rangeMapping.originalRange, considerWhitespaceChanges);
+      const slice2 = new LinesSliceCharSequence(modifiedLines, rangeMapping.modifiedRange, considerWhitespaceChanges);
+      const diffResult = slice1.length + slice2.length < 500 ? this.dynamicProgrammingDiffing.compute(slice1, slice2, timeout) : this.myersDiffingAlgorithm.compute(slice1, slice2, timeout);
+      let diffs = diffResult.diffs;
+      diffs = optimizeSequenceDiffs(slice1, slice2, diffs);
+      diffs = extendDiffsToEntireWordIfAppropriate(slice1, slice2, diffs, (seq, idx) => seq.findWordContaining(idx));
+      if (options.extendToSubwords) {
+        diffs = extendDiffsToEntireWordIfAppropriate(slice1, slice2, diffs, (seq, idx) => seq.findSubWordContaining(idx), true);
+      }
+      diffs = removeShortMatches(slice1, slice2, diffs);
+      diffs = removeVeryShortMatchingTextBetweenLongDiffs(slice1, slice2, diffs);
+      const result = diffs.map((d) => new RangeMapping(slice1.translateRange(d.seq1Range), slice2.translateRange(d.seq2Range)));
+      return {
+        mappings: result,
+        hitTimeout: diffResult.hitTimeout
+      };
+    }
+  };
+  function toLineRangeMapping(sequenceDiff) {
+    return new LineRangeMapping(new LineRange(sequenceDiff.seq1Range.start + 1, sequenceDiff.seq1Range.endExclusive + 1), new LineRange(sequenceDiff.seq2Range.start + 1, sequenceDiff.seq2Range.endExclusive + 1));
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/diff/linesDiffComputers.js
+  var linesDiffComputers = {
+    getLegacy: () => new LegacyLinesDiffComputer(),
+    getDefault: () => new DefaultLinesDiffComputer()
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/color.js
+  function roundFloat(number, decimalPoints) {
+    const decimal = Math.pow(10, decimalPoints);
+    return Math.round(number * decimal) / decimal;
+  }
+  var RGBA = class {
+    constructor(r, g, b, a = 1) {
+      this._rgbaBrand = void 0;
+      this.r = Math.min(255, Math.max(0, r)) | 0;
+      this.g = Math.min(255, Math.max(0, g)) | 0;
+      this.b = Math.min(255, Math.max(0, b)) | 0;
+      this.a = roundFloat(Math.max(Math.min(1, a), 0), 3);
+    }
+    static equals(a, b) {
+      return a.r === b.r && a.g === b.g && a.b === b.b && a.a === b.a;
+    }
+  };
+  var HSLA = class _HSLA {
+    constructor(h, s, l, a) {
+      this._hslaBrand = void 0;
+      this.h = Math.max(Math.min(360, h), 0) | 0;
+      this.s = roundFloat(Math.max(Math.min(1, s), 0), 3);
+      this.l = roundFloat(Math.max(Math.min(1, l), 0), 3);
+      this.a = roundFloat(Math.max(Math.min(1, a), 0), 3);
+    }
+    static equals(a, b) {
+      return a.h === b.h && a.s === b.s && a.l === b.l && a.a === b.a;
+    }
+    /**
+     * Converts an RGB color value to HSL. Conversion formula
+     * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+     * Assumes r, g, and b are contained in the set [0, 255] and
+     * returns h in the set [0, 360], s, and l in the set [0, 1].
+     */
+    static fromRGBA(rgba) {
+      const r = rgba.r / 255;
+      const g = rgba.g / 255;
+      const b = rgba.b / 255;
+      const a = rgba.a;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h = 0;
+      let s = 0;
+      const l = (min + max) / 2;
+      const chroma = max - min;
+      if (chroma > 0) {
+        s = Math.min(l <= 0.5 ? chroma / (2 * l) : chroma / (2 - 2 * l), 1);
+        switch (max) {
+          case r:
+            h = (g - b) / chroma + (g < b ? 6 : 0);
+            break;
+          case g:
+            h = (b - r) / chroma + 2;
+            break;
+          case b:
+            h = (r - g) / chroma + 4;
+            break;
+        }
+        h *= 60;
+        h = Math.round(h);
+      }
+      return new _HSLA(h, s, l, a);
+    }
+    static _hue2rgb(p, q, t) {
+      if (t < 0) {
+        t += 1;
+      }
+      if (t > 1) {
+        t -= 1;
+      }
+      if (t < 1 / 6) {
+        return p + (q - p) * 6 * t;
+      }
+      if (t < 1 / 2) {
+        return q;
+      }
+      if (t < 2 / 3) {
+        return p + (q - p) * (2 / 3 - t) * 6;
+      }
+      return p;
+    }
+    /**
+     * Converts an HSL color value to RGB. Conversion formula
+     * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+     * Assumes h in the set [0, 360] s, and l are contained in the set [0, 1] and
+     * returns r, g, and b in the set [0, 255].
+     */
+    static toRGBA(hsla) {
+      const h = hsla.h / 360;
+      const { s, l, a } = hsla;
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = _HSLA._hue2rgb(p, q, h + 1 / 3);
+        g = _HSLA._hue2rgb(p, q, h);
+        b = _HSLA._hue2rgb(p, q, h - 1 / 3);
+      }
+      return new RGBA(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a);
+    }
+  };
+  var HSVA = class _HSVA {
+    constructor(h, s, v, a) {
+      this._hsvaBrand = void 0;
+      this.h = Math.max(Math.min(360, h), 0) | 0;
+      this.s = roundFloat(Math.max(Math.min(1, s), 0), 3);
+      this.v = roundFloat(Math.max(Math.min(1, v), 0), 3);
+      this.a = roundFloat(Math.max(Math.min(1, a), 0), 3);
+    }
+    static equals(a, b) {
+      return a.h === b.h && a.s === b.s && a.v === b.v && a.a === b.a;
+    }
+    // from http://www.rapidtables.com/convert/color/rgb-to-hsv.htm
+    static fromRGBA(rgba) {
+      const r = rgba.r / 255;
+      const g = rgba.g / 255;
+      const b = rgba.b / 255;
+      const cmax = Math.max(r, g, b);
+      const cmin = Math.min(r, g, b);
+      const delta = cmax - cmin;
+      const s = cmax === 0 ? 0 : delta / cmax;
+      let m;
+      if (delta === 0) {
+        m = 0;
+      } else if (cmax === r) {
+        m = ((g - b) / delta % 6 + 6) % 6;
+      } else if (cmax === g) {
+        m = (b - r) / delta + 2;
+      } else {
+        m = (r - g) / delta + 4;
+      }
+      return new _HSVA(Math.round(m * 60), s, cmax, rgba.a);
+    }
+    // from http://www.rapidtables.com/convert/color/hsv-to-rgb.htm
+    static toRGBA(hsva) {
+      const { h, s, v, a } = hsva;
+      const c = v * s;
+      const x = c * (1 - Math.abs(h / 60 % 2 - 1));
+      const m = v - c;
+      let [r, g, b] = [0, 0, 0];
+      if (h < 60) {
+        r = c;
+        g = x;
+      } else if (h < 120) {
+        r = x;
+        g = c;
+      } else if (h < 180) {
+        g = c;
+        b = x;
+      } else if (h < 240) {
+        g = x;
+        b = c;
+      } else if (h < 300) {
+        r = x;
+        b = c;
+      } else if (h <= 360) {
+        r = c;
+        b = x;
+      }
+      r = Math.round((r + m) * 255);
+      g = Math.round((g + m) * 255);
+      b = Math.round((b + m) * 255);
+      return new RGBA(r, g, b, a);
+    }
+  };
+  var Color = class _Color {
+    static fromHex(hex) {
+      return _Color.Format.CSS.parseHex(hex) || _Color.red;
+    }
+    static equals(a, b) {
+      if (!a && !b) {
+        return true;
+      }
+      if (!a || !b) {
+        return false;
+      }
+      return a.equals(b);
+    }
+    get hsla() {
+      if (this._hsla) {
+        return this._hsla;
+      } else {
+        return HSLA.fromRGBA(this.rgba);
+      }
+    }
+    get hsva() {
+      if (this._hsva) {
+        return this._hsva;
+      }
+      return HSVA.fromRGBA(this.rgba);
+    }
+    constructor(arg) {
+      if (!arg) {
+        throw new Error("Color needs a value");
+      } else if (arg instanceof RGBA) {
+        this.rgba = arg;
+      } else if (arg instanceof HSLA) {
+        this._hsla = arg;
+        this.rgba = HSLA.toRGBA(arg);
+      } else if (arg instanceof HSVA) {
+        this._hsva = arg;
+        this.rgba = HSVA.toRGBA(arg);
+      } else {
+        throw new Error("Invalid color ctor argument");
+      }
+    }
+    equals(other) {
+      return !!other && RGBA.equals(this.rgba, other.rgba) && HSLA.equals(this.hsla, other.hsla) && HSVA.equals(this.hsva, other.hsva);
+    }
+    /**
+     * http://www.w3.org/TR/WCAG20/#relativeluminancedef
+     * Returns the number in the set [0, 1]. O => Darkest Black. 1 => Lightest white.
+     */
+    getRelativeLuminance() {
+      const R = _Color._relativeLuminanceForComponent(this.rgba.r);
+      const G = _Color._relativeLuminanceForComponent(this.rgba.g);
+      const B = _Color._relativeLuminanceForComponent(this.rgba.b);
+      const luminance = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+      return roundFloat(luminance, 4);
+    }
+    static _relativeLuminanceForComponent(color) {
+      const c = color / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+    /**
+     *	http://24ways.org/2010/calculating-color-contrast
+     *  Return 'true' if lighter color otherwise 'false'
+     */
+    isLighter() {
+      const yiq = (this.rgba.r * 299 + this.rgba.g * 587 + this.rgba.b * 114) / 1e3;
+      return yiq >= 128;
+    }
+    isLighterThan(another) {
+      const lum1 = this.getRelativeLuminance();
+      const lum2 = another.getRelativeLuminance();
+      return lum1 > lum2;
+    }
+    isDarkerThan(another) {
+      const lum1 = this.getRelativeLuminance();
+      const lum2 = another.getRelativeLuminance();
+      return lum1 < lum2;
+    }
+    lighten(factor) {
+      return new _Color(new HSLA(this.hsla.h, this.hsla.s, this.hsla.l + this.hsla.l * factor, this.hsla.a));
+    }
+    darken(factor) {
+      return new _Color(new HSLA(this.hsla.h, this.hsla.s, this.hsla.l - this.hsla.l * factor, this.hsla.a));
+    }
+    transparent(factor) {
+      const { r, g, b, a } = this.rgba;
+      return new _Color(new RGBA(r, g, b, a * factor));
+    }
+    isTransparent() {
+      return this.rgba.a === 0;
+    }
+    isOpaque() {
+      return this.rgba.a === 1;
+    }
+    opposite() {
+      return new _Color(new RGBA(255 - this.rgba.r, 255 - this.rgba.g, 255 - this.rgba.b, this.rgba.a));
+    }
+    /**
+     * Mixes the current color with the provided color based on the given factor.
+     * @param color The color to mix with
+     * @param factor The factor of mixing (0 means this color, 1 means the input color, 0.5 means equal mix)
+     * @returns A new color representing the mix
+     */
+    mix(color, factor = 0.5) {
+      const normalize2 = Math.min(Math.max(factor, 0), 1);
+      const thisRGBA = this.rgba;
+      const otherRGBA = color.rgba;
+      const r = thisRGBA.r + (otherRGBA.r - thisRGBA.r) * normalize2;
+      const g = thisRGBA.g + (otherRGBA.g - thisRGBA.g) * normalize2;
+      const b = thisRGBA.b + (otherRGBA.b - thisRGBA.b) * normalize2;
+      const a = thisRGBA.a + (otherRGBA.a - thisRGBA.a) * normalize2;
+      return new _Color(new RGBA(r, g, b, a));
+    }
+    makeOpaque(opaqueBackground) {
+      if (this.isOpaque() || opaqueBackground.rgba.a !== 1) {
+        return this;
+      }
+      const { r, g, b, a } = this.rgba;
+      return new _Color(new RGBA(opaqueBackground.rgba.r - a * (opaqueBackground.rgba.r - r), opaqueBackground.rgba.g - a * (opaqueBackground.rgba.g - g), opaqueBackground.rgba.b - a * (opaqueBackground.rgba.b - b), 1));
+    }
+    toString() {
+      if (!this._toString) {
+        this._toString = _Color.Format.CSS.format(this);
+      }
+      return this._toString;
+    }
+    toNumber32Bit() {
+      if (!this._toNumber32Bit) {
+        this._toNumber32Bit = (this.rgba.r << 24 | this.rgba.g << 16 | this.rgba.b << 8 | this.rgba.a * 255 << 0) >>> 0;
+      }
+      return this._toNumber32Bit;
+    }
+    static getLighterColor(of, relative2, factor) {
+      if (of.isLighterThan(relative2)) {
+        return of;
+      }
+      factor = factor ? factor : 0.5;
+      const lum1 = of.getRelativeLuminance();
+      const lum2 = relative2.getRelativeLuminance();
+      factor = factor * (lum2 - lum1) / lum2;
+      return of.lighten(factor);
+    }
+    static getDarkerColor(of, relative2, factor) {
+      if (of.isDarkerThan(relative2)) {
+        return of;
+      }
+      factor = factor ? factor : 0.5;
+      const lum1 = of.getRelativeLuminance();
+      const lum2 = relative2.getRelativeLuminance();
+      factor = factor * (lum1 - lum2) / lum1;
+      return of.darken(factor);
+    }
+    static {
+      this.white = new _Color(new RGBA(255, 255, 255, 1));
+    }
+    static {
+      this.black = new _Color(new RGBA(0, 0, 0, 1));
+    }
+    static {
+      this.red = new _Color(new RGBA(255, 0, 0, 1));
+    }
+    static {
+      this.blue = new _Color(new RGBA(0, 0, 255, 1));
+    }
+    static {
+      this.green = new _Color(new RGBA(0, 255, 0, 1));
+    }
+    static {
+      this.cyan = new _Color(new RGBA(0, 255, 255, 1));
+    }
+    static {
+      this.lightgrey = new _Color(new RGBA(211, 211, 211, 1));
+    }
+    static {
+      this.transparent = new _Color(new RGBA(0, 0, 0, 0));
+    }
+  };
+  (function(Color2) {
+    (function(Format) {
+      (function(CSS) {
+        function formatRGB(color) {
+          if (color.rgba.a === 1) {
+            return `rgb(${color.rgba.r}, ${color.rgba.g}, ${color.rgba.b})`;
+          }
+          return Color2.Format.CSS.formatRGBA(color);
+        }
+        CSS.formatRGB = formatRGB;
+        function formatRGBA(color) {
+          return `rgba(${color.rgba.r}, ${color.rgba.g}, ${color.rgba.b}, ${+color.rgba.a.toFixed(2)})`;
+        }
+        CSS.formatRGBA = formatRGBA;
+        function formatHSL(color) {
+          if (color.hsla.a === 1) {
+            return `hsl(${color.hsla.h}, ${Math.round(color.hsla.s * 100)}%, ${Math.round(color.hsla.l * 100)}%)`;
+          }
+          return Color2.Format.CSS.formatHSLA(color);
+        }
+        CSS.formatHSL = formatHSL;
+        function formatHSLA(color) {
+          return `hsla(${color.hsla.h}, ${Math.round(color.hsla.s * 100)}%, ${Math.round(color.hsla.l * 100)}%, ${color.hsla.a.toFixed(2)})`;
+        }
+        CSS.formatHSLA = formatHSLA;
+        function _toTwoDigitHex(n) {
+          const r = n.toString(16);
+          return r.length !== 2 ? "0" + r : r;
+        }
+        function formatHex(color) {
+          return `#${_toTwoDigitHex(color.rgba.r)}${_toTwoDigitHex(color.rgba.g)}${_toTwoDigitHex(color.rgba.b)}`;
+        }
+        CSS.formatHex = formatHex;
+        function formatHexA(color, compact = false) {
+          if (compact && color.rgba.a === 1) {
+            return Color2.Format.CSS.formatHex(color);
+          }
+          return `#${_toTwoDigitHex(color.rgba.r)}${_toTwoDigitHex(color.rgba.g)}${_toTwoDigitHex(color.rgba.b)}${_toTwoDigitHex(Math.round(color.rgba.a * 255))}`;
+        }
+        CSS.formatHexA = formatHexA;
+        function format(color) {
+          if (color.isOpaque()) {
+            return Color2.Format.CSS.formatHex(color);
+          }
+          return Color2.Format.CSS.formatRGBA(color);
+        }
+        CSS.format = format;
+        function parse(css) {
+          if (css === "transparent") {
+            return Color2.transparent;
+          }
+          if (css.startsWith("#")) {
+            return parseHex(css);
+          }
+          if (css.startsWith("rgba(")) {
+            const color = css.match(/rgba\((?<r>(?:\+|-)?\d+), *(?<g>(?:\+|-)?\d+), *(?<b>(?:\+|-)?\d+), *(?<a>(?:\+|-)?\d+(\.\d+)?)\)/);
+            if (!color) {
+              throw new Error("Invalid color format " + css);
+            }
+            const r = parseInt(color.groups?.r ?? "0");
+            const g = parseInt(color.groups?.g ?? "0");
+            const b = parseInt(color.groups?.b ?? "0");
+            const a = parseFloat(color.groups?.a ?? "0");
+            return new Color2(new RGBA(r, g, b, a));
+          }
+          if (css.startsWith("rgb(")) {
+            const color = css.match(/rgb\((?<r>(?:\+|-)?\d+), *(?<g>(?:\+|-)?\d+), *(?<b>(?:\+|-)?\d+)\)/);
+            if (!color) {
+              throw new Error("Invalid color format " + css);
+            }
+            const r = parseInt(color.groups?.r ?? "0");
+            const g = parseInt(color.groups?.g ?? "0");
+            const b = parseInt(color.groups?.b ?? "0");
+            return new Color2(new RGBA(r, g, b));
+          }
+          return parseNamedKeyword(css);
+        }
+        CSS.parse = parse;
+        function parseNamedKeyword(css) {
+          switch (css) {
+            case "aliceblue":
+              return new Color2(new RGBA(240, 248, 255, 1));
+            case "antiquewhite":
+              return new Color2(new RGBA(250, 235, 215, 1));
+            case "aqua":
+              return new Color2(new RGBA(0, 255, 255, 1));
+            case "aquamarine":
+              return new Color2(new RGBA(127, 255, 212, 1));
+            case "azure":
+              return new Color2(new RGBA(240, 255, 255, 1));
+            case "beige":
+              return new Color2(new RGBA(245, 245, 220, 1));
+            case "bisque":
+              return new Color2(new RGBA(255, 228, 196, 1));
+            case "black":
+              return new Color2(new RGBA(0, 0, 0, 1));
+            case "blanchedalmond":
+              return new Color2(new RGBA(255, 235, 205, 1));
+            case "blue":
+              return new Color2(new RGBA(0, 0, 255, 1));
+            case "blueviolet":
+              return new Color2(new RGBA(138, 43, 226, 1));
+            case "brown":
+              return new Color2(new RGBA(165, 42, 42, 1));
+            case "burlywood":
+              return new Color2(new RGBA(222, 184, 135, 1));
+            case "cadetblue":
+              return new Color2(new RGBA(95, 158, 160, 1));
+            case "chartreuse":
+              return new Color2(new RGBA(127, 255, 0, 1));
+            case "chocolate":
+              return new Color2(new RGBA(210, 105, 30, 1));
+            case "coral":
+              return new Color2(new RGBA(255, 127, 80, 1));
+            case "cornflowerblue":
+              return new Color2(new RGBA(100, 149, 237, 1));
+            case "cornsilk":
+              return new Color2(new RGBA(255, 248, 220, 1));
+            case "crimson":
+              return new Color2(new RGBA(220, 20, 60, 1));
+            case "cyan":
+              return new Color2(new RGBA(0, 255, 255, 1));
+            case "darkblue":
+              return new Color2(new RGBA(0, 0, 139, 1));
+            case "darkcyan":
+              return new Color2(new RGBA(0, 139, 139, 1));
+            case "darkgoldenrod":
+              return new Color2(new RGBA(184, 134, 11, 1));
+            case "darkgray":
+              return new Color2(new RGBA(169, 169, 169, 1));
+            case "darkgreen":
+              return new Color2(new RGBA(0, 100, 0, 1));
+            case "darkgrey":
+              return new Color2(new RGBA(169, 169, 169, 1));
+            case "darkkhaki":
+              return new Color2(new RGBA(189, 183, 107, 1));
+            case "darkmagenta":
+              return new Color2(new RGBA(139, 0, 139, 1));
+            case "darkolivegreen":
+              return new Color2(new RGBA(85, 107, 47, 1));
+            case "darkorange":
+              return new Color2(new RGBA(255, 140, 0, 1));
+            case "darkorchid":
+              return new Color2(new RGBA(153, 50, 204, 1));
+            case "darkred":
+              return new Color2(new RGBA(139, 0, 0, 1));
+            case "darksalmon":
+              return new Color2(new RGBA(233, 150, 122, 1));
+            case "darkseagreen":
+              return new Color2(new RGBA(143, 188, 143, 1));
+            case "darkslateblue":
+              return new Color2(new RGBA(72, 61, 139, 1));
+            case "darkslategray":
+              return new Color2(new RGBA(47, 79, 79, 1));
+            case "darkslategrey":
+              return new Color2(new RGBA(47, 79, 79, 1));
+            case "darkturquoise":
+              return new Color2(new RGBA(0, 206, 209, 1));
+            case "darkviolet":
+              return new Color2(new RGBA(148, 0, 211, 1));
+            case "deeppink":
+              return new Color2(new RGBA(255, 20, 147, 1));
+            case "deepskyblue":
+              return new Color2(new RGBA(0, 191, 255, 1));
+            case "dimgray":
+              return new Color2(new RGBA(105, 105, 105, 1));
+            case "dimgrey":
+              return new Color2(new RGBA(105, 105, 105, 1));
+            case "dodgerblue":
+              return new Color2(new RGBA(30, 144, 255, 1));
+            case "firebrick":
+              return new Color2(new RGBA(178, 34, 34, 1));
+            case "floralwhite":
+              return new Color2(new RGBA(255, 250, 240, 1));
+            case "forestgreen":
+              return new Color2(new RGBA(34, 139, 34, 1));
+            case "fuchsia":
+              return new Color2(new RGBA(255, 0, 255, 1));
+            case "gainsboro":
+              return new Color2(new RGBA(220, 220, 220, 1));
+            case "ghostwhite":
+              return new Color2(new RGBA(248, 248, 255, 1));
+            case "gold":
+              return new Color2(new RGBA(255, 215, 0, 1));
+            case "goldenrod":
+              return new Color2(new RGBA(218, 165, 32, 1));
+            case "gray":
+              return new Color2(new RGBA(128, 128, 128, 1));
+            case "green":
+              return new Color2(new RGBA(0, 128, 0, 1));
+            case "greenyellow":
+              return new Color2(new RGBA(173, 255, 47, 1));
+            case "grey":
+              return new Color2(new RGBA(128, 128, 128, 1));
+            case "honeydew":
+              return new Color2(new RGBA(240, 255, 240, 1));
+            case "hotpink":
+              return new Color2(new RGBA(255, 105, 180, 1));
+            case "indianred":
+              return new Color2(new RGBA(205, 92, 92, 1));
+            case "indigo":
+              return new Color2(new RGBA(75, 0, 130, 1));
+            case "ivory":
+              return new Color2(new RGBA(255, 255, 240, 1));
+            case "khaki":
+              return new Color2(new RGBA(240, 230, 140, 1));
+            case "lavender":
+              return new Color2(new RGBA(230, 230, 250, 1));
+            case "lavenderblush":
+              return new Color2(new RGBA(255, 240, 245, 1));
+            case "lawngreen":
+              return new Color2(new RGBA(124, 252, 0, 1));
+            case "lemonchiffon":
+              return new Color2(new RGBA(255, 250, 205, 1));
+            case "lightblue":
+              return new Color2(new RGBA(173, 216, 230, 1));
+            case "lightcoral":
+              return new Color2(new RGBA(240, 128, 128, 1));
+            case "lightcyan":
+              return new Color2(new RGBA(224, 255, 255, 1));
+            case "lightgoldenrodyellow":
+              return new Color2(new RGBA(250, 250, 210, 1));
+            case "lightgray":
+              return new Color2(new RGBA(211, 211, 211, 1));
+            case "lightgreen":
+              return new Color2(new RGBA(144, 238, 144, 1));
+            case "lightgrey":
+              return new Color2(new RGBA(211, 211, 211, 1));
+            case "lightpink":
+              return new Color2(new RGBA(255, 182, 193, 1));
+            case "lightsalmon":
+              return new Color2(new RGBA(255, 160, 122, 1));
+            case "lightseagreen":
+              return new Color2(new RGBA(32, 178, 170, 1));
+            case "lightskyblue":
+              return new Color2(new RGBA(135, 206, 250, 1));
+            case "lightslategray":
+              return new Color2(new RGBA(119, 136, 153, 1));
+            case "lightslategrey":
+              return new Color2(new RGBA(119, 136, 153, 1));
+            case "lightsteelblue":
+              return new Color2(new RGBA(176, 196, 222, 1));
+            case "lightyellow":
+              return new Color2(new RGBA(255, 255, 224, 1));
+            case "lime":
+              return new Color2(new RGBA(0, 255, 0, 1));
+            case "limegreen":
+              return new Color2(new RGBA(50, 205, 50, 1));
+            case "linen":
+              return new Color2(new RGBA(250, 240, 230, 1));
+            case "magenta":
+              return new Color2(new RGBA(255, 0, 255, 1));
+            case "maroon":
+              return new Color2(new RGBA(128, 0, 0, 1));
+            case "mediumaquamarine":
+              return new Color2(new RGBA(102, 205, 170, 1));
+            case "mediumblue":
+              return new Color2(new RGBA(0, 0, 205, 1));
+            case "mediumorchid":
+              return new Color2(new RGBA(186, 85, 211, 1));
+            case "mediumpurple":
+              return new Color2(new RGBA(147, 112, 219, 1));
+            case "mediumseagreen":
+              return new Color2(new RGBA(60, 179, 113, 1));
+            case "mediumslateblue":
+              return new Color2(new RGBA(123, 104, 238, 1));
+            case "mediumspringgreen":
+              return new Color2(new RGBA(0, 250, 154, 1));
+            case "mediumturquoise":
+              return new Color2(new RGBA(72, 209, 204, 1));
+            case "mediumvioletred":
+              return new Color2(new RGBA(199, 21, 133, 1));
+            case "midnightblue":
+              return new Color2(new RGBA(25, 25, 112, 1));
+            case "mintcream":
+              return new Color2(new RGBA(245, 255, 250, 1));
+            case "mistyrose":
+              return new Color2(new RGBA(255, 228, 225, 1));
+            case "moccasin":
+              return new Color2(new RGBA(255, 228, 181, 1));
+            case "navajowhite":
+              return new Color2(new RGBA(255, 222, 173, 1));
+            case "navy":
+              return new Color2(new RGBA(0, 0, 128, 1));
+            case "oldlace":
+              return new Color2(new RGBA(253, 245, 230, 1));
+            case "olive":
+              return new Color2(new RGBA(128, 128, 0, 1));
+            case "olivedrab":
+              return new Color2(new RGBA(107, 142, 35, 1));
+            case "orange":
+              return new Color2(new RGBA(255, 165, 0, 1));
+            case "orangered":
+              return new Color2(new RGBA(255, 69, 0, 1));
+            case "orchid":
+              return new Color2(new RGBA(218, 112, 214, 1));
+            case "palegoldenrod":
+              return new Color2(new RGBA(238, 232, 170, 1));
+            case "palegreen":
+              return new Color2(new RGBA(152, 251, 152, 1));
+            case "paleturquoise":
+              return new Color2(new RGBA(175, 238, 238, 1));
+            case "palevioletred":
+              return new Color2(new RGBA(219, 112, 147, 1));
+            case "papayawhip":
+              return new Color2(new RGBA(255, 239, 213, 1));
+            case "peachpuff":
+              return new Color2(new RGBA(255, 218, 185, 1));
+            case "peru":
+              return new Color2(new RGBA(205, 133, 63, 1));
+            case "pink":
+              return new Color2(new RGBA(255, 192, 203, 1));
+            case "plum":
+              return new Color2(new RGBA(221, 160, 221, 1));
+            case "powderblue":
+              return new Color2(new RGBA(176, 224, 230, 1));
+            case "purple":
+              return new Color2(new RGBA(128, 0, 128, 1));
+            case "rebeccapurple":
+              return new Color2(new RGBA(102, 51, 153, 1));
+            case "red":
+              return new Color2(new RGBA(255, 0, 0, 1));
+            case "rosybrown":
+              return new Color2(new RGBA(188, 143, 143, 1));
+            case "royalblue":
+              return new Color2(new RGBA(65, 105, 225, 1));
+            case "saddlebrown":
+              return new Color2(new RGBA(139, 69, 19, 1));
+            case "salmon":
+              return new Color2(new RGBA(250, 128, 114, 1));
+            case "sandybrown":
+              return new Color2(new RGBA(244, 164, 96, 1));
+            case "seagreen":
+              return new Color2(new RGBA(46, 139, 87, 1));
+            case "seashell":
+              return new Color2(new RGBA(255, 245, 238, 1));
+            case "sienna":
+              return new Color2(new RGBA(160, 82, 45, 1));
+            case "silver":
+              return new Color2(new RGBA(192, 192, 192, 1));
+            case "skyblue":
+              return new Color2(new RGBA(135, 206, 235, 1));
+            case "slateblue":
+              return new Color2(new RGBA(106, 90, 205, 1));
+            case "slategray":
+              return new Color2(new RGBA(112, 128, 144, 1));
+            case "slategrey":
+              return new Color2(new RGBA(112, 128, 144, 1));
+            case "snow":
+              return new Color2(new RGBA(255, 250, 250, 1));
+            case "springgreen":
+              return new Color2(new RGBA(0, 255, 127, 1));
+            case "steelblue":
+              return new Color2(new RGBA(70, 130, 180, 1));
+            case "tan":
+              return new Color2(new RGBA(210, 180, 140, 1));
+            case "teal":
+              return new Color2(new RGBA(0, 128, 128, 1));
+            case "thistle":
+              return new Color2(new RGBA(216, 191, 216, 1));
+            case "tomato":
+              return new Color2(new RGBA(255, 99, 71, 1));
+            case "turquoise":
+              return new Color2(new RGBA(64, 224, 208, 1));
+            case "violet":
+              return new Color2(new RGBA(238, 130, 238, 1));
+            case "wheat":
+              return new Color2(new RGBA(245, 222, 179, 1));
+            case "white":
+              return new Color2(new RGBA(255, 255, 255, 1));
+            case "whitesmoke":
+              return new Color2(new RGBA(245, 245, 245, 1));
+            case "yellow":
+              return new Color2(new RGBA(255, 255, 0, 1));
+            case "yellowgreen":
+              return new Color2(new RGBA(154, 205, 50, 1));
+            default:
+              return null;
+          }
+        }
+        function parseHex(hex) {
+          const length = hex.length;
+          if (length === 0) {
+            return null;
+          }
+          if (hex.charCodeAt(0) !== 35) {
+            return null;
+          }
+          if (length === 7) {
+            const r = 16 * _parseHexDigit(hex.charCodeAt(1)) + _parseHexDigit(hex.charCodeAt(2));
+            const g = 16 * _parseHexDigit(hex.charCodeAt(3)) + _parseHexDigit(hex.charCodeAt(4));
+            const b = 16 * _parseHexDigit(hex.charCodeAt(5)) + _parseHexDigit(hex.charCodeAt(6));
+            return new Color2(new RGBA(r, g, b, 1));
+          }
+          if (length === 9) {
+            const r = 16 * _parseHexDigit(hex.charCodeAt(1)) + _parseHexDigit(hex.charCodeAt(2));
+            const g = 16 * _parseHexDigit(hex.charCodeAt(3)) + _parseHexDigit(hex.charCodeAt(4));
+            const b = 16 * _parseHexDigit(hex.charCodeAt(5)) + _parseHexDigit(hex.charCodeAt(6));
+            const a = 16 * _parseHexDigit(hex.charCodeAt(7)) + _parseHexDigit(hex.charCodeAt(8));
+            return new Color2(new RGBA(r, g, b, a / 255));
+          }
+          if (length === 4) {
+            const r = _parseHexDigit(hex.charCodeAt(1));
+            const g = _parseHexDigit(hex.charCodeAt(2));
+            const b = _parseHexDigit(hex.charCodeAt(3));
+            return new Color2(new RGBA(16 * r + r, 16 * g + g, 16 * b + b));
+          }
+          if (length === 5) {
+            const r = _parseHexDigit(hex.charCodeAt(1));
+            const g = _parseHexDigit(hex.charCodeAt(2));
+            const b = _parseHexDigit(hex.charCodeAt(3));
+            const a = _parseHexDigit(hex.charCodeAt(4));
+            return new Color2(new RGBA(16 * r + r, 16 * g + g, 16 * b + b, (16 * a + a) / 255));
+          }
+          return null;
+        }
+        CSS.parseHex = parseHex;
+        function _parseHexDigit(charCode) {
+          switch (charCode) {
+            case 48:
+              return 0;
+            case 49:
+              return 1;
+            case 50:
+              return 2;
+            case 51:
+              return 3;
+            case 52:
+              return 4;
+            case 53:
+              return 5;
+            case 54:
+              return 6;
+            case 55:
+              return 7;
+            case 56:
+              return 8;
+            case 57:
+              return 9;
+            case 97:
+              return 10;
+            case 65:
+              return 10;
+            case 98:
+              return 11;
+            case 66:
+              return 11;
+            case 99:
+              return 12;
+            case 67:
+              return 12;
+            case 100:
+              return 13;
+            case 68:
+              return 13;
+            case 101:
+              return 14;
+            case 69:
+              return 14;
+            case 102:
+              return 15;
+            case 70:
+              return 15;
+          }
+          return 0;
+        }
+      })(Format.CSS || (Format.CSS = {}));
+    })(Color2.Format || (Color2.Format = {}));
+  })(Color || (Color = {}));
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/languages/defaultDocumentColorsComputer.js
+  function _parseCaptureGroups(captureGroups) {
+    const values = [];
+    for (const captureGroup of captureGroups) {
+      const parsedNumber = Number(captureGroup);
+      if (parsedNumber || parsedNumber === 0 && captureGroup.replace(/\s/g, "") !== "") {
+        values.push(parsedNumber);
+      }
+    }
+    return values;
+  }
+  function _toIColor(r, g, b, a) {
+    return {
+      red: r / 255,
+      blue: b / 255,
+      green: g / 255,
+      alpha: a
+    };
+  }
+  function _findRange(model, match) {
+    const index = match.index;
+    const length = match[0].length;
+    if (index === void 0) {
+      return;
+    }
+    const startPosition = model.positionAt(index);
+    const range = {
+      startLineNumber: startPosition.lineNumber,
+      startColumn: startPosition.column,
+      endLineNumber: startPosition.lineNumber,
+      endColumn: startPosition.column + length
+    };
+    return range;
+  }
+  function _findHexColorInformation(range, hexValue) {
+    if (!range) {
+      return;
+    }
+    const parsedHexColor = Color.Format.CSS.parseHex(hexValue);
+    if (!parsedHexColor) {
+      return;
+    }
+    return {
+      range,
+      color: _toIColor(parsedHexColor.rgba.r, parsedHexColor.rgba.g, parsedHexColor.rgba.b, parsedHexColor.rgba.a)
+    };
+  }
+  function _findRGBColorInformation(range, matches, isAlpha) {
+    if (!range || matches.length !== 1) {
+      return;
+    }
+    const match = matches[0];
+    const captureGroups = match.values();
+    const parsedRegex = _parseCaptureGroups(captureGroups);
+    return {
+      range,
+      color: _toIColor(parsedRegex[0], parsedRegex[1], parsedRegex[2], isAlpha ? parsedRegex[3] : 1)
+    };
+  }
+  function _findHSLColorInformation(range, matches, isAlpha) {
+    if (!range || matches.length !== 1) {
+      return;
+    }
+    const match = matches[0];
+    const captureGroups = match.values();
+    const parsedRegex = _parseCaptureGroups(captureGroups);
+    const colorEquivalent = new Color(new HSLA(parsedRegex[0], parsedRegex[1] / 100, parsedRegex[2] / 100, isAlpha ? parsedRegex[3] : 1));
+    return {
+      range,
+      color: _toIColor(colorEquivalent.rgba.r, colorEquivalent.rgba.g, colorEquivalent.rgba.b, colorEquivalent.rgba.a)
+    };
+  }
+  function _findMatches(model, regex) {
+    if (typeof model === "string") {
+      return [...model.matchAll(regex)];
+    } else {
+      return model.findMatches(regex);
+    }
+  }
+  function computeColors(model) {
+    const result = [];
+    const initialValidationRegex = /\b(rgb|rgba|hsl|hsla)(\([0-9\s,.\%]*\))|^(#)([A-Fa-f0-9]{3})\b|^(#)([A-Fa-f0-9]{4})\b|^(#)([A-Fa-f0-9]{6})\b|^(#)([A-Fa-f0-9]{8})\b|(?<=['"\s])(#)([A-Fa-f0-9]{3})\b|(?<=['"\s])(#)([A-Fa-f0-9]{4})\b|(?<=['"\s])(#)([A-Fa-f0-9]{6})\b|(?<=['"\s])(#)([A-Fa-f0-9]{8})\b/gm;
+    const initialValidationMatches = _findMatches(model, initialValidationRegex);
+    if (initialValidationMatches.length > 0) {
+      for (const initialMatch of initialValidationMatches) {
+        const initialCaptureGroups = initialMatch.filter((captureGroup) => captureGroup !== void 0);
+        const colorScheme = initialCaptureGroups[1];
+        const colorParameters = initialCaptureGroups[2];
+        if (!colorParameters) {
+          continue;
+        }
+        let colorInformation;
+        if (colorScheme === "rgb") {
+          const regexParameters = /^\(\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*\)$/gm;
+          colorInformation = _findRGBColorInformation(_findRange(model, initialMatch), _findMatches(colorParameters, regexParameters), false);
+        } else if (colorScheme === "rgba") {
+          const regexParameters = /^\(\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\s*,\s*(0[.][0-9]+|[.][0-9]+|[01][.]|[01])\s*\)$/gm;
+          colorInformation = _findRGBColorInformation(_findRange(model, initialMatch), _findMatches(colorParameters, regexParameters), true);
+        } else if (colorScheme === "hsl") {
+          const regexParameters = /^\(\s*((?:360(?:\.0+)?|(?:36[0]|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])(?:\.\d+)?))\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*\)$/gm;
+          colorInformation = _findHSLColorInformation(_findRange(model, initialMatch), _findMatches(colorParameters, regexParameters), false);
+        } else if (colorScheme === "hsla") {
+          const regexParameters = /^\(\s*((?:360(?:\.0+)?|(?:36[0]|3[0-5][0-9]|[12][0-9][0-9]|[1-9]?[0-9])(?:\.\d+)?))\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*[\s,]\s*(100|\d{1,2}[.]\d*|\d{1,2})%\s*[\s,]\s*(0[.][0-9]+|[.][0-9]+|[01][.]0*|[01])\s*\)$/gm;
+          colorInformation = _findHSLColorInformation(_findRange(model, initialMatch), _findMatches(colorParameters, regexParameters), true);
+        } else if (colorScheme === "#") {
+          colorInformation = _findHexColorInformation(_findRange(model, initialMatch), colorScheme + colorParameters);
+        }
+        if (colorInformation) {
+          result.push(colorInformation);
+        }
+      }
+    }
+    return result;
+  }
+  function computeDefaultDocumentColors(model) {
+    if (!model || typeof model.getValue !== "function" || typeof model.positionAt !== "function") {
+      return [];
+    }
+    return computeColors(model);
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/services/findSectionHeaders.js
+  var trimDashesRegex = /^-+|-+$/g;
+  var CHUNK_SIZE = 100;
+  var MAX_SECTION_LINES = 5;
+  function findSectionHeaders(model, options) {
+    let headers = [];
+    if (options.findRegionSectionHeaders && options.foldingRules?.markers) {
+      const regionHeaders = collectRegionHeaders(model, options);
+      headers = headers.concat(regionHeaders);
+    }
+    if (options.findMarkSectionHeaders) {
+      const markHeaders = collectMarkHeaders(model, options);
+      headers = headers.concat(markHeaders);
+    }
+    return headers;
+  }
+  function collectRegionHeaders(model, options) {
+    const regionHeaders = [];
+    const endLineNumber = model.getLineCount();
+    for (let lineNumber = 1; lineNumber <= endLineNumber; lineNumber++) {
+      const lineContent = model.getLineContent(lineNumber);
+      const match = lineContent.match(options.foldingRules.markers.start);
+      if (match) {
+        const range = { startLineNumber: lineNumber, startColumn: match[0].length + 1, endLineNumber: lineNumber, endColumn: lineContent.length + 1 };
+        if (range.endColumn > range.startColumn) {
+          const sectionHeader = {
+            range,
+            ...getHeaderText(lineContent.substring(match[0].length)),
+            shouldBeInComments: false
+          };
+          if (sectionHeader.text || sectionHeader.hasSeparatorLine) {
+            regionHeaders.push(sectionHeader);
+          }
+        }
+      }
+    }
+    return regionHeaders;
+  }
+  function collectMarkHeaders(model, options) {
+    const markHeaders = [];
+    const endLineNumber = model.getLineCount();
+    if (!options.markSectionHeaderRegex || options.markSectionHeaderRegex.trim() === "") {
+      return markHeaders;
+    }
+    const multiline = isMultilineRegexSource(options.markSectionHeaderRegex);
+    const regex = new RegExp(options.markSectionHeaderRegex, `gdm${multiline ? "s" : ""}`);
+    if (regExpLeadsToEndlessLoop(regex)) {
+      return markHeaders;
+    }
+    for (let startLine = 1; startLine <= endLineNumber; startLine += CHUNK_SIZE - MAX_SECTION_LINES) {
+      const endLine = Math.min(startLine + CHUNK_SIZE - 1, endLineNumber);
+      const lines = [];
+      for (let i = startLine; i <= endLine; i++) {
+        lines.push(model.getLineContent(i));
+      }
+      const text = lines.join("\n");
+      regex.lastIndex = 0;
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const precedingText = text.substring(0, match.index);
+        const lineOffset = (precedingText.match(/\n/g) || []).length;
+        const lineNumber = startLine + lineOffset;
+        const matchLines = match[0].split("\n");
+        const matchHeight = matchLines.length;
+        const matchEndLine = lineNumber + matchHeight - 1;
+        const lineStartIndex = precedingText.lastIndexOf("\n") + 1;
+        const startColumn = match.index - lineStartIndex + 1;
+        const lastMatchLine = matchLines[matchLines.length - 1];
+        const endColumn = matchHeight === 1 ? startColumn + match[0].length : lastMatchLine.length + 1;
+        const range = {
+          startLineNumber: lineNumber,
+          startColumn,
+          endLineNumber: matchEndLine,
+          endColumn
+        };
+        const text2 = (match.groups ?? {})["label"] ?? "";
+        const hasSeparatorLine = ((match.groups ?? {})["separator"] ?? "") !== "";
+        const sectionHeader = {
+          range,
+          text: text2,
+          hasSeparatorLine,
+          shouldBeInComments: true
+        };
+        if (sectionHeader.text || sectionHeader.hasSeparatorLine) {
+          if (markHeaders.length === 0 || markHeaders[markHeaders.length - 1].range.endLineNumber < sectionHeader.range.startLineNumber) {
+            markHeaders.push(sectionHeader);
+          }
+        }
+        regex.lastIndex = match.index + match[0].length;
+      }
+    }
+    return markHeaders;
+  }
+  function getHeaderText(text) {
+    text = text.trim();
+    const hasSeparatorLine = text.startsWith("-");
+    text = text.replace(trimDashesRegex, "");
+    return { text, hasSeparatorLine };
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/base/common/async.js
+  var runWhenGlobalIdle;
+  var _runWhenIdle;
+  (function() {
+    const safeGlobal = globalThis;
+    if (typeof safeGlobal.requestIdleCallback !== "function" || typeof safeGlobal.cancelIdleCallback !== "function") {
+      _runWhenIdle = (_targetWindow, runner, timeout) => {
+        setTimeout0(() => {
+          if (disposed) {
+            return;
+          }
+          const end = Date.now() + 15;
+          const deadline = {
+            didTimeout: true,
+            timeRemaining() {
+              return Math.max(0, end - Date.now());
+            }
+          };
+          runner(Object.freeze(deadline));
+        });
+        let disposed = false;
+        return {
+          dispose() {
+            if (disposed) {
+              return;
+            }
+            disposed = true;
+          }
+        };
+      };
+    } else {
+      _runWhenIdle = (targetWindow, runner, timeout) => {
+        const handle = targetWindow.requestIdleCallback(runner, typeof timeout === "number" ? { timeout } : void 0);
+        let disposed = false;
+        return {
+          dispose() {
+            if (disposed) {
+              return;
+            }
+            disposed = true;
+            targetWindow.cancelIdleCallback(handle);
+          }
+        };
+      };
+    }
+    runWhenGlobalIdle = (runner, timeout) => _runWhenIdle(globalThis, runner, timeout);
+  })();
+  var DeferredPromise = class {
+    get isRejected() {
+      return this.outcome?.outcome === 1;
+    }
+    get isSettled() {
+      return !!this.outcome;
+    }
+    constructor() {
+      this.p = new Promise((c, e) => {
+        this.completeCallback = c;
+        this.errorCallback = e;
+      });
+    }
+    complete(value) {
+      if (this.isSettled) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve2) => {
+        this.completeCallback(value);
+        this.outcome = { outcome: 0, value };
+        resolve2();
+      });
+    }
+    error(err) {
+      if (this.isSettled) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve2) => {
+        this.errorCallback(err);
+        this.outcome = { outcome: 1, value: err };
+        resolve2();
+      });
+    }
+    cancel() {
+      return this.error(new CancellationError());
+    }
+  };
+  var Promises;
+  (function(Promises2) {
+    async function settled(promises) {
+      let firstError = void 0;
+      const result = await Promise.all(promises.map((promise) => promise.then((value) => value, (error) => {
+        if (!firstError) {
+          firstError = error;
+        }
+        return void 0;
+      })));
+      if (typeof firstError !== "undefined") {
+        throw firstError;
+      }
+      return result;
+    }
+    Promises2.settled = settled;
+    function withAsyncBody(bodyFn) {
+      return new Promise(async (resolve2, reject) => {
+        try {
+          await bodyFn(resolve2, reject);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+    Promises2.withAsyncBody = withAsyncBody;
+  })(Promises || (Promises = {}));
+  var ProducerConsumer = class {
+    constructor() {
+      this._unsatisfiedConsumers = [];
+      this._unconsumedValues = [];
+    }
+    get hasFinalValue() {
+      return !!this._finalValue;
+    }
+    produce(value) {
+      this._ensureNoFinalValue();
+      if (this._unsatisfiedConsumers.length > 0) {
+        const deferred = this._unsatisfiedConsumers.shift();
+        this._resolveOrRejectDeferred(deferred, value);
+      } else {
+        this._unconsumedValues.push(value);
+      }
+    }
+    produceFinal(value) {
+      this._ensureNoFinalValue();
+      this._finalValue = value;
+      for (const deferred of this._unsatisfiedConsumers) {
+        this._resolveOrRejectDeferred(deferred, value);
+      }
+      this._unsatisfiedConsumers.length = 0;
+    }
+    _ensureNoFinalValue() {
+      if (this._finalValue) {
+        throw new BugIndicatingError("ProducerConsumer: cannot produce after final value has been set");
+      }
+    }
+    _resolveOrRejectDeferred(deferred, value) {
+      if (value.ok) {
+        deferred.complete(value.value);
+      } else {
+        deferred.error(value.error);
+      }
+    }
+    consume() {
+      if (this._unconsumedValues.length > 0 || this._finalValue) {
+        const value = this._unconsumedValues.length > 0 ? this._unconsumedValues.shift() : this._finalValue;
+        if (value.ok) {
+          return Promise.resolve(value.value);
+        } else {
+          return Promise.reject(value.error);
+        }
+      } else {
+        const deferred = new DeferredPromise();
+        this._unsatisfiedConsumers.push(deferred);
+        return deferred.p;
+      }
+    }
+  };
+  var AsyncIterableProducer = class _AsyncIterableProducer {
+    constructor(executor, _onReturn) {
+      this._onReturn = _onReturn;
+      this._producerConsumer = new ProducerConsumer();
+      this._iterator = {
+        next: () => this._producerConsumer.consume(),
+        return: () => {
+          this._onReturn?.();
+          return Promise.resolve({ done: true, value: void 0 });
+        },
+        throw: async (e) => {
+          this._finishError(e);
+          return { done: true, value: void 0 };
+        }
+      };
+      queueMicrotask(async () => {
+        const p = executor({
+          emitOne: (value) => this._producerConsumer.produce({ ok: true, value: { done: false, value } }),
+          emitMany: (values) => {
+            for (const value of values) {
+              this._producerConsumer.produce({ ok: true, value: { done: false, value } });
+            }
+          },
+          reject: (error) => this._finishError(error)
+        });
+        if (!this._producerConsumer.hasFinalValue) {
+          try {
+            await p;
+            this._finishOk();
+          } catch (error) {
+            this._finishError(error);
+          }
+        }
+      });
+    }
+    static fromArray(items) {
+      return new _AsyncIterableProducer((writer) => {
+        writer.emitMany(items);
+      });
+    }
+    static fromPromise(promise) {
+      return new _AsyncIterableProducer(async (emitter) => {
+        emitter.emitMany(await promise);
+      });
+    }
+    static fromPromisesResolveOrder(promises) {
+      return new _AsyncIterableProducer(async (emitter) => {
+        await Promise.all(promises.map(async (p) => emitter.emitOne(await p)));
+      });
+    }
+    static merge(iterables) {
+      return new _AsyncIterableProducer(async (emitter) => {
+        await Promise.all(iterables.map(async (iterable) => {
+          for await (const item of iterable) {
+            emitter.emitOne(item);
+          }
+        }));
+      });
+    }
+    static {
+      this.EMPTY = _AsyncIterableProducer.fromArray([]);
+    }
+    static map(iterable, mapFn) {
+      return new _AsyncIterableProducer(async (emitter) => {
+        for await (const item of iterable) {
+          emitter.emitOne(mapFn(item));
+        }
+      });
+    }
+    map(mapFn) {
+      return _AsyncIterableProducer.map(this, mapFn);
+    }
+    static coalesce(iterable) {
+      return _AsyncIterableProducer.filter(iterable, (item) => !!item);
+    }
+    coalesce() {
+      return _AsyncIterableProducer.coalesce(this);
+    }
+    static filter(iterable, filterFn) {
+      return new _AsyncIterableProducer(async (emitter) => {
+        for await (const item of iterable) {
+          if (filterFn(item)) {
+            emitter.emitOne(item);
+          }
+        }
+      });
+    }
+    filter(filterFn) {
+      return _AsyncIterableProducer.filter(this, filterFn);
+    }
+    _finishOk() {
+      if (!this._producerConsumer.hasFinalValue) {
+        this._producerConsumer.produceFinal({ ok: true, value: { done: true, value: void 0 } });
+      }
+    }
+    _finishError(error) {
+      if (!this._producerConsumer.hasFinalValue) {
+        this._producerConsumer.produceFinal({ ok: false, error });
+      }
+    }
+    [Symbol.asyncIterator]() {
+      return this._iterator;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/model/prefixSumComputer.js
+  var PrefixSumComputer = class {
+    constructor(values) {
+      this.values = values;
+      this.prefixSum = new Uint32Array(values.length);
+      this.prefixSumValidIndex = new Int32Array(1);
+      this.prefixSumValidIndex[0] = -1;
+    }
+    insertValues(insertIndex, insertValues) {
+      insertIndex = toUint32(insertIndex);
+      const oldValues = this.values;
+      const oldPrefixSum = this.prefixSum;
+      const insertValuesLen = insertValues.length;
+      if (insertValuesLen === 0) {
+        return false;
+      }
+      this.values = new Uint32Array(oldValues.length + insertValuesLen);
+      this.values.set(oldValues.subarray(0, insertIndex), 0);
+      this.values.set(oldValues.subarray(insertIndex), insertIndex + insertValuesLen);
+      this.values.set(insertValues, insertIndex);
+      if (insertIndex - 1 < this.prefixSumValidIndex[0]) {
+        this.prefixSumValidIndex[0] = insertIndex - 1;
+      }
+      this.prefixSum = new Uint32Array(this.values.length);
+      if (this.prefixSumValidIndex[0] >= 0) {
+        this.prefixSum.set(oldPrefixSum.subarray(0, this.prefixSumValidIndex[0] + 1));
+      }
+      return true;
+    }
+    setValue(index, value) {
+      index = toUint32(index);
+      value = toUint32(value);
+      if (this.values[index] === value) {
+        return false;
+      }
+      this.values[index] = value;
+      if (index - 1 < this.prefixSumValidIndex[0]) {
+        this.prefixSumValidIndex[0] = index - 1;
+      }
+      return true;
+    }
+    removeValues(startIndex, count) {
+      startIndex = toUint32(startIndex);
+      count = toUint32(count);
+      const oldValues = this.values;
+      const oldPrefixSum = this.prefixSum;
+      if (startIndex >= oldValues.length) {
+        return false;
+      }
+      const maxCount = oldValues.length - startIndex;
+      if (count >= maxCount) {
+        count = maxCount;
+      }
+      if (count === 0) {
+        return false;
+      }
+      this.values = new Uint32Array(oldValues.length - count);
+      this.values.set(oldValues.subarray(0, startIndex), 0);
+      this.values.set(oldValues.subarray(startIndex + count), startIndex);
+      this.prefixSum = new Uint32Array(this.values.length);
+      if (startIndex - 1 < this.prefixSumValidIndex[0]) {
+        this.prefixSumValidIndex[0] = startIndex - 1;
+      }
+      if (this.prefixSumValidIndex[0] >= 0) {
+        this.prefixSum.set(oldPrefixSum.subarray(0, this.prefixSumValidIndex[0] + 1));
+      }
+      return true;
+    }
+    getTotalSum() {
+      if (this.values.length === 0) {
+        return 0;
+      }
+      return this._getPrefixSum(this.values.length - 1);
+    }
+    /**
+     * Returns the sum of the first `index + 1` many items.
+     * @returns `SUM(0 <= j <= index, values[j])`.
+     */
+    getPrefixSum(index) {
+      if (index < 0) {
+        return 0;
+      }
+      index = toUint32(index);
+      return this._getPrefixSum(index);
+    }
+    _getPrefixSum(index) {
+      if (index <= this.prefixSumValidIndex[0]) {
+        return this.prefixSum[index];
+      }
+      let startIndex = this.prefixSumValidIndex[0] + 1;
+      if (startIndex === 0) {
+        this.prefixSum[0] = this.values[0];
+        startIndex++;
+      }
+      if (index >= this.values.length) {
+        index = this.values.length - 1;
+      }
+      for (let i = startIndex; i <= index; i++) {
+        this.prefixSum[i] = this.prefixSum[i - 1] + this.values[i];
+      }
+      this.prefixSumValidIndex[0] = Math.max(this.prefixSumValidIndex[0], index);
+      return this.prefixSum[index];
+    }
+    getIndexOf(sum) {
+      sum = Math.floor(sum);
+      this.getTotalSum();
+      let low = 0;
+      let high = this.values.length - 1;
+      let mid = 0;
+      let midStop = 0;
+      let midStart = 0;
+      while (low <= high) {
+        mid = low + (high - low) / 2 | 0;
+        midStop = this.prefixSum[mid];
+        midStart = midStop - this.values[mid];
+        if (sum < midStart) {
+          high = mid - 1;
+        } else if (sum >= midStop) {
+          low = mid + 1;
+        } else {
+          break;
+        }
+      }
+      return new PrefixSumIndexOfResult(mid, sum - midStart);
+    }
+  };
+  var PrefixSumIndexOfResult = class {
+    constructor(index, remainder) {
+      this.index = index;
+      this.remainder = remainder;
+      this._prefixSumIndexOfResultBrand = void 0;
+      this.index = index;
+      this.remainder = remainder;
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/model/mirrorTextModel.js
+  var MirrorTextModel = class {
+    constructor(uri, lines, eol, versionId) {
+      this._uri = uri;
+      this._lines = lines;
+      this._eol = eol;
+      this._versionId = versionId;
+      this._lineStarts = null;
+      this._cachedTextValue = null;
+    }
+    dispose() {
+      this._lines.length = 0;
+    }
+    get version() {
+      return this._versionId;
+    }
+    getText() {
+      if (this._cachedTextValue === null) {
+        this._cachedTextValue = this._lines.join(this._eol);
+      }
+      return this._cachedTextValue;
+    }
+    onEvents(e) {
+      if (e.eol && e.eol !== this._eol) {
+        this._eol = e.eol;
+        this._lineStarts = null;
+      }
+      const changes = e.changes;
+      for (const change of changes) {
+        this._acceptDeleteRange(change.range);
+        this._acceptInsertText(new Position(change.range.startLineNumber, change.range.startColumn), change.text);
+      }
+      this._versionId = e.versionId;
+      this._cachedTextValue = null;
+    }
+    _ensureLineStarts() {
+      if (!this._lineStarts) {
+        const eolLength = this._eol.length;
+        const linesLength = this._lines.length;
+        const lineStartValues = new Uint32Array(linesLength);
+        for (let i = 0; i < linesLength; i++) {
+          lineStartValues[i] = this._lines[i].length + eolLength;
+        }
+        this._lineStarts = new PrefixSumComputer(lineStartValues);
+      }
+    }
+    /**
+     * All changes to a line's text go through this method
+     */
+    _setLineText(lineIndex, newValue) {
+      this._lines[lineIndex] = newValue;
+      if (this._lineStarts) {
+        this._lineStarts.setValue(lineIndex, this._lines[lineIndex].length + this._eol.length);
+      }
+    }
+    _acceptDeleteRange(range) {
+      if (range.startLineNumber === range.endLineNumber) {
+        if (range.startColumn === range.endColumn) {
+          return;
+        }
+        this._setLineText(range.startLineNumber - 1, this._lines[range.startLineNumber - 1].substring(0, range.startColumn - 1) + this._lines[range.startLineNumber - 1].substring(range.endColumn - 1));
+        return;
+      }
+      this._setLineText(range.startLineNumber - 1, this._lines[range.startLineNumber - 1].substring(0, range.startColumn - 1) + this._lines[range.endLineNumber - 1].substring(range.endColumn - 1));
+      this._lines.splice(range.startLineNumber, range.endLineNumber - range.startLineNumber);
+      if (this._lineStarts) {
+        this._lineStarts.removeValues(range.startLineNumber, range.endLineNumber - range.startLineNumber);
+      }
+    }
+    _acceptInsertText(position, insertText) {
+      if (insertText.length === 0) {
+        return;
+      }
+      const insertLines = splitLines(insertText);
+      if (insertLines.length === 1) {
+        this._setLineText(position.lineNumber - 1, this._lines[position.lineNumber - 1].substring(0, position.column - 1) + insertLines[0] + this._lines[position.lineNumber - 1].substring(position.column - 1));
+        return;
+      }
+      insertLines[insertLines.length - 1] += this._lines[position.lineNumber - 1].substring(position.column - 1);
+      this._setLineText(position.lineNumber - 1, this._lines[position.lineNumber - 1].substring(0, position.column - 1) + insertLines[0]);
+      const newLengths = new Uint32Array(insertLines.length - 1);
+      for (let i = 1; i < insertLines.length; i++) {
+        this._lines.splice(position.lineNumber + i - 1, 0, insertLines[i]);
+        newLengths[i - 1] = insertLines[i].length + this._eol.length;
+      }
+      if (this._lineStarts) {
+        this._lineStarts.insertValues(position.lineNumber, newLengths);
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/services/textModelSync/textModelSync.impl.js
+  var STOP_SYNC_MODEL_DELTA_TIME_MS = 60 * 1e3;
+  var WorkerTextModelSyncServer = class {
+    constructor() {
+      this._models = /* @__PURE__ */ Object.create(null);
+    }
+    getModel(uri) {
+      return this._models[uri];
+    }
+    getModels() {
+      const all = [];
+      Object.keys(this._models).forEach((key) => all.push(this._models[key]));
+      return all;
+    }
+    $acceptNewModel(data) {
+      this._models[data.url] = new MirrorModel(URI.parse(data.url), data.lines, data.EOL, data.versionId);
+    }
+    $acceptModelChanged(uri, e) {
+      if (!this._models[uri]) {
+        return;
+      }
+      const model = this._models[uri];
+      model.onEvents(e);
+    }
+    $acceptRemovedModel(uri) {
+      if (!this._models[uri]) {
+        return;
+      }
+      delete this._models[uri];
+    }
+  };
+  var MirrorModel = class extends MirrorTextModel {
+    get uri() {
+      return this._uri;
+    }
+    get eol() {
+      return this._eol;
+    }
+    getValue() {
+      return this.getText();
+    }
+    findMatches(regex) {
+      const matches = [];
+      for (let i = 0; i < this._lines.length; i++) {
+        const line = this._lines[i];
+        const offsetToAdd = this.offsetAt(new Position(i + 1, 1));
+        const iteratorOverMatches = line.matchAll(regex);
+        for (const match of iteratorOverMatches) {
+          if (match.index || match.index === 0) {
+            match.index = match.index + offsetToAdd;
+          }
+          matches.push(match);
+        }
+      }
+      return matches;
+    }
+    getLinesContent() {
+      return this._lines.slice(0);
+    }
+    getLineCount() {
+      return this._lines.length;
+    }
+    getLineContent(lineNumber) {
+      return this._lines[lineNumber - 1];
+    }
+    getWordAtPosition(position, wordDefinition) {
+      const wordAtText = getWordAtText(position.column, ensureValidWordDefinition(wordDefinition), this._lines[position.lineNumber - 1], 0);
+      if (wordAtText) {
+        return new Range(position.lineNumber, wordAtText.startColumn, position.lineNumber, wordAtText.endColumn);
+      }
+      return null;
+    }
+    words(wordDefinition) {
+      const lines = this._lines;
+      const wordenize = this._wordenize.bind(this);
+      let lineNumber = 0;
+      let lineText = "";
+      let wordRangesIdx = 0;
+      let wordRanges = [];
+      return {
+        *[Symbol.iterator]() {
+          while (true) {
+            if (wordRangesIdx < wordRanges.length) {
+              const value = lineText.substring(wordRanges[wordRangesIdx].start, wordRanges[wordRangesIdx].end);
+              wordRangesIdx += 1;
+              yield value;
+            } else {
+              if (lineNumber < lines.length) {
+                lineText = lines[lineNumber];
+                wordRanges = wordenize(lineText, wordDefinition);
+                wordRangesIdx = 0;
+                lineNumber += 1;
+              } else {
+                break;
+              }
+            }
+          }
+        }
+      };
+    }
+    getLineWords(lineNumber, wordDefinition) {
+      const content = this._lines[lineNumber - 1];
+      const ranges = this._wordenize(content, wordDefinition);
+      const words = [];
+      for (const range of ranges) {
+        words.push({
+          word: content.substring(range.start, range.end),
+          startColumn: range.start + 1,
+          endColumn: range.end + 1
+        });
+      }
+      return words;
+    }
+    _wordenize(content, wordDefinition) {
+      const result = [];
+      let match;
+      wordDefinition.lastIndex = 0;
+      while (match = wordDefinition.exec(content)) {
+        if (match[0].length === 0) {
+          break;
+        }
+        result.push({ start: match.index, end: match.index + match[0].length });
+      }
+      return result;
+    }
+    getValueInRange(range) {
+      range = this._validateRange(range);
+      if (range.startLineNumber === range.endLineNumber) {
+        return this._lines[range.startLineNumber - 1].substring(range.startColumn - 1, range.endColumn - 1);
+      }
+      const lineEnding = this._eol;
+      const startLineIndex = range.startLineNumber - 1;
+      const endLineIndex = range.endLineNumber - 1;
+      const resultLines = [];
+      resultLines.push(this._lines[startLineIndex].substring(range.startColumn - 1));
+      for (let i = startLineIndex + 1; i < endLineIndex; i++) {
+        resultLines.push(this._lines[i]);
+      }
+      resultLines.push(this._lines[endLineIndex].substring(0, range.endColumn - 1));
+      return resultLines.join(lineEnding);
+    }
+    offsetAt(position) {
+      position = this._validatePosition(position);
+      this._ensureLineStarts();
+      return this._lineStarts.getPrefixSum(position.lineNumber - 2) + (position.column - 1);
+    }
+    positionAt(offset) {
+      offset = Math.floor(offset);
+      offset = Math.max(0, offset);
+      this._ensureLineStarts();
+      const out = this._lineStarts.getIndexOf(offset);
+      const lineLength = this._lines[out.index].length;
+      return {
+        lineNumber: 1 + out.index,
+        column: 1 + Math.min(out.remainder, lineLength)
+      };
+    }
+    _validateRange(range) {
+      const start2 = this._validatePosition({ lineNumber: range.startLineNumber, column: range.startColumn });
+      const end = this._validatePosition({ lineNumber: range.endLineNumber, column: range.endColumn });
+      if (start2.lineNumber !== range.startLineNumber || start2.column !== range.startColumn || end.lineNumber !== range.endLineNumber || end.column !== range.endColumn) {
+        return {
+          startLineNumber: start2.lineNumber,
+          startColumn: start2.column,
+          endLineNumber: end.lineNumber,
+          endColumn: end.column
+        };
+      }
+      return range;
+    }
+    _validatePosition(position) {
+      if (!Position.isIPosition(position)) {
+        throw new Error("bad position");
+      }
+      let { lineNumber, column } = position;
+      let hasChanged = false;
+      if (lineNumber < 1) {
+        lineNumber = 1;
+        column = 1;
+        hasChanged = true;
+      } else if (lineNumber > this._lines.length) {
+        lineNumber = this._lines.length;
+        column = this._lines[lineNumber - 1].length + 1;
+        hasChanged = true;
+      } else {
+        const maxCharacter = this._lines[lineNumber - 1].length + 1;
+        if (column < 1) {
+          column = 1;
+          hasChanged = true;
+        } else if (column > maxCharacter) {
+          column = maxCharacter;
+          hasChanged = true;
+        }
+      }
+      if (!hasChanged) {
+        return position;
+      } else {
+        return { lineNumber, column };
+      }
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/services/editorWebWorker.js
+  var EditorWorker = class _EditorWorker {
+    constructor(_foreignModule = null) {
+      this._foreignModule = _foreignModule;
+      this._requestHandlerBrand = void 0;
+      this._workerTextModelSyncServer = new WorkerTextModelSyncServer();
+    }
+    dispose() {
+    }
+    async $ping() {
+      return "pong";
+    }
+    _getModel(uri) {
+      return this._workerTextModelSyncServer.getModel(uri);
+    }
+    getModels() {
+      return this._workerTextModelSyncServer.getModels();
+    }
+    $acceptNewModel(data) {
+      this._workerTextModelSyncServer.$acceptNewModel(data);
+    }
+    $acceptModelChanged(uri, e) {
+      this._workerTextModelSyncServer.$acceptModelChanged(uri, e);
+    }
+    $acceptRemovedModel(uri) {
+      this._workerTextModelSyncServer.$acceptRemovedModel(uri);
+    }
+    async $computeUnicodeHighlights(url, options, range) {
+      const model = this._getModel(url);
+      if (!model) {
+        return { ranges: [], hasMore: false, ambiguousCharacterCount: 0, invisibleCharacterCount: 0, nonBasicAsciiCharacterCount: 0 };
+      }
+      return UnicodeTextModelHighlighter.computeUnicodeHighlights(model, options, range);
+    }
+    async $findSectionHeaders(url, options) {
+      const model = this._getModel(url);
+      if (!model) {
+        return [];
+      }
+      return findSectionHeaders(model, options);
+    }
+    // ---- BEGIN diff --------------------------------------------------------------------------
+    async $computeDiff(originalUrl, modifiedUrl, options, algorithm) {
+      const original = this._getModel(originalUrl);
+      const modified = this._getModel(modifiedUrl);
+      if (!original || !modified) {
+        return null;
+      }
+      const result = _EditorWorker.computeDiff(original, modified, options, algorithm);
+      return result;
+    }
+    static computeDiff(originalTextModel, modifiedTextModel, options, algorithm) {
+      const diffAlgorithm = algorithm === "advanced" ? linesDiffComputers.getDefault() : linesDiffComputers.getLegacy();
+      const originalLines = originalTextModel.getLinesContent();
+      const modifiedLines = modifiedTextModel.getLinesContent();
+      const result = diffAlgorithm.computeDiff(originalLines, modifiedLines, options);
+      const identical = result.changes.length > 0 ? false : this._modelsAreIdentical(originalTextModel, modifiedTextModel);
+      function getLineChanges(changes) {
+        return changes.map((m) => [m.original.startLineNumber, m.original.endLineNumberExclusive, m.modified.startLineNumber, m.modified.endLineNumberExclusive, m.innerChanges?.map((m2) => [
+          m2.originalRange.startLineNumber,
+          m2.originalRange.startColumn,
+          m2.originalRange.endLineNumber,
+          m2.originalRange.endColumn,
+          m2.modifiedRange.startLineNumber,
+          m2.modifiedRange.startColumn,
+          m2.modifiedRange.endLineNumber,
+          m2.modifiedRange.endColumn
+        ])]);
+      }
+      return {
+        identical,
+        quitEarly: result.hitTimeout,
+        changes: getLineChanges(result.changes),
+        moves: result.moves.map((m) => [
+          m.lineRangeMapping.original.startLineNumber,
+          m.lineRangeMapping.original.endLineNumberExclusive,
+          m.lineRangeMapping.modified.startLineNumber,
+          m.lineRangeMapping.modified.endLineNumberExclusive,
+          getLineChanges(m.changes)
+        ])
+      };
+    }
+    static _modelsAreIdentical(original, modified) {
+      const originalLineCount = original.getLineCount();
+      const modifiedLineCount = modified.getLineCount();
+      if (originalLineCount !== modifiedLineCount) {
+        return false;
+      }
+      for (let line = 1; line <= originalLineCount; line++) {
+        const originalLine = original.getLineContent(line);
+        const modifiedLine = modified.getLineContent(line);
+        if (originalLine !== modifiedLine) {
+          return false;
+        }
+      }
+      return true;
+    }
+    static {
+      this._diffLimit = 1e5;
+    }
+    async $computeMoreMinimalEdits(modelUrl, edits, pretty) {
+      const model = this._getModel(modelUrl);
+      if (!model) {
+        return edits;
+      }
+      const result = [];
+      let lastEol = void 0;
+      edits = edits.slice(0).sort((a, b) => {
+        if (a.range && b.range) {
+          return Range.compareRangesUsingStarts(a.range, b.range);
+        }
+        const aRng = a.range ? 0 : 1;
+        const bRng = b.range ? 0 : 1;
+        return aRng - bRng;
+      });
+      let writeIndex = 0;
+      for (let readIndex = 1; readIndex < edits.length; readIndex++) {
+        if (Range.getEndPosition(edits[writeIndex].range).equals(Range.getStartPosition(edits[readIndex].range))) {
+          edits[writeIndex].range = Range.fromPositions(Range.getStartPosition(edits[writeIndex].range), Range.getEndPosition(edits[readIndex].range));
+          edits[writeIndex].text += edits[readIndex].text;
+        } else {
+          writeIndex++;
+          edits[writeIndex] = edits[readIndex];
+        }
+      }
+      edits.length = writeIndex + 1;
+      for (let { range, text, eol } of edits) {
+        if (typeof eol === "number") {
+          lastEol = eol;
+        }
+        if (Range.isEmpty(range) && !text) {
+          continue;
+        }
+        const original = model.getValueInRange(range);
+        text = text.replace(/\r\n|\n|\r/g, model.eol);
+        if (original === text) {
+          continue;
+        }
+        if (Math.max(text.length, original.length) > _EditorWorker._diffLimit) {
+          result.push({ range, text });
+          continue;
+        }
+        const changes = stringDiff(original, text, pretty);
+        const editOffset = model.offsetAt(Range.lift(range).getStartPosition());
+        for (const change of changes) {
+          const start2 = model.positionAt(editOffset + change.originalStart);
+          const end = model.positionAt(editOffset + change.originalStart + change.originalLength);
+          const newEdit = {
+            text: text.substr(change.modifiedStart, change.modifiedLength),
+            range: { startLineNumber: start2.lineNumber, startColumn: start2.column, endLineNumber: end.lineNumber, endColumn: end.column }
+          };
+          if (model.getValueInRange(newEdit.range) !== newEdit.text) {
+            result.push(newEdit);
+          }
+        }
+      }
+      if (typeof lastEol === "number") {
+        result.push({ eol: lastEol, text: "", range: { startLineNumber: 0, startColumn: 0, endLineNumber: 0, endColumn: 0 } });
+      }
+      return result;
+    }
+    // ---- END minimal edits ---------------------------------------------------------------
+    async $computeLinks(modelUrl) {
+      const model = this._getModel(modelUrl);
+      if (!model) {
+        return null;
+      }
+      return computeLinks(model);
+    }
+    // --- BEGIN default document colors -----------------------------------------------------------
+    async $computeDefaultDocumentColors(modelUrl) {
+      const model = this._getModel(modelUrl);
+      if (!model) {
+        return null;
+      }
+      return computeDefaultDocumentColors(model);
+    }
+    static {
+      this._suggestionsLimit = 1e4;
+    }
+    async $textualSuggest(modelUrls, leadingWord, wordDef, wordDefFlags) {
+      const sw = new StopWatch();
+      const wordDefRegExp = new RegExp(wordDef, wordDefFlags);
+      const seen = /* @__PURE__ */ new Set();
+      outer: for (const url of modelUrls) {
+        const model = this._getModel(url);
+        if (!model) {
+          continue;
+        }
+        for (const word of model.words(wordDefRegExp)) {
+          if (word === leadingWord || !isNaN(Number(word))) {
+            continue;
+          }
+          seen.add(word);
+          if (seen.size > _EditorWorker._suggestionsLimit) {
+            break outer;
+          }
+        }
+      }
+      return { words: Array.from(seen), duration: sw.elapsed() };
+    }
+    // ---- END suggest --------------------------------------------------------------------------
+    //#region -- word ranges --
+    async $computeWordRanges(modelUrl, range, wordDef, wordDefFlags) {
+      const model = this._getModel(modelUrl);
+      if (!model) {
+        return /* @__PURE__ */ Object.create(null);
+      }
+      const wordDefRegExp = new RegExp(wordDef, wordDefFlags);
+      const result = /* @__PURE__ */ Object.create(null);
+      for (let line = range.startLineNumber; line < range.endLineNumber; line++) {
+        const words = model.getLineWords(line, wordDefRegExp);
+        for (const word of words) {
+          if (!isNaN(Number(word.word))) {
+            continue;
+          }
+          let array = result[word.word];
+          if (!array) {
+            array = [];
+            result[word.word] = array;
+          }
+          array.push({
+            startLineNumber: line,
+            startColumn: word.startColumn,
+            endLineNumber: line,
+            endColumn: word.endColumn
+          });
+        }
+      }
+      return result;
+    }
+    //#endregion
+    async $navigateValueSet(modelUrl, range, up, wordDef, wordDefFlags) {
+      const model = this._getModel(modelUrl);
+      if (!model) {
+        return null;
+      }
+      const wordDefRegExp = new RegExp(wordDef, wordDefFlags);
+      if (range.startColumn === range.endColumn) {
+        range = {
+          startLineNumber: range.startLineNumber,
+          startColumn: range.startColumn,
+          endLineNumber: range.endLineNumber,
+          endColumn: range.endColumn + 1
+        };
+      }
+      const selectionText = model.getValueInRange(range);
+      const wordRange = model.getWordAtPosition({ lineNumber: range.startLineNumber, column: range.startColumn }, wordDefRegExp);
+      if (!wordRange) {
+        return null;
+      }
+      const word = model.getValueInRange(wordRange);
+      const result = BasicInplaceReplace.INSTANCE.navigateValueSet(range, selectionText, wordRange, word, up);
+      return result;
+    }
+    // ---- BEGIN foreign module support --------------------------------------------------------------------------
+    // foreign method request
+    $fmr(method, args) {
+      if (!this._foreignModule || typeof this._foreignModule[method] !== "function") {
+        return Promise.reject(new Error("Missing requestHandler or method: " + method));
+      }
+      try {
+        return Promise.resolve(this._foreignModule[method].apply(this._foreignModule, args));
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+  };
+  if (typeof importScripts === "function") {
+    globalThis.monaco = createMonacoBaseAPI();
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/common/services/editorWorkerHost.js
+  var EditorWorkerHost = class _EditorWorkerHost {
+    static {
+      this.CHANNEL_NAME = "editorWorkerHost";
+    }
+    static getChannel(workerServer) {
+      return workerServer.getChannel(_EditorWorkerHost.CHANNEL_NAME);
+    }
+    static setChannel(workerClient, obj) {
+      workerClient.setChannel(_EditorWorkerHost.CHANNEL_NAME, obj);
+    }
+  };
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/editor.worker.start.js
+  function start(createClient) {
+    let client;
+    const webWorkerServer = initialize((workerServer) => {
+      const editorWorkerHost = EditorWorkerHost.getChannel(workerServer);
+      const host = new Proxy({}, {
+        get(target, prop, receiver) {
+          if (prop === "then") {
+            return void 0;
+          }
+          if (typeof prop !== "string") {
+            throw new Error(`Not supported`);
+          }
+          return (...args) => {
+            return editorWorkerHost.$fhr(prop, args);
+          };
+        }
+      });
+      const ctx = {
+        host,
+        getMirrorModels: () => {
+          return webWorkerServer.requestHandler.getModels();
+        }
+      };
+      client = createClient(ctx);
+      return new EditorWorker(client);
+    });
+    return client;
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/common/initialize.js
+  var initialized2 = false;
+  function isWorkerInitialized() {
+    return initialized2;
+  }
+  function initialize2(callback) {
+    initialized2 = true;
+    self.onmessage = (m) => {
+      start((ctx) => {
+        return callback(ctx, m.data);
+      });
+    };
+  }
+
+  // ../../../Library/Caches/deno/deno_esbuild/registry.npmjs.org/monaco-editor@0.55.1/node_modules/monaco-editor/esm/vs/editor/editor.worker.js
+  self.onmessage = () => {
+    if (!isWorkerInitialized()) {
+      start(() => {
+        return {};
+      });
+    }
+  };
+})();

@@ -70,10 +70,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="index_files/libs/bootstrap/bootstrap-7d52103a208c030741cc79fae131c136.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-<script src="index_files/libs/quarto-contrib/molviewspec-quarto-1.1.0/molstar-components.js" type="module"></script>
+<script src="index_files/libs/quarto-contrib/molviewspec-quarto-1.1.0/molstar.js"></script>
 <script src="index_files/libs/quarto-contrib/molviewspec-quarto-1.1.0/molviewspec.js" type="module"></script>
+<link href="index_files/libs/quarto-contrib/molviewspec-quarto-1.1.0/molstar.css" rel="stylesheet">
 <link href="index_files/libs/quarto-contrib/molviewspec-quarto-1.1.0/molstar-components.css" rel="stylesheet">
 <link href="index_files/libs/quarto-contrib/molviewspec-quarto-1.1.0/molviewspec.css" rel="stylesheet">
+<script>
+// Configure Monaco Environment before loading modules
+window.MonacoEnvironment = {
+  getWorkerUrl: function(moduleId, label) {
+    // Determine base path from script location
+    var scripts = document.getElementsByTagName('script');
+    var basePath = '';
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src;
+      if (src && src.indexOf('molviewspec') !== -1) {
+        basePath = src.substring(0, src.lastIndexOf('/') + 1);
+        break;
+      }
+    }
+    if (label === 'typescript' || label === 'javascript') {
+      return basePath + 'assets/ts.worker.js';
+    }
+    return basePath + 'assets/editor.worker.js';
+  }
+};
+</script>
 
 
 </head>
@@ -257,7 +279,7 @@ const structure = builder
 </script>
   <script type="application/json" id="molviewspec-6-scene">
 // This is scene code - it appears in the editor and is editable
-structuref
+structure
   .component({ selector: 'polymer' })
   .representation({ type: 'cartoon' })
   .color({ color: 'purple' });</script>

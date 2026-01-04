@@ -2,29 +2,10 @@
 // Initializes all molviewspec viewers when DOM is ready
 
 import { h, render } from "npm:preact@10.28.1";
-import { EditorWithViewer } from "jsr:@zachcp/molstar-components@0.4.12";
+import { EditorWithViewer } from "jsr:@zachcp/molstar-components@0.4.13";
 
-// Configure Monaco Environment to load workers from assets subdirectory
-// This must be set before Monaco is initialized
-(self as any).MonacoEnvironment = {
-  getWorkerUrl: function (_moduleId: string, label: string) {
-    // Determine the base path from the current script
-    const scripts = document.getElementsByTagName("script");
-    let basePath = "";
-    for (let i = 0; i < scripts.length; i++) {
-      const src = scripts[i].src;
-      if (src && src.indexOf("molviewspec") !== -1) {
-        basePath = src.substring(0, src.lastIndexOf("/") + 1);
-        break;
-      }
-    }
-
-    if (label === "typescript" || label === "javascript") {
-      return basePath + "assets/ts.worker.js";
-    }
-    return basePath + "assets/editor.worker.js";
-  },
-};
+// Note: Monaco Environment is configured in the HTML head via Lua filter
+// to ensure it runs before the module loads
 
 // Initialize all molviewspec viewers when DOM is ready
 async function initializeMolViewSpecViewers() {
