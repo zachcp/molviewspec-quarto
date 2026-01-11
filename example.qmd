@@ -13,7 +13,7 @@ filters:
 To use this extension in your Quarto project, run the following command in your terminal:
 
 ```bash
-quarto add zachcp/molviewspec-quarto
+quarto add molstar/molviewspec-quarto
 ```
 
 Then add the filter to your document's YAML front matter and can use `.molviewspec` within a codeblock header.

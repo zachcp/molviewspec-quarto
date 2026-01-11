@@ -52,7 +52,7 @@ _extensions/molviewspec-quarto/
 
 **Unique ID Generation**: Lua-side counter generates deterministic IDs (`molviewspec-1`, `molviewspec-2`, etc.) ensuring no collisions within a document.
 
-**Dynamic Import**: molstar-components library is loaded at runtime via ESM from `https://esm.sh/jsr/@zachcp/molstar-components`, avoiding bundling and keeping the extension lightweight.
+**Dynamic Import**: molstar-components library is loaded at runtime via ESM from `https://esm.sh/jsr/@molstar/molstar-components`, avoiding bundling and keeping the extension lightweight.
 
 **Graceful Degradation**: If components fail to load (no internet, errors), falls back to displaying JSON in a textarea with clear error messaging.
 

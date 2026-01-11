@@ -2,7 +2,7 @@
 // Initializes all molviewspec viewers when DOM is ready
 
 import { h, render } from "preact";
-import { EditorWithViewer } from "@zachcp/molstar-components"; // v0.4.14
+import { EditorWithViewer } from "@molstar/molstar-components";
 
 // Note: Monaco Environment is configured in the HTML head via Lua filter
 // to ensure it runs before the module loads

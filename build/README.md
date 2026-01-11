@@ -22,7 +22,7 @@ build/molviewspec.ts
 ## Files
 
 ### Source Files
-- **`molviewspec.ts`** - Main entry point, initializes viewers using `@zachcp/molstar-components`
+- **`molviewspec.ts`** - Main entry point, initializes viewers using `@molstar/molstar-components`
 - **`build.ts`** - esbuild configuration, handles bundling and worker generation
 
 ### Build Command
@@ -34,7 +34,7 @@ deno task build
 
 ### Runtime (bundled in molviewspec.js)
 - `preact@10.28.1` - React alternative
-- `@zachcp/molstar-components@0.4.13` - Preact components for MolStar + Monaco
+- `@molstar/molstar-components` - Preact components for MolStar + Monaco
 - `monaco-editor@0.55.1` - Code editor (must match component version)
 
 ### Build Tools (deno.json)
